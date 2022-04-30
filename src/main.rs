@@ -1,6 +1,7 @@
 mod core;
+mod uci;
+mod engine;
 
 fn main() {
-    let a : core::Move;
     println!("Hello, world!");
 }
