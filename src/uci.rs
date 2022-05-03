@@ -1,0 +1,234 @@
+/// Functionality for running the Universal Chess Protocol
+/// 
+/// This is a standardized way for chess engines to communicate.
+/// See http://wbec-ridderkerk.nl/html/UCIProtocol.html for protocol
+/// specification.
+
+// Use rustyline for a better commandline experience
+// Allows for line history and more
+use rustyline::Editor;
+use rustyline::error::ReadlineError;
+
+static STARTING_POS_FEN: &str 
+    = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+#[derive(Debug, PartialEq)]
+struct GoState {
+    // How deep is the engine allowed to search?
+    depth: Option<usize>,
+    // How many nodes is the engine allowed to search?
+    nodes: Option<usize>,
+    // White time related
+    white_time: Option<usize>,
+    white_time_increment: Option<usize>,
+    // Black time related
+    black_time: Option<usize>,
+    black_time_increment: Option<usize>,
+    // Restrict the search to certain moves
+    search_moves: Option<Vec<String>>,
+    // Restrict the search to a certain amount of time
+    move_time: Option<usize>,
+}
+
+#[derive(Debug, PartialEq)]
+// UCI Command types sent from GUI to engine
+enum CommandType {
+    // UCI commands
+    UCI,
+    Debug(bool),
+    IsReady,
+    SetOption(String, String),
+    UCINewGame,
+    Position(String),
+    Go(GoState),
+    Stop,
+    Quit,
+    // Non-UCI commands
+    Perft(usize),
+    DisplayBoard,
+    EvaluateBoard,
+    Help,
+    Unknown,
+    Error(String),
+}
+
+/// Start the UCI protocol, start accepting command
+pub fn start_uci_protocol() {
+    let mut rl = Editor::<()>::new();
+    let _ = rl.load_history(".linehistory.txt");
+
+    println!("Magnificence Oxidized Chess Engine");
+    println!("Created by the Prog Boys\n");
+    println!("Type 'help' for help");
+
+    loop {
+        let command = read_input(&mut rl);
+        handle_command(&command);
+
+        if command == CommandType::Quit {
+            break;
+        }
+    }
+}
+
+fn handle_command(command : &CommandType) {
+    match command {
+        CommandType::Quit => {
+            println!("Exiting...");
+        }
+        CommandType::Error(e) => {
+            println!("Error: {}", e);
+        }
+        CommandType::Unknown => {
+            println!("Unknown command");
+        }
+        _ => {}
+    }
+}
+
+
+// =============== Input parsing ===================
+
+fn read_input(rl : &mut Editor::<()>) -> CommandType {
+    // Read input using rustyline library
+    let readline = rl.readline(">> ");
+    let cmd = match readline {
+        Ok(line) => {
+            rl.add_history_entry(line.as_str());
+            line.as_str().to_string()
+        },
+        Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
+            return CommandType::Quit;
+        },
+        Err(err) => {
+            println!("Error: {:?}", err);
+            return CommandType::Quit;
+        }
+    };
+
+    // Parse input into a command
+    let split = cmd.split(" ");
+    let words = split.collect::<Vec<&str>>();
+
+    let command = match words[0] {
+        "quit" | "exit" | "q" => CommandType::Quit,
+        "stop" => CommandType::Stop,
+        "uci" => CommandType::UCI,
+        "ucinewgame" => CommandType::UCINewGame,
+        "isready" => CommandType::IsReady,
+        "help" | "h" => CommandType::Help,
+        "display" | "d" | "board" => CommandType::DisplayBoard,
+        "eval" | "evaluate" | "score" => CommandType::EvaluateBoard,
+        "position" | "pos" | "setboard" | "p" => { 
+            parse_uci_position_cmd(&words[1..])
+        }
+        "go" => { 
+            parse_uci_command_go(&words[1..]) 
+        }
+        "perft" => {
+            if words.len() > 1 {
+                match words[1].parse::<usize>() {
+                    Ok(n) => CommandType::Perft(n),
+                    Err(_) => CommandType::Error("Invalid perft depth".to_string())
+                }
+            }
+            else {
+                CommandType::Error("Please specify a perft depth".to_string())
+            }
+        }
+        _ => CommandType::Unknown,
+    };
+    return command;
+}
+
+// Parse the UCI 'go' command into a CommandType::Go
+// Returns a CommandType::Error if the command is not well formed
+fn parse_uci_command_go(words : &[&str]) -> CommandType {
+    let mut go_state : GoState = GoState {
+        depth: None,
+        nodes: None,
+        white_time: None,
+        white_time_increment: None,
+        black_time: None,
+        black_time_increment: None,
+        move_time: None,
+        search_moves: None
+    };
+
+    go_state.depth = get_named_argument_as_num(&words, "depth");
+    go_state.nodes = get_named_argument_as_num(&words, "nodes");
+    go_state.white_time = get_named_argument_as_num(&words, "wtime");
+    go_state.white_time_increment = get_named_argument_as_num(&words, "winc");
+    go_state.black_time = get_named_argument_as_num(&words, "btime");
+    go_state.black_time_increment = get_named_argument_as_num(&words, "binc");
+    go_state.move_time = get_named_argument_as_num(&words, "movetime");
+
+    // Use an infinite depth if infinite is stated
+    if get_named_argument(&words, "infinite") != None || words.len() == 0 {
+        go_state.depth = Some(1000);
+    }
+    // If only one argument is specified, treat it as depth
+    else if words.len() == 1 {
+        go_state.depth = match words[0].parse::<usize>() {
+            Ok(n) => Some(n),
+            Err(_) => None,
+        }
+    }
+
+    return CommandType::Go(go_state);
+}
+
+fn get_named_argument_as_num(words : &[&str], name: &str) -> Option<usize> {
+    match get_named_argument(words, name) {
+        Some(n) => {
+            match n.parse::<usize>() {
+                Ok(n) => Some(n),
+                Err(_) => None,
+            }
+        }
+        None => None
+    }
+}
+
+// Get a named arguments value from a list of words
+// Returns None if no arguments found
+fn get_named_argument(words : &[&str], name: &str) -> Option<String> {
+    for (i, val) in words.iter().enumerate() {
+        if *val == name {
+            return if i < (words.len() - 1) {
+                Some(words[i + 1].to_string())
+            }
+            else {
+                Some("".to_string())
+            };
+        }
+    }
+    return None;
+}
+
+// Parse the UCI 'position' command into a CommandType::Position(FEN)
+// Returns a CommandType::Error if the command is not well formed
+fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
+    if words.len() > 0 {
+        return match words[1] {
+            "startpos" | "sp" if words.len() > 1 => { 
+                CommandType::Position(STARTING_POS_FEN.to_string()) 
+            }
+            "moves" | "m" if words.len() > 1 => { 
+                // This one is more complicated, need to have a working board for this
+                CommandType::Error("TODO: Feature not implemented yet".to_string())
+                //CommandType::PositionMoves(words[2..]) 
+            }
+            "fen" if words.len() > 1 => { 
+                // Check if _ is a valid fen string
+                CommandType::Position(words[2].to_string()) 
+            }
+            _ => {
+                CommandType::Position(words[1].to_string()) 
+            }
+            
+        }
+    } else {
+        return CommandType::Error("Please specify position arguments".to_string());
+    }
+}

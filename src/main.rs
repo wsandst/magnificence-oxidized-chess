@@ -2,5 +2,5 @@ mod uci;
 mod engine;
 
 fn main() {
-    println!("Hello, world!");
+    uci::start_uci_protocol();
 }
