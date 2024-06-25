@@ -71,6 +71,11 @@ pub fn start_uci_protocol() {
     }
 }
 
+pub fn run_single_uci_command(command_line: &str) {
+    let command = parse_command(command_line);
+    handle_command(&command);
+}
+
 fn handle_command(command : &CommandType) {
     match command {
         CommandType::Quit => {
@@ -105,9 +110,12 @@ fn read_input(rl : &mut Editor::<()>) -> CommandType {
             return CommandType::Quit;
         }
     };
+    return parse_command(&cmd);
+}
 
+fn parse_command(line: &str) -> CommandType {
     // Parse input into a command
-    let split = cmd.split(" ");
+    let split = line.split(" ");
     let words = split.collect::<Vec<&str>>();
 
     let command = match words[0] {
@@ -141,43 +149,8 @@ fn read_input(rl : &mut Editor::<()>) -> CommandType {
     return command;
 }
 
-// Parse the UCI 'go' command into a CommandType::Go
-// Returns a CommandType::Error if the command is not well formed
-fn parse_uci_command_go(words : &[&str]) -> CommandType {
-    let mut go_state : GoState = GoState {
-        depth: None,
-        nodes: None,
-        white_time: None,
-        white_time_increment: None,
-        black_time: None,
-        black_time_increment: None,
-        move_time: None,
-        search_moves: None
-    };
-
-    go_state.depth = get_named_argument_as_num(&words, "depth");
-    go_state.nodes = get_named_argument_as_num(&words, "nodes");
-    go_state.white_time = get_named_argument_as_num(&words, "wtime");
-    go_state.white_time_increment = get_named_argument_as_num(&words, "winc");
-    go_state.black_time = get_named_argument_as_num(&words, "btime");
-    go_state.black_time_increment = get_named_argument_as_num(&words, "binc");
-    go_state.move_time = get_named_argument_as_num(&words, "movetime");
-
-    // Use an infinite depth if infinite is stated
-    if get_named_argument(&words, "infinite") != None || words.len() == 0 {
-        go_state.depth = Some(1000);
-    }
-    // If only one argument is specified, treat it as depth
-    else if words.len() == 1 {
-        go_state.depth = match words[0].parse::<usize>() {
-            Ok(n) => Some(n),
-            Err(_) => None,
-        }
-    }
-
-    return CommandType::Go(go_state);
-}
-
+// Get a named argument value from a list of words, as an integer.
+// Returns None if no arguments found
 fn get_named_argument_as_num(words : &[&str], name: &str) -> Option<usize> {
     match get_named_argument(words, name) {
         Some(n) => {
@@ -231,4 +204,41 @@ fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
     } else {
         return CommandType::Error("Please specify position arguments".to_string());
     }
+}
+
+// Parse the UCI 'go' command into a CommandType::Go
+// Returns a CommandType::Error if the command is not well formed
+fn parse_uci_command_go(words : &[&str]) -> CommandType {
+    let mut go_state : GoState = GoState {
+        depth: None,
+        nodes: None,
+        white_time: None,
+        white_time_increment: None,
+        black_time: None,
+        black_time_increment: None,
+        move_time: None,
+        search_moves: None
+    };
+
+    go_state.depth = get_named_argument_as_num(&words, "depth");
+    go_state.nodes = get_named_argument_as_num(&words, "nodes");
+    go_state.white_time = get_named_argument_as_num(&words, "wtime");
+    go_state.white_time_increment = get_named_argument_as_num(&words, "winc");
+    go_state.black_time = get_named_argument_as_num(&words, "btime");
+    go_state.black_time_increment = get_named_argument_as_num(&words, "binc");
+    go_state.move_time = get_named_argument_as_num(&words, "movetime");
+
+    // Use an infinite depth if infinite is stated
+    if get_named_argument(&words, "infinite") != None || words.len() == 0 {
+        go_state.depth = Some(1000);
+    }
+    // If only one argument is specified, treat it as depth
+    else if words.len() == 1 {
+        go_state.depth = match words[0].parse::<usize>() {
+            Ok(n) => Some(n),
+            Err(_) => None,
+        }
+    }
+
+    return CommandType::Go(go_state);
 }
