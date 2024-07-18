@@ -8,6 +8,7 @@
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use crate::engine::ab_engine;
 
 static STARTING_POS_FEN: &str 
     = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

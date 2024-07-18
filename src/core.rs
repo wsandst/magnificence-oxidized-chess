@@ -1,15 +1,7 @@
-// Copyright 2022 Latiang.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
+pub mod bitboard;
 
 #[cfg(test)]
 mod tests;
-
-mod board;
 
 pub enum Piece {
     WhitePawn = 0,
@@ -34,6 +26,3 @@ pub struct Move {
     pub promotion : u8,
     pub captured : u8
 }
-
-
-//pub move::Move;
