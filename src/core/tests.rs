@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_fen() {
         // Starting position
-        let board1 = Board::new_from_fen(STARTING_POS_FEN);
+        let board1 = Board::from_fen(STARTING_POS_FEN);
         let expected_pieces1 = [
             Piece::BlackRook, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackQueen, Piece::BlackKing, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook,
             Piece::BlackPawn, Piece::BlackPawn,   Piece::BlackPawn,   Piece::BlackPawn,  Piece::BlackPawn, Piece::BlackPawn,   Piece::BlackPawn,   Piece::BlackPawn,
@@ -57,7 +57,7 @@ mod tests {
         assert_board_equal_to_array_board(&board1, &expected_pieces1);
 
         // Kiwipete
-        let board2 = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+        let board2 = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
         let expected_pieces2 = [
             Piece::BlackRook,   Piece::Empty,      Piece::Empty,      Piece::Empty,      Piece::BlackKing, Piece::Empty,      Piece::Empty,      Piece::BlackRook,
             Piece::BlackPawn,   Piece::Empty,      Piece::BlackPawn,  Piece::BlackPawn,  Piece::BlackQueen,Piece::BlackPawn,  Piece::BlackBishop,Piece::Empty,
@@ -71,5 +71,30 @@ mod tests {
         assert_board_equal_to_array_board(&board2, &expected_pieces2);
     }
 
-    
+    #[test]
+    fn test_make_unmake_moves() {
+        let mut board = Board::from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
+
+        assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::BlackPawn);
+        assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::Empty);
+        let mv = Move {from: 10, to: 2, promotion: 0, captured: Piece::Empty};
+        board.make_move(&mv);
+        println!("{}", board);
+        assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::Empty);
+        assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::BlackPawn);
+        board.unmake_move(&mv);
+        assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::BlackPawn);
+        assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::Empty);
+
+        assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::WhiteRook);
+        assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::BlackPawn);
+        let mv = Move {from: 33, to: 37, promotion: 0, captured: Piece::BlackPawn};
+        board.make_move(&mv);
+        println!("{}", board);
+        assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::Empty);
+        assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::WhiteRook);
+        board.unmake_move(&mv);
+        assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::WhiteRook);
+        assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::BlackPawn);
+    }
 }

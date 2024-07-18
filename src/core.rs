@@ -7,9 +7,11 @@ use strum_macros::EnumIter;
 
 pub static STARTING_POS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+#[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter)]
 pub enum Piece {
-    WhitePawn = 0,
+    Empty = 0,
+    WhitePawn,
     WhiteBishop,
     WhiteKnight,
     WhiteRook,
@@ -21,7 +23,6 @@ pub enum Piece {
     BlackRook,
     BlackQueen,
     BlackKing,
-    Empty,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -29,7 +30,7 @@ pub struct Move {
     pub from : u8,
     pub to : u8,
     pub promotion : u8,
-    pub captured : u8
+    pub captured : Piece
 }
 
 

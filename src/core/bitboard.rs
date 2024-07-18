@@ -11,7 +11,8 @@ pub struct Board {
     ep_history: Vec<u8>,
     castling_history: Vec<u8>,
     ep: u8,
-    castling: u8
+    castling: u8,
+    mailboard: [Piece; 64]
 }
 
 impl Board {
@@ -24,7 +25,8 @@ impl Board {
             ep_history: Vec::new(),
             castling_history: Vec::new(),
             ep: 0,
-            castling: 0
+            castling: 0,
+            mailboard: [Piece::Empty; 64]
         }
         //return Board::new_from_fen(STARTING_POS_FEN);
     }
@@ -43,10 +45,10 @@ impl Board {
         //let half_move_counter = parts[4];
         //let full_move_counter = parts[5];
 
-        let mut x: usize = 0;
         let mut y: usize = 0;
         // Place pieces
         for row in pieces.split("/") {
+            let mut x: usize = 0;
             for c in row.chars() {
                 if c.is_digit(10) {
                     // Digit means empty spaces
@@ -56,14 +58,14 @@ impl Board {
                 else {
                     // Map the character to the correct piece
                     let piece = Piece::from_char(c);
-                    board.set_piece(x as u8, y as u8, &piece)
+                    board.set_piece(x, y, &piece);
+                    x += 1;
                 }
                 if x >= 8 {
                     continue;
                 }
             }
             y += 1;
-            x = 0;
         }
 
         return board;
@@ -74,24 +76,29 @@ impl Board {
     }
 
     pub fn make_move(&mut self, mv: &Move) {
-        //todo!()
+        let piece_to_move = *self.get_piece(mv.from as usize % 8, mv.from as usize / 8);
+        self.set_piece(mv.to as usize % 8, mv.to as usize / 8, &piece_to_move);
+        self.set_piece(mv.from as usize % 8, mv.from as usize / 8, &Piece::Empty);
+        // Set en passant and such here too
     }
 
     pub fn unmake_move(&mut self, mv: &Move) {
-        todo!()
+        let moved_piece = *self.get_piece(mv.to as usize % 8, mv.to as usize / 8);
+        self.set_piece(mv.to as usize % 8, mv.to as usize / 8, &mv.captured);
+        self.set_piece(mv.from as usize % 8, mv.from as usize / 8, &moved_piece);
     }
 
-    pub fn set_piece(&mut self, x: u8, y: u8, piece: &Piece) {
-        //todo!()
+    pub fn set_piece(&mut self, x: usize, y: usize, piece: &Piece) {
+        self.mailboard[y * 8 + x] = *piece;
     }
 
-    pub fn get_piece(&self, x: u8, y: u8) -> &Piece {
-        return &Piece::BlackKing;
+    pub fn get_piece(&self, x: usize, y: usize) -> &Piece {
+        return &self.mailboard[y * 8 + x];
     }
 
     // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
     pub fn get_moves(&self) -> Vec<Move> {
-        let null_move = Move {from: 0, to: 0, promotion: 0, captured: 0};
+        let null_move = Move {from: 0, to: 0, promotion: 0, captured: Piece::Empty};
         return vec![null_move, null_move, null_move, null_move, null_move];
     }
 }
