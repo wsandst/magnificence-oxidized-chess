@@ -37,7 +37,7 @@ impl Board {
     }
 
     pub fn make_move(&mut self, mv: &Move) {
-        todo!()
+        //todo!()
     }
 
     pub fn unmake_move(&mut self, mv: &Move) {
@@ -54,7 +54,8 @@ impl Board {
 
     // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
     pub fn get_moves(&self) -> Vec<Move> {
-        todo!();
+        let null_move = Move {from: 0, to: 0, promotion: 0, captured: 0};
+        return vec![null_move, null_move, null_move, null_move, null_move];
     }
 }
 

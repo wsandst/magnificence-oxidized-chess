@@ -1,3 +1,4 @@
+use bitboard::Board;
 /// Functionality for running the Universal Chess Protocol
 /// 
 /// This is a standardized way for chess engines to communicate.
@@ -10,6 +11,7 @@ use rustyline::Editor;
 use rustyline::error::ReadlineError;
 use crate::engine::ab_engine;
 use crate::core::*;
+use std::time::SystemTime;
 
 #[derive(Debug, PartialEq)]
 struct GoState {
@@ -27,6 +29,10 @@ struct GoState {
     search_moves: Option<Vec<String>>,
     // Restrict the search to a certain amount of time
     move_time: Option<usize>,
+}
+
+struct UCIState {
+    board: Board
 }
 
 #[derive(Debug, PartialEq)]
@@ -60,9 +66,13 @@ pub fn start_uci_protocol() {
     println!("Created by the Prog Boys\n");
     println!("Type 'help' for help");
 
+    let mut state = UCIState {
+        board: Board::new()
+    };
+
     loop {
         let command = read_input(&mut rl);
-        handle_command(&command);
+        handle_command(&command, &mut state);
 
         if command == CommandType::Quit {
             break;
@@ -71,11 +81,15 @@ pub fn start_uci_protocol() {
 }
 
 pub fn run_single_uci_command(command_line: &str) {
+    let mut state = UCIState {
+        board: Board::new()
+    };
+
     let command = parse_command(command_line);
-    handle_command(&command);
+    handle_command(&command, &mut state);
 }
 
-fn handle_command(command : &CommandType) {
+fn handle_command(command : &CommandType, state: &mut UCIState) {
     match command {
         CommandType::Quit => {
             println!("Exiting...");
@@ -86,8 +100,31 @@ fn handle_command(command : &CommandType) {
         CommandType::Unknown => {
             println!("Unknown command");
         }
+        CommandType::Perft(depth) => {
+            perft(depth, state);
+        }
         _ => {}
     }
+}
+
+fn perft(depth: &usize, state: &mut UCIState) {
+    println!("Performing perft of depth {}", depth);
+    let (perft_count, duration) = timeit(|| perft_recurse(*depth, state));
+    let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
+    println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
+    println!("Result: {}", perft_count);
+}
+
+fn perft_recurse(depth: usize, state: &mut UCIState) -> usize {
+    if depth == 1 {
+        return state.board.get_moves().len();
+    }
+    let mut total_move_count = 0;
+    for mv in state.board.get_moves() {
+        state.board.make_move(&mv);
+        total_move_count += perft_recurse(depth - 1, state);
+    }
+    return total_move_count;
 }
 
 
@@ -241,3 +278,12 @@ fn parse_uci_command_go(words : &[&str]) -> CommandType {
 
     return CommandType::Go(go_state);
 }
+
+fn timeit<F: FnMut() -> T, T>(mut f: F) -> (T, f64) {
+    let start = SystemTime::now();
+    let result = f();
+    let end = SystemTime::now();
+    let duration = end.duration_since(start).unwrap();
+    return (result, duration.as_secs_f64());
+  }
+  
