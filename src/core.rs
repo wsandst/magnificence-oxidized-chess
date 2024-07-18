@@ -2,11 +2,10 @@ pub mod bitboard;
 #[cfg(test)]
 mod tests;
 
-use strum::IntoEnumIterator; // 0.17.1
-use strum_macros::EnumIter; // 0.17.1
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-pub static STARTING_POS_FEN: &str 
-    = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+pub static STARTING_POS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter)]
 pub enum Piece {
@@ -45,11 +44,30 @@ impl Piece {
             Piece::WhiteKing => 'K',
             Piece::BlackPawn => 'p',
             Piece::BlackBishop => 'b',
-            Piece::BlackKnight => 'k',
+            Piece::BlackKnight => 'n',
             Piece::BlackRook => 'r',
             Piece::BlackQueen => 'q',
             Piece::BlackKing => 'k',
             Piece::Empty => '.',
+        }
+    }
+
+    pub fn from_char(c: char) -> Piece {
+        match c {
+            'P' => Piece::WhitePawn,
+            'B' => Piece::WhiteBishop,
+            'N' => Piece::WhiteKnight,
+            'R' => Piece::WhiteRook,
+            'Q' => Piece::WhiteQueen,
+            'K' => Piece::WhiteKing,
+            'p' => Piece::BlackPawn,
+            'b' => Piece::BlackBishop,
+            'n' => Piece::BlackKnight, 
+            'r' => Piece::BlackRook,
+            'q' => Piece::BlackQueen,
+            'k' => Piece::BlackKing,
+            '.' => Piece::Empty,
+            _ => panic!("Invalid character!"),
         }
     }
 }

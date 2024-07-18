@@ -15,13 +15,16 @@ fn main() {
         .long("command")
         .value_name("COMMAND")
         .takes_value(true)
-        .max_values(10))
+        .max_values(30))
     .get_matches();
 
     if let Some(values) = matches.values_of("command") {
         // Run a single UCI command
-        let cmd = values.collect::<Vec<&str>>().join(" ");
-        uci::run_single_uci_command(&cmd)
+        let string = values.collect::<Vec<&str>>().join(" ");
+        let cmds: Vec<&str> = string.split(" and ").collect();
+        for cmd in cmds {
+            uci::run_single_uci_command(&cmd.trim())
+        }
     } else {
         // Start UCI protocol
         uci::start_uci_protocol();

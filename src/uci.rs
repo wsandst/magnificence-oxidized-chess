@@ -67,7 +67,7 @@ pub fn start_uci_protocol() {
     println!("Type 'help' for help");
 
     let mut state = UCIState {
-        board: Board::new()
+        board: Board::empty()
     };
 
     loop {
@@ -82,7 +82,7 @@ pub fn start_uci_protocol() {
 
 pub fn run_single_uci_command(command_line: &str) {
     let mut state = UCIState {
-        board: Board::new()
+        board: Board::empty()
     };
 
     let command = parse_command(command_line);
@@ -104,7 +104,8 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             perft(depth, state);
         }
         CommandType::Position(fen) => {
-            state.board = Board::new_from_fen(fen);
+            println!("{}", fen);
+            state.board = Board::from_fen(fen);
         }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
@@ -236,10 +237,10 @@ fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
             }
             "fen" if words.len() > 1 => { 
                 // Check if _ is a valid fen string
-                CommandType::Position(words[2].to_string()) 
+                CommandType::Position(words[2..].join(" ").to_string()) 
             }
             _ => {
-                CommandType::Position(words[1].to_string()) 
+                CommandType::Position(words[1..].join(" ").to_string()) 
             }
             
         }

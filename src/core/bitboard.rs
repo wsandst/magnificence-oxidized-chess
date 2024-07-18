@@ -15,7 +15,7 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Board {
+    pub fn empty() -> Board {
         return Board {
             piece_sets: [0; 12],
             occupancy: 0,
@@ -29,8 +29,44 @@ impl Board {
         //return Board::new_from_fen(STARTING_POS_FEN);
     }
 
-    pub fn new_from_fen(fen: &str) -> Board {
-        todo!();
+    pub fn new() -> Board {
+        return Board::from_fen(STARTING_POS_FEN);
+    }
+
+    pub fn from_fen(fen: &str) -> Board {
+        let mut board = Board::empty();
+        let parts: Vec<&str> = fen.split(" ").collect();
+        let pieces = parts[0];
+        //let player_to_move = parts[1];
+        //let castling = parts[2];
+        //let en_passant = parts[3];
+        //let half_move_counter = parts[4];
+        //let full_move_counter = parts[5];
+
+        let mut x: usize = 0;
+        let mut y: usize = 0;
+        // Place pieces
+        for row in pieces.split("/") {
+            for c in row.chars() {
+                if c.is_digit(10) {
+                    // Digit means empty spaces
+                    let num = c.to_digit(10).unwrap() as usize;
+                    x += num;
+                }
+                else {
+                    // Map the character to the correct piece
+                    let piece = Piece::from_char(c);
+                    board.set_piece(x as u8, y as u8, &piece)
+                }
+                if x >= 8 {
+                    continue;
+                }
+            }
+            y += 1;
+            x = 0;
+        }
+
+        return board;
     }
 
     pub fn to_fen(&self) -> &str {
@@ -46,7 +82,7 @@ impl Board {
     }
 
     pub fn set_piece(&mut self, x: u8, y: u8, piece: &Piece) {
-        todo!()
+        //todo!()
     }
 
     pub fn get_piece(&self, x: u8, y: u8) -> &Piece {
