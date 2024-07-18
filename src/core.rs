@@ -32,3 +32,24 @@ pub struct Move {
     pub promotion : u8,
     pub captured : u8
 }
+
+
+impl Piece {
+    pub fn as_char(&self) -> char {
+        match *self {
+            Piece::WhitePawn => 'P',
+            Piece::WhiteBishop => 'B',
+            Piece::WhiteKnight => 'N',
+            Piece::WhiteRook => 'R',
+            Piece::WhiteQueen => 'Q',
+            Piece::WhiteKing => 'K',
+            Piece::BlackPawn => 'p',
+            Piece::BlackBishop => 'b',
+            Piece::BlackKnight => 'k',
+            Piece::BlackRook => 'r',
+            Piece::BlackQueen => 'q',
+            Piece::BlackKing => 'k',
+            Piece::Empty => '.',
+        }
+    }
+}

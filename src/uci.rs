@@ -103,6 +103,12 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         CommandType::Perft(depth) => {
             perft(depth, state);
         }
+        CommandType::Position(fen) => {
+            state.board = Board::new_from_fen(fen);
+        }
+        CommandType::DisplayBoard => {
+            println!("{}", state.board.to_string());
+        }
         _ => {}
     }
 }

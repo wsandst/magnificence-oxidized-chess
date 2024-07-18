@@ -1,4 +1,5 @@
 use crate::core::*;
+use std::fmt;
 use lazy_static::lazy_static;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -33,7 +34,7 @@ impl Board {
     }
 
     pub fn to_fen(&self) -> &str {
-        todo!();
+        return "Fen string here";
     }
 
     pub fn make_move(&mut self, mv: &Move) {
@@ -49,7 +50,7 @@ impl Board {
     }
 
     pub fn get_piece(&self, x: u8, y: u8) -> &Piece {
-        todo!()
+        return &Piece::BlackKing;
     }
 
     // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
@@ -59,6 +60,22 @@ impl Board {
     }
 }
 
+impl fmt::Display for Board {
+    // String representation of board
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut board_string = String::with_capacity(64 + 8 + 64);
+        board_string.push_str("\n  ABCDEFGH\n");
+        for y in 0..8 {
+            board_string.push_str(&format!("\n{} ", 8 - y));
+            for x in 0..8 {
+                let piece = self.get_piece(x, y);
+                board_string.push(piece.as_char());
+            }
+        }
+        board_string.push_str(&format!("\n\n{}", self.to_fen()));
+        f.write_str(&board_string)
+    }
+}
 // Lazy initialize some state at the beginning of the program
 lazy_static! {
     pub static ref EXAMPLE_DATA: [u64; 12] = {
