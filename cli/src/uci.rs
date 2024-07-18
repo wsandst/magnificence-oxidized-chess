@@ -1,4 +1,3 @@
-use bitboard::Board;
 /// Functionality for running the Universal Chess Protocol
 /// 
 /// This is a standardized way for chess engines to communicate.
@@ -9,9 +8,11 @@ use bitboard::Board;
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
-use crate::engine::ab_engine;
-use crate::core::*;
 use std::time::SystemTime;
+
+use engine_core::core::*;
+use engine_core::core::bitboard::*;
+use engine_core::engine::*;
 
 #[derive(Debug, PartialEq)]
 struct GoState {

@@ -1,6 +1,4 @@
-mod core;
 mod uci;
-mod engine;
 use clap::Arg;
 
 fn main() {

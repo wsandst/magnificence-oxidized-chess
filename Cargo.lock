@@ -91,6 +91,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
+name = "engine_core"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "error-code"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -174,14 +183,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "magnificence-oxidized-chess"
+name = "magnificence-oxidized"
 version = "0.1.0"
 dependencies = [
  "clap",
- "lazy_static",
+ "engine_core",
  "rustyline",
- "strum",
- "strum_macros",
 ]
 
 [[package]]
