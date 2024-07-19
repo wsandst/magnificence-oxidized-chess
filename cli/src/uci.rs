@@ -13,6 +13,8 @@ use std::time::SystemTime;
 use engine_core::core::*;
 use engine_core::core::bitboard::*;
 use engine_core::engine::*;
+use engine_core::commands;
+
 
 #[derive(Debug, PartialEq)]
 struct GoState {
@@ -117,24 +119,11 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
 
 fn perft(depth: &usize, state: &mut UCIState) {
     println!("Performing perft of depth {}", depth);
-    let (perft_count, duration) = timeit(|| perft_recurse(*depth, state));
+    let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
     println!("Result: {}", perft_count);
 }
-
-fn perft_recurse(depth: usize, state: &mut UCIState) -> usize {
-    if depth == 1 {
-        return state.board.get_moves().len();
-    }
-    let mut total_move_count = 0;
-    for mv in state.board.get_moves() {
-        state.board.make_move(&mv);
-        total_move_count += perft_recurse(depth - 1, state);
-    }
-    return total_move_count;
-}
-
 
 // =============== Input parsing ===================
 

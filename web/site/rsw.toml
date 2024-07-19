@@ -1,0 +1,11 @@
+name = "magnificence-oxidized"
+version = "0.1.0"
+interval = 50
+cli = "npm"
+
+#! When there is only `name`, other fields will use the default configuration
+[[crates]]
+name = "web"
+root = "../../"
+link = true
+out-dir = "site/wasm"
