@@ -2,6 +2,10 @@ use crate::core::*;
 use std::fmt;
 use lazy_static::lazy_static;
 
+#[cfg(target_feature = "bmi2")]
+use std::arch::x86_64::{_pdep_u64, _pext_u64};
+// Use count_ones() for popcnt
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
     piece_sets: [u64; 12],
@@ -100,6 +104,16 @@ impl Board {
     pub fn get_moves(&self) -> Vec<Move> {
         let null_move = Move {from: 0, to: 0, promotion: 0, captured: Piece::Empty};
         return vec![null_move, null_move, null_move, null_move, null_move];
+    }
+
+    #[cfg(target_feature = "bmi2")]
+    fn bmi_conditional_example() -> bool {
+        return true;
+    }
+
+    #[cfg(not(target_feature = "bmi2"))]
+    fn bmi_conditional_example() -> bool {
+        return true;
     }
 }
 
