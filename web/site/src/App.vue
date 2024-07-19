@@ -1,10 +1,7 @@
-<template>
-  <h1 class="text-3xl font-bold underline"> Magnificence Oxidized </h1>
-</template>
-
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import init, { ChessEngine } from '../wasm'
+import { onMounted } from 'vue';
+import Board from './components/Board.vue';
+import init, { ChessEngine } from '../wasm';
 
 onMounted(async () => {
     // Init wasm
@@ -16,6 +13,14 @@ onMounted(async () => {
     console.log(engine.get_counter());
 });
 </script>
+
+<template>
+  <div class="flex flex-col items-center py-4 gap-20">
+      <h1 class="text-3xl"> Magnificence Oxidized </h1>
+      <Board/>
+  </div>
+</template>
+
 
 <style>
 

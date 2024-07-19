@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --bg: #0F0F0F;
+    --bg-up: lighten(#0F0F0F, 20%);
+    --text-normal: hsla(0, 0%, 100%, 0.88);
+    --text-title: hsla(0, 0% ,100%, 0.96);;
+    --text-highlight: hsla(0, 0%, 100%, 0.8);
+    --text-link: #6ab0f3;
+    --text-link-hover: #4675a1;
+}
+
+html {
+    width: 100vw;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg);
+    color: var(--text-normal);
+}
