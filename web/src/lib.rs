@@ -1,4 +1,4 @@
-/// This file contains a wasm_bindgen interface to the emulator core
+/// This file contains a wasm_bindgen interface to the chess engine core
 use wasm_bindgen::prelude::*;
 use engine_core::core;
 
@@ -7,7 +7,7 @@ pub struct ChessEngine {
     counter: usize
 }
 
-/// Represents a wasm_bindgen wrapping for the emulator core
+/// Wrap the chess engine with wasm_bindgen
 #[wasm_bindgen]
 impl ChessEngine {
 

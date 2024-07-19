@@ -15,7 +15,10 @@ export default {
                     "DEFAULT": "#B58863",
                     "hightlight": "#AAA23A"
                 }
-            }
+            },
+            fontFamily: {
+                'sans': ['ProximaNova', 'Arial', 'sans-serif'],
+            },
         },
     },
     plugins: [],
