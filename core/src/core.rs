@@ -55,8 +55,13 @@ impl Piece {
         }
     }
 
-    pub fn is_white(&self) -> bool{
-        return true;
+    pub fn is_white(&self) -> bool {
+        return self.to_u8() < 6;
+    }
+
+    pub fn is_black(&self) -> bool {
+        let val: u8 = self.to_u8();
+        return (val > 5) & (val < 12);
     }
 
     pub fn from_char(c: char) -> Piece {

@@ -12,8 +12,6 @@ const ONE: u64 = 1;
 pub struct Board {
     piece_sets: [u64; 12],
     occupancy: u64,
-    white_occupancy: u64,
-    black_occupancy: u64,
     ep_history: Vec<u8>,
     castling_history: Vec<u8>,
     ep: u8,
@@ -26,8 +24,6 @@ impl Board {
         return Board {
             piece_sets: [0; 12],
             occupancy: 0,
-            white_occupancy: 0,
-            black_occupancy: 0,
             ep_history: Vec::new(),
             castling_history: Vec::new(),
             ep: 0,
@@ -102,10 +98,12 @@ impl Board {
         let old_piece : Piece = self.mailboard[pos as usize];
         if old_piece != Piece::Empty {
             let piecenum = old_piece.to_u8() as usize;
-            self.piece_sets[piecenum] = Board::unset_bit(self.piece_sets[piecenum], pos);
+            Board::unset_bit(&mut self.piece_sets[piecenum], pos);
         }
         let piecenum = piece.to_u8() as usize;
-        self.piece_sets[piecenum] = Board::set_bit(self.piece_sets[piecenum], pos);
+        if piece != Piece::Empty {
+            Board::set_bit(&mut self.piece_sets[piecenum], pos);
+        }
         self.mailboard[pos as usize] = piece;
     }
 
@@ -119,12 +117,12 @@ impl Board {
         return vec![null_move, null_move, null_move, null_move, null_move];
     }
 
-    fn set_bit(num: u64, pos: u8) -> u64{
-        return num | (1u64 << pos);
+    fn set_bit(num: &mut u64, pos: u8){
+        *num  = (*num) | (1u64 << pos);
     }
     
-    fn unset_bit(num: u64, pos: u8) -> u64 {
-        return num & (!1u64).rotate_left(pos as u32);
+    fn unset_bit(num: &mut u64, pos: u8) {
+        *num = (*num) & (!1u64).rotate_left(pos as u32);
     }
 
     #[cfg(target_feature = "bmi2")]
