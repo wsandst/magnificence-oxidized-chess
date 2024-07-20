@@ -38,7 +38,7 @@ impl ChessEngine {
         for y in 0..8 {
             for x in 0..8 {
                 let piece_value = self.board.get_piece_pos(x, y).to_u8();
-                if piece_value != 0 {
+                if piece_value != 13 {
                     pieces.push(PiecePosition {x, y, piece: piece_value as usize});
                 }
             }
@@ -47,6 +47,9 @@ impl ChessEngine {
     }
 
     pub fn make_move(&mut self, from_x: usize, from_y: usize, to_x: usize, to_y: usize) {
+        if from_x == to_x && from_y == to_y {
+            return;
+        }
         let capture_piece = self.board.get_piece_pos(to_x, to_y);
         let mv = Move { 
             from: (from_y * 8 + from_x) as u8, 

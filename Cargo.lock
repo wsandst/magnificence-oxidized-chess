@@ -146,8 +146,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "418d37c8b1d42553c93648be529cb70f920d3baf8ef469b74b9638df426e0b4c"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -226,6 +228,7 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "engine_core",
+ "getrandom",
  "js-sys",
  "wasm-bindgen",
  "wasm-bindgen-test",

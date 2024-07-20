@@ -21,18 +21,18 @@ const props = defineProps({
 })
 
 const pieceToIconMap : any = {
-    1: "src/assets/icons/pieces/white-pawn.svg",
-    2: "src/assets/icons/pieces/white-bishop.svg",
-    3: "src/assets/icons/pieces/white-knight.svg",
-    4: "src/assets/icons/pieces/white-rook.svg",
-    5: "src/assets/icons/pieces/white-queen.svg",
-    6: "src/assets/icons/pieces/white-king.svg",
-    7: "src/assets/icons/pieces/black-pawn.svg",
-    8: "src/assets/icons/pieces/black-bishop.svg",
-    9: "src/assets/icons/pieces/black-knight.svg",
-    10: "src/assets/icons/pieces/black-rook.svg",
-    11: "src/assets/icons/pieces/black-queen.svg",
-    12: "src/assets/icons/pieces/black-king.svg"
+    0: "src/assets/icons/pieces/white-pawn.svg",
+    1: "src/assets/icons/pieces/white-bishop.svg",
+    2: "src/assets/icons/pieces/white-knight.svg",
+    3: "src/assets/icons/pieces/white-rook.svg",
+    4: "src/assets/icons/pieces/white-queen.svg",
+    5: "src/assets/icons/pieces/white-king.svg",
+    6: "src/assets/icons/pieces/black-pawn.svg",
+    7: "src/assets/icons/pieces/black-bishop.svg",
+    8: "src/assets/icons/pieces/black-knight.svg",
+    9: "src/assets/icons/pieces/black-rook.svg",
+    10: "src/assets/icons/pieces/black-queen.svg",
+    11: "src/assets/icons/pieces/black-king.svg"
 }
 
 function calculateTranslationBasedOnPosition(x : number, y: number) {
@@ -71,8 +71,10 @@ function pieceDragStop(e: any, x: number, y: number) {
     if (movingPiece.value != null) {
         let to_x = Math.floor((dragStopX - rect.left) / squareSizePx);
         let to_y = Math.floor((dragStopY - rect.top) / squareSizePx);
-        if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8) {
-            emit("pieceMoved", {from: [x, y], to: [to_x, to_y]})
+        if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
+            emit("pieceMoved", {from: [x, y], to: [to_x, to_y]});
+            refreshPieces.value += 1;
+
         }
         else {
             movingPiece.value.style = calculateTranslationBasedOnPosition(x, y);
