@@ -79,8 +79,28 @@ impl Board {
         return board;
     }
 
-    pub fn to_fen(&self) -> &str {
-        return "Fen string here";
+    pub fn to_fen(&self) -> String {
+        let mut fen_string = String::with_capacity(64);
+        let mut run_of_empty = 0;
+        for (i, piece) in self.mailboard.iter().enumerate() {
+            if run_of_empty > 0 && (*piece != Piece::Empty || i != 0 && i % 8 == 0) {
+                fen_string.push_str(&format!("{}", run_of_empty));
+                run_of_empty = 0;
+            }
+            if i != 0 && i % 8 == 0 {
+                fen_string.push_str("/");
+            }
+            if *piece != Piece::Empty {
+                fen_string.push(piece.as_char());
+            }
+            if *piece == Piece::Empty {
+                run_of_empty += 1;
+            }
+        }
+        if run_of_empty > 0 {
+            fen_string.push_str(&format!("{}", run_of_empty));
+        }
+        return fen_string;
     }
 
     pub fn make_move(&mut self, mv: &Move) {
@@ -154,8 +174,8 @@ impl Board {
         for piece in self.mailboard {
             let piece_set = self.piece_sets[piece.to_u8() as usize];
             if piece_set & (1 << i) == 0 {
-                panic!("Invalid board state. Piece {:?} at ({}, {}) was found in mailboard but not in the bitboard", 
-                        piece, i % 8, i / 8);
+                panic!("Invalid board state. Piece {:?} at ({}, {}) was found in mailboard but not in the bitboard. \n Board: {}", 
+                        piece, i % 8, i / 8, self);
             }
             i += 1;
         }
@@ -163,8 +183,8 @@ impl Board {
         for (piece, piece_set) in self.piece_sets.iter().enumerate() {
             for i in 0..64 {
                 if piece_set & (1 << i) == 1 && self.mailboard[i] != Piece::from_u8(piece as u8) {
-                    panic!("Invalid board state. Piece {:?} at ({}, {}) was found in bitboard but not in the mailboard", 
-                            piece, i % 8, i / 8);
+                    panic!("Invalid board state. Piece {:?} at ({}, {}) was found in bitboard but not in the mailboard. \n Board: {}", 
+                            piece, i % 8, i / 8, self);
                 }
             }
         }
