@@ -6,8 +6,6 @@ use lazy_static::lazy_static;
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
 // Use count_ones() for popcnt
 
-const ONE: u64 = 1;
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
     piece_sets: [u64; 13],
@@ -20,15 +18,16 @@ pub struct Board {
 
 impl Board {
     pub fn empty() -> Board {
-        return Board {
+        let mut board = Board {
             piece_sets: [0; 13],
             ep_history: Vec::new(),
             castling_history: Vec::new(),
             ep: 0,
             castling: 0,
             mailboard: [Piece::Empty; 64]
-        }
-        //return Board::new_from_fen(STARTING_POS_FEN);
+        };
+        board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
+        return board;
     }
 
     pub fn new() -> Board {
@@ -129,6 +128,29 @@ impl Board {
     #[cfg(not(target_feature = "bmi2"))]
     fn bmi_conditional_example() -> bool {
         return true;
+    }
+
+    /// Validate that the bitboard is in a valid state
+    pub fn validate(&self) {
+        // Validate that every mailboard piece has the bitboard correctly set
+        let mut i = 0;
+        for piece in self.mailboard {
+            let piece_set = self.piece_sets[piece.to_u8() as usize];
+            if piece_set & (1 << i) == 0 {
+                panic!("Invalid board state. Piece {:?} at ({}, {}) was found in mailboard but not in the bitboard", 
+                        piece, i % 8, i / 8);
+            }
+            i += 1;
+        }
+        // Valdiate that every bitboard piece has the mailboard correctly set
+        for (piece, piece_set) in self.piece_sets.iter().enumerate() {
+            for i in 0..64 {
+                if piece_set & (1 << i) == 1 && self.mailboard[i] != Piece::from_u8(piece as u8) {
+                    panic!("Invalid board state. Piece {:?} at ({}, {}) was found in bitboard but not in the mailboard", 
+                            piece, i % 8, i / 8);
+                }
+            }
+        }
     }
 }
 

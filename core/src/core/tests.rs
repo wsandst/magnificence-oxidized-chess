@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn test_set_piece() {
-        let mut board = Board::new();
+        let mut board = Board::empty();
 
         // Ensure that there are no out of bounds problems with edges
         board.set_piece_pos(0, 0, &Piece::WhiteQueen);
@@ -28,6 +28,7 @@ mod tests {
             board.set_piece_pos(2, 3, &piece);
             assert_eq!(*board.get_piece(2, 3), piece);
         }
+        board.validate();
     }
 
     fn assert_board_equal_to_array_board(board: &Board, array_board: &[Piece; 64]) {
@@ -55,6 +56,7 @@ mod tests {
             Piece::WhiteRook, Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteQueen, Piece::WhiteKing, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook,
         ];
         assert_board_equal_to_array_board(&board1, &expected_pieces1);
+        board1.validate();
 
         // Kiwipete
         let board2 = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
@@ -69,6 +71,7 @@ mod tests {
             Piece::WhiteRook,   Piece::Empty,      Piece::Empty,      Piece::Empty,      Piece::WhiteKing, Piece::Empty,      Piece::Empty,      Piece::WhiteRook,
         ];
         assert_board_equal_to_array_board(&board2, &expected_pieces2);
+        board2.validate();
     }
 
     #[test]
