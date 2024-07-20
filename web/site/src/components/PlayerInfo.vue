@@ -18,7 +18,7 @@ defineProps({
 
 <template>
     <div class="flex flex-row gap-2">
-        <img width="50" height="50" class="w-[50px] h-[50px] rounded-[3px]" :src="image">
+        <img width="55" height="55" class="w-[50px] h-[50px] rounded-[3px]" :src="image">
         <div class="cursor-pointer flex flex-row">
             <span class="text-sm font-bold">{{ name }}</span>
             <FontAwesomeIcon class="cursor-pointer hover:scale-110 duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="md" :icon="faCaretDown"/>

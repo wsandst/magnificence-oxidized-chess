@@ -4,11 +4,13 @@ mod tests;
 
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use num;
+use num_derive::{FromPrimitive, ToPrimitive};
 
 pub static STARTING_POS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter, FromPrimitive, ToPrimitive)]
 pub enum Piece {
     Empty = 0,
     WhitePawn,
@@ -70,5 +72,13 @@ impl Piece {
             '.' => Piece::Empty,
             _ => panic!("Invalid character!"),
         }
+    }
+
+    pub fn from_u8(num: u8) -> Piece {
+        return num::FromPrimitive::from_u8(num).unwrap();
+    }
+
+    pub fn to_u8(&self) -> u8 {
+        return num::ToPrimitive::to_u8(self).unwrap();
     }
 }

@@ -7,7 +7,7 @@ import { faGear } from '@fortawesome/free-solid-svg-icons/faGear'
 </script>
 
 <template>
-    <header class="fixed h-[40px] w-full z-10">
+    <header class="fixed h-[40px] w-full z-10 invisible">
         <div class="w-[min(500px,100vw)] mx-auto flex justify-between px-6">
             <img class="w-[50px]" src="../assets/icons/magnificence-icon.svg">
             <div class="flex justify-end py-4 gap-3">

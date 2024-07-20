@@ -7,19 +7,19 @@
         font-family: 'ProximaNova';
         font-style: normal;
         font-weight: 100;
-        src: url(~/assets/fonts/ProximaNova-Thin.woff2) format('woff2');
+        src: url(src/assets/fonts/ProximaNova-Thin.woff2) format('woff2');
     }
     @font-face {
         font-family: 'ProximaNova';
         font-style: normal;
         font-weight: 400;
-        src: url(~/assets/fonts/ProximaNova-Regular.woff2) format('woff2');
+        src: url(src/assets/fonts/ProximaNova-Regular.woff2) format('woff2');
     }
     @font-face {
         font-family: 'ProximaNova';
         font-style: normal;
         font-weight: 700;
-        src: url(~/assets/fonts/ProximaNova-Bold.woff2) format('woff2');
+        src: url(src/assets/fonts/ProximaNova-Bold.woff2) format('woff2');
     }
 }
 
