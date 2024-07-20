@@ -10,8 +10,7 @@ const ONE: u64 = 1;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
-    piece_sets: [u64; 12],
-    occupancy: u64,
+    piece_sets: [u64; 13],
     ep_history: Vec<u8>,
     castling_history: Vec<u8>,
     ep: u8,
@@ -22,8 +21,7 @@ pub struct Board {
 impl Board {
     pub fn empty() -> Board {
         return Board {
-            piece_sets: [0; 12],
-            occupancy: 0,
+            piece_sets: [0; 13],
             ep_history: Vec::new(),
             castling_history: Vec::new(),
             ep: 0,
@@ -95,15 +93,13 @@ impl Board {
     }
 
     pub fn set_piece(&mut self, pos: u8, piece: Piece) {
-        let old_piece : Piece = self.mailboard[pos as usize];
-        if old_piece != Piece::Empty {
-            let piecenum = old_piece.to_u8() as usize;
-            Board::unset_bit(&mut self.piece_sets[piecenum], pos);
-        }
+        let old_piece: Piece = self.mailboard[pos as usize];
+        let piecenum = old_piece.to_u8() as usize;
+        Board::unset_bit(&mut self.piece_sets[piecenum], pos);
+
         let piecenum = piece.to_u8() as usize;
-        if piece != Piece::Empty {
-            Board::set_bit(&mut self.piece_sets[piecenum], pos);
-        }
+        Board::set_bit(&mut self.piece_sets[piecenum], pos);
+
         self.mailboard[pos as usize] = piece;
     }
 
