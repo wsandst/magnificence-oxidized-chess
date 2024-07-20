@@ -5,7 +5,6 @@ use engine_core::core::bitboard::*;
 
 #[wasm_bindgen]
 pub struct ChessEngine {
-    counter: usize,
     board: Board
 }
 
@@ -22,7 +21,7 @@ impl ChessEngine {
 
     /// Create a new chess engine wrapper
     pub fn new() -> ChessEngine {
-        ChessEngine { counter: 0, board: Board::new()}
+        ChessEngine { board: Board::new()}
     }
 
     pub fn get_piece(&self, x: usize, y: usize) -> usize  {

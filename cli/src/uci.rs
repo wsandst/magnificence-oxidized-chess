@@ -12,7 +12,6 @@ use std::time::SystemTime;
 
 use engine_core::core::*;
 use engine_core::core::bitboard::*;
-use engine_core::engine::*;
 use engine_core::commands;
 
 
@@ -39,6 +38,7 @@ struct UCIState {
 }
 
 #[derive(Debug, PartialEq)]
+#[allow(unused)]
 // UCI Command types sent from GUI to engine
 enum CommandType {
     // UCI commands

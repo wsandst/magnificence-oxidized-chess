@@ -2,7 +2,6 @@ pub mod bitboard;
 #[cfg(test)]
 mod tests;
 
-use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use num;
 use num_derive::{FromPrimitive, ToPrimitive};

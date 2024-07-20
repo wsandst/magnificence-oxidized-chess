@@ -1,5 +1,4 @@
 use crate::core::*;
-use std::fmt;
 use lazy_static::lazy_static;
 use rand::Rng;
 

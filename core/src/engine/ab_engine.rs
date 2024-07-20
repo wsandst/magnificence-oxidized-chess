@@ -2,10 +2,12 @@
 use super::Engine;
 use crate::core::bitboard::Board;
 
+#[allow(unused)]
 struct StandardAlphaBetaEngine {
 
 }
 
+#[allow(unused)]
 impl Engine for StandardAlphaBetaEngine {
     fn make_move(&mut self, mv: &crate::core::Move) {
         todo!()
