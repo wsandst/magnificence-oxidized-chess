@@ -99,8 +99,11 @@ impl Board {
         *num = (*num) & (!1u64).rotate_left(pos as u32);
     }
 
+    /// Updates the zoobrist key based on the addition/removal of ```piece``` at ```pos```.
     fn flip_zoobrist_piece(&mut self, pos: u8, piece: Piece) {
-        self.hash_key = self.hash_key ^ ZOOBRIST_KEYS[(piece.to_u8() as usize) * 64 + (pos as usize)];
+        let index = (piece.to_u8() as usize) * 64 + (pos as usize);
+        let key = ZOOBRIST_KEYS[index];
+        self.hash_key = self.hash_key ^ key;
     }
 
     #[cfg(target_feature = "bmi2")]
@@ -111,6 +114,16 @@ impl Board {
     #[cfg(not(target_feature = "bmi2"))]
     fn bmi_conditional_example() -> bool {
         return true;
+    }
+
+    /// Calculates the hash key from scratch. Used for debugging.
+    pub fn calculate_hash(&self) -> u64 {
+        let mut result = 0;
+        for i in 0..64 {
+            let index = i + (self.mailboard[i].to_u8() as usize) * 64;
+            result = result ^ ZOOBRIST_KEYS[index];
+        }
+        return result;
     }
 
     /// Validate that the bitboard is in a valid state
@@ -133,6 +146,11 @@ impl Board {
                             piece, i % 8, i / 8, self);
                 }
             }
+        }
+        //Validate that the hask key is correct
+        if self.calculate_hash() != self.hash_key {
+            panic!("Invalid board state. Stored hash_key {}, calculated hashkey {} in boardstate \"{}\"", 
+                self.hash_key, self.calculate_hash(), self.to_fen())
         }
     }
 }

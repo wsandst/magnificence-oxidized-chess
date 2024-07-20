@@ -11,17 +11,24 @@ mod tests {
         // Ensure that there are no out of bounds problems with edges
         board.set_piece_pos(0, 0, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(0, 0), Piece::WhiteQueen);
+        board.validate();
         board.set_piece_pos(0, 7, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(0, 7), Piece::WhiteQueen);
+        board.validate();
         board.set_piece_pos(7, 0, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(7, 0), Piece::WhiteQueen);
+        board.validate();
         board.set_piece_pos(7, 7, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(7, 7), Piece::WhiteQueen);
+        board.validate();
 
         // Check that overwriting of pieces works as intended
         board.set_piece_pos(0, 0, &Piece::WhiteQueen);
+        board.validate();
         board.set_piece_pos(0, 0, &Piece::BlackQueen);
+        board.validate();
         assert_eq!(*board.get_piece(0, 0), Piece::BlackQueen);
+        board.validate();
 
         // Check that every piece works as intended
         for piece in Piece::iter() {
