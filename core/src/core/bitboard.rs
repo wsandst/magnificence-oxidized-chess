@@ -117,11 +117,11 @@ impl Board {
         return vec![null_move, null_move, null_move, null_move, null_move];
     }
 
-    fn set_bit(num: &mut u64, pos: u8){
+    pub fn set_bit(num: &mut u64, pos: u8){
         *num  = (*num) | (1u64 << pos);
     }
     
-    fn unset_bit(num: &mut u64, pos: u8) {
+    pub fn unset_bit(num: &mut u64, pos: u8) {
         *num = (*num) & (!1u64).rotate_left(pos as u32);
     }
 
