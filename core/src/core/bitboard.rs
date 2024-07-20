@@ -3,6 +3,8 @@ use std::fmt;
 use lazy_static::lazy_static;
 use rand::Rng;
 
+mod formatting;
+
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
 // Use count_ones() for popcnt
@@ -41,46 +43,6 @@ impl Board {
 
     pub fn new() -> Board {
         return Board::from_fen(STARTING_POS_FEN);
-    }
-
-    pub fn from_fen(fen: &str) -> Board {
-        let mut board = Board::empty();
-        let parts: Vec<&str> = fen.split(" ").collect();
-        let pieces = parts[0];
-        //let player_to_move = parts[1];
-        //let castling = parts[2];
-        //let en_passant = parts[3];
-        //let half_move_counter = parts[4];
-        //let full_move_counter = parts[5];
-
-        let mut y: usize = 0;
-        // Place pieces
-        for row in pieces.split("/") {
-            let mut x: usize = 0;
-            for c in row.chars() {
-                if c.is_digit(10) {
-                    // Digit means empty spaces
-                    let num = c.to_digit(10).unwrap() as usize;
-                    x += num;
-                }
-                else {
-                    // Map the character to the correct piece
-                    let piece = Piece::from_char(c);
-                    board.set_piece_pos(x, y, &piece);
-                    x += 1;
-                }
-                if x >= 8 {
-                    continue;
-                }
-            }
-            y += 1;
-        }
-
-        return board;
-    }
-
-    pub fn to_fen(&self) -> &str {
-        return "Fen string here";
     }
 
     pub fn make_move(&mut self, mv: &Move) {
@@ -167,8 +129,8 @@ impl Board {
         for piece in self.mailboard {
             let piece_set = self.piece_sets[piece.to_u8() as usize];
             if piece_set & (1 << i) == 0 {
-                panic!("Invalid board state. Piece {:?} at ({}, {}) was found in mailboard but not in the bitboard", 
-                        piece, i % 8, i / 8);
+                panic!("Invalid board state. Piece {:?} at ({}, {}) was found in mailboard but not in the bitboard. \n Board: {}", 
+                        piece, i % 8, i / 8, self);
             }
             i += 1;
         }
@@ -176,8 +138,8 @@ impl Board {
         for (piece, piece_set) in self.piece_sets.iter().enumerate() {
             for i in 0..64 {
                 if piece_set & (1 << i) == 1 && self.mailboard[i] != Piece::from_u8(piece as u8) {
-                    panic!("Invalid board state. Piece {:?} at ({}, {}) was found in bitboard but not in the mailboard", 
-                            piece, i % 8, i / 8);
+                    panic!("Invalid board state. Piece {:?} at ({}, {}) was found in bitboard but not in the mailboard. \n Board: {}", 
+                            piece, i % 8, i / 8, self);
                 }
             }
         }
@@ -189,22 +151,6 @@ impl Board {
     }
 }
 
-impl fmt::Display for Board {
-    // String representation of board
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut board_string = String::with_capacity(64 + 8 + 64);
-        board_string.push_str("\n  ABCDEFGH\n");
-        for y in 0..8 {
-            board_string.push_str(&format!("\n{} ", 8 - y));
-            for x in 0..8 {
-                let piece = self.get_piece(x, y);
-                board_string.push(piece.as_char());
-            }
-        }
-        board_string.push_str(&format!("\n\n{}", self.to_fen()));
-        f.write_str(&board_string)
-    }
-}
 // Lazy initialize some state at the beginning of the program
 lazy_static! {
     pub static ref ZOOBRIST_KEYS: [u64;13*64 + 4 + 8 + 1] = {
