@@ -97,4 +97,22 @@ mod tests {
         assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::WhiteRook);
         assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::BlackPawn);
     }
+
+    #[test]
+    fn test_bit_twiddling() {
+        // Test all possible bits
+        for i in 0..64 {
+            let mut num = 0u64;
+            Board::set_bit(&mut num, i);
+            assert_eq!(num, 1u64 << i);
+            Board::unset_bit(&mut num, i);
+            assert_eq!(num, 0u64);
+        }
+        let mut num = 0b101010101010;
+        Board::set_bit(&mut num, 0);   // 0b101010101011;
+        Board::set_bit(&mut num, 2);   // 0b101010101111;
+        Board::unset_bit(&mut num, 2); // 0b101010101011;
+        Board::unset_bit(&mut num, 1); // 0b101010101001;
+        assert_eq!(num, 0b101010101001);
+    }
 }
