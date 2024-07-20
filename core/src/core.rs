@@ -27,6 +27,13 @@ pub enum Piece {
     Empty,
 }
 
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter, FromPrimitive, ToPrimitive)]
+pub enum Color {
+    White = 0,
+    Black,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Move {
     pub from : u8,
@@ -89,5 +96,14 @@ impl Piece {
 
     pub fn to_u8(&self) -> u8 {
         return num::ToPrimitive::to_u8(self).unwrap();
+    }
+}
+
+impl Color {
+    pub fn next_player(&self) -> Color {
+        return  match  *self {
+            Color::Black => Color::White,
+            Color::White => Color::Black
+        };
     }
 }
