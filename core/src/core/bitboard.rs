@@ -4,12 +4,51 @@ use rand::Rng;
 
 mod formatting;
 
+const CASTLING_RIGHTS_INDEX: usize = 13*64;
+const EP_INDEX: usize = 13 * 64 + 4;
+const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
+const COLUMNS: [u64; 8] = {
+    let mut masks = [0u64; 8];
+    let mut i = 0;
+    while i < 8 {
+        let mut mask = 1u64 << i;
+        let mut offset = 8;
+        while offset < 64 {
+            mask |= mask << offset;
+            offset <<= 1;
+        }
+        masks[i] = mask;
+        i += 1;
+    }
+    masks
+};
+const ROWS: [u64; 8] = {
+    let mut masks = [0u64; 8];
+    let mut i = 0;
+    while i < 8 {
+        let mut mask = 1u64 << (i * 8);
+        let mut offset = 1;
+        while offset < 8 {
+            mask |= mask << offset;
+            offset <<= 1;
+        }
+        masks[i] = mask;
+        i += 1;
+    }
+    masks
+};
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
 // Use count_ones() for popcnt
 
+/// Represents a chess board.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
+    /// Piece masks in order determined by the enum ```Piece```. 
+    /// 
+    /// #### Encoding
+    /// A8 (black queenside rook starting position) is bit 0. B8 (black queenside knight starting position)
+    /// is bit 1. A7 is bit 8. H1 (white kingside rook starting position) is bit 63.
     piece_sets: [u64; 13],
     hash_key: u64,
     ep_history: Vec<u8>,
@@ -149,6 +188,46 @@ impl Board {
         self.set_piece(mv.from, moved_piece);
     }
 
+
+    /// Generate a u8 representing castling rights from named booleans.
+    pub fn generate_castling_u8(white_kingside: bool, white_queenside: bool, black_kingside: bool, 
+            black_queenside: bool) -> u8 {
+        return (white_kingside as u8) | ((white_queenside as u8) << 1) | 
+            ((black_kingside as u8) << 2) | ((black_kingside as u8) << 3)
+    }
+
+    /// Set castling rights by named booleans.
+    pub fn set_castling_bools(&mut self, white_kingside: bool, white_queenside: bool, black_kingside: bool, 
+            black_queenside: bool) {
+        self.set_castling(Board::generate_castling_u8(
+            white_kingside, white_queenside, black_kingside, black_queenside
+            )
+        )
+    }
+
+    /// Gets the castling rights for given player. Returns queenside castling rights if 
+    /// ```queenside``` is ```true```, kingside otherwise.
+    pub fn get_castling(&self, player: Color, queenside: bool) -> bool {
+        let color_offset = match player {
+            Color::White => 0,
+            Color::Black => 2
+        };
+        let index = color_offset + queenside as u8;
+        return (self.castling & (1u8 << index)) > 0;
+    }
+
+    /// Set castling rights.
+    pub fn set_castling(&mut self, new_val: u8) {
+        let old_val = self.castling;
+        self.castling = new_val;
+        let mut difference = old_val ^ self.castling;
+        while difference > 0 { 
+            let index = difference.trailing_zeros() as usize;
+            self.hash_key = self.hash_key ^ ZOOBRIST_KEYS[index + CASTLING_RIGHTS_INDEX];
+            difference &= difference - 1;
+        }
+    }
+
     pub fn set_piece_pos(&mut self, x: usize, y: usize, piece: &Piece) {
         self.set_piece((y * 8 + x) as u8, *piece)
     }
@@ -224,14 +303,12 @@ impl Board {
     /// Validate that the bitboard is in a valid state
     pub fn validate(&self) {
         // Validate that every mailboard piece has the bitboard correctly set
-        let mut i = 0;
-        for piece in self.mailboard {
+        for (i, piece) in self.mailboard.iter().enumerate() {
             let piece_set = self.piece_sets[piece.to_u8() as usize];
-            if piece_set & (1 << i) == 0 {
+            if piece_set & (1u64 << i) == 0 {
                 panic!("Invalid board state. Piece {:?} at ({}, {}) was found in mailboard but not in the bitboard. \n Board: {}", 
                         piece, i % 8, i / 8, self);
             }
-            i += 1;
         }
         // Valdiate that every bitboard piece has the mailboard correctly set
         for (piece, piece_set) in self.piece_sets.iter().enumerate() {
@@ -263,4 +340,5 @@ lazy_static! {
         }
         return keys;
     };
+
 }
