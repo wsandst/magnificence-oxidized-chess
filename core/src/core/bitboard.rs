@@ -1,6 +1,7 @@
 use crate::core::*;
 use std::fmt;
 use lazy_static::lazy_static;
+use rand::Rng;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
@@ -9,10 +10,14 @@ use std::arch::x86_64::{_pdep_u64, _pext_u64};
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
     piece_sets: [u64; 13],
+    hash_key: u64,
     ep_history: Vec<u8>,
     castling_history: Vec<u8>,
+    quiet_history: Vec<u8>,
     ep: u8,
     castling: u8,
+    current_player: Color,
+    quiet: u8,
     mailboard: [Piece; 64]
 }
 
@@ -20,10 +25,14 @@ impl Board {
     pub fn empty() -> Board {
         let mut board = Board {
             piece_sets: [0; 13],
+            hash_key: 0,
             ep_history: Vec::new(),
             castling_history: Vec::new(),
+            quiet_history: Vec::new(),
             ep: 0,
             castling: 0,
+            current_player: Color::White,
+            quiet: 0,
             mailboard: [Piece::Empty; 64]
         };
         board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
@@ -95,9 +104,11 @@ impl Board {
         let old_piece: Piece = self.mailboard[pos as usize];
         let piecenum = old_piece.to_u8() as usize;
         Board::unset_bit(&mut self.piece_sets[piecenum], pos);
+        self.flip_zoobrist_piece(pos, old_piece);
 
         let piecenum = piece.to_u8() as usize;
         Board::set_bit(&mut self.piece_sets[piecenum], pos);
+        self.flip_zoobrist_piece(pos, piece);
 
         self.mailboard[pos as usize] = piece;
     }
@@ -112,12 +123,18 @@ impl Board {
         return vec![null_move, null_move, null_move, null_move, null_move];
     }
 
+    /// Sets the bit at ```pos``` to ```1```.
     pub fn set_bit(num: &mut u64, pos: u8){
         *num  = (*num) | (1u64 << pos);
     }
     
+    /// Sets the bit at ```pos % 64``` to ```0```.
     pub fn unset_bit(num: &mut u64, pos: u8) {
         *num = (*num) & (!1u64).rotate_left(pos as u32);
+    }
+
+    fn flip_zoobrist_piece(&mut self, pos: u8, piece: Piece) {
+        self.hash_key = self.hash_key ^ ZOOBRIST_KEYS[(piece.to_u8() as usize) * 64 + (pos as usize)];
     }
 
     #[cfg(target_feature = "bmi2")]
@@ -172,9 +189,15 @@ impl fmt::Display for Board {
 }
 // Lazy initialize some state at the beginning of the program
 lazy_static! {
-    pub static ref EXAMPLE_DATA: [u64; 12] = {
-        let mut masks = [1,2,3,4,5,6,7,8,9,10,11,12];
-        
-        return masks;
+    pub static ref ZOOBRIST_KEYS: [u64;13*64 + 4 + 8 + 1] = {
+        let mut keys = [0u64; 13*64 + 4 + 8 + 1];
+        let mut rng = rand::thread_rng();
+        for i in 0..keys.len() {
+            keys[i] = rng.gen::<u64>();
+        }
+        for i in 0..64 {
+            keys[(Piece::Empty.to_u8() as usize) * 64 + i] = 0;
+        }
+        return keys;
     };
 }
