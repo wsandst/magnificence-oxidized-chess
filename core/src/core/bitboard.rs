@@ -79,6 +79,10 @@ impl Board {
         return &self.mailboard[y * 8 + x];
     }
 
+    pub fn get_current_player(&self) -> Color {
+        return self.current_player;
+    }
+
     // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
     pub fn get_moves(&self) -> Vec<Move> {
         let null_move = Move {from: 0, to: 0, promotion: Piece::Empty, captured: Piece::Empty};

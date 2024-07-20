@@ -7,7 +7,9 @@ impl Board {
         let mut board = Board::empty();
         let parts: Vec<&str> = fen.split(" ").collect();
         let pieces = parts[0];
-        //let player_to_move = parts[1];
+        if parts.len() > 1 {
+            board.current_player = Color::from_char(parts[1].chars().nth(0).unwrap());
+        }
         //let castling = parts[2];
         //let en_passant = parts[3];
         //let half_move_counter = parts[4];
@@ -60,6 +62,7 @@ impl Board {
         if run_of_empty > 0 {
             fen_string.push_str(&format!("{}", run_of_empty));
         }
+        fen_string.push_str(&format!(" {}", self.current_player.to_char()));
         return fen_string;
     }
 }

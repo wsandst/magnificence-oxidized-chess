@@ -56,7 +56,8 @@ mod tests {
             Piece::WhiteRook, Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteQueen, Piece::WhiteKing, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook,
         ];
         assert_board_equal_to_array_board(&board1, &expected_pieces1);
-        assert_eq!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", &board1.to_fen());
+        assert_eq!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w", &board1.to_fen());
+        assert_eq!(board1.get_current_player(), Color::White);
         board1.validate();
 
         // Kiwipete
@@ -72,11 +73,13 @@ mod tests {
             Piece::WhiteRook,   Piece::Empty,      Piece::Empty,      Piece::Empty,      Piece::WhiteKing, Piece::Empty,      Piece::Empty,      Piece::WhiteRook,
         ];
         assert_board_equal_to_array_board(&board2, &expected_pieces2);
-        assert_eq!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R", &board2.to_fen());
+        assert_eq!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w", &board2.to_fen());
+        assert_eq!(board2.get_current_player(), Color::White);
         board2.validate();
 
-        let board3 = Board::from_fen("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 w KQkq -");
-        assert_eq!("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8", &board3.to_fen());
+        let board3 = Board::from_fen("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 b KQkq -");
+        assert_eq!(board3.get_current_player(), Color::Black);
+        assert_eq!("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 b", &board3.to_fen());
     }
 
     #[test]

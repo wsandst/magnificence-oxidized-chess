@@ -101,9 +101,24 @@ impl Piece {
 
 impl Color {
     pub fn next_player(&self) -> Color {
-        return  match  *self {
+        return match *self {
             Color::Black => Color::White,
             Color::White => Color::Black
+        };
+    }
+
+    pub fn from_char(c: char) -> Color {
+        return match c {
+            'w' => Color::White,
+            'b' => Color::Black,
+            _ => panic!("Invalid color character: {}", c)
+        };
+    }
+
+    pub fn to_char(&self) -> char {
+        return match *self {
+            Color::White => 'w',
+            Color::Black => 'b'
         };
     }
 }
