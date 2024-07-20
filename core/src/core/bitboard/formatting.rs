@@ -32,6 +32,7 @@ impl Board {
         }
 
         if parts.len() > 1 {
+            println!("{}", parts[1].chars().nth(0).unwrap());
             board.current_player = Color::from_char(parts[1].chars().nth(0).unwrap());
         }
         if parts.len() > 2 {
@@ -93,7 +94,7 @@ impl fmt::Display for Board {
         for y in 0..8 {
             board_string.push_str(&format!("\n{} ", 8 - y));
             for x in 0..8 {
-                let piece = self.get_piece(x, y);
+                let piece = self.get_piece_pos(x, y);
                 board_string.push(piece.as_char());
             }
         }

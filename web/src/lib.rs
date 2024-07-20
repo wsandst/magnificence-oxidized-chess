@@ -25,7 +25,7 @@ impl ChessEngine {
     }
 
     pub fn get_piece(&self, x: usize, y: usize) -> usize  {
-        return self.board.get_piece(x, y).to_u8() as usize;
+        return self.board.get_piece_pos(x, y).to_u8() as usize;
     }
 
     pub fn set_piece(&mut self, x: usize, y: usize, piece_value: usize) {
@@ -37,7 +37,7 @@ impl ChessEngine {
         let mut pieces : Vec<PiecePosition> = Vec::new();
         for y in 0..8 {
             for x in 0..8 {
-                let piece_value = self.board.get_piece(x, y).to_u8();
+                let piece_value = self.board.get_piece_pos(x, y).to_u8();
                 if piece_value != 0 {
                     pieces.push(PiecePosition {x, y, piece: piece_value as usize});
                 }
@@ -47,11 +47,11 @@ impl ChessEngine {
     }
 
     pub fn make_move(&mut self, from_x: usize, from_y: usize, to_x: usize, to_y: usize) {
-        let capture_piece = self.board.get_piece(to_x, to_y);
+        let capture_piece = self.board.get_piece_pos(to_x, to_y);
         let mv = Move { 
             from: (from_y * 8 + from_x) as u8, 
             to: (to_y * 8 + to_x) as u8, 
-            captured: *capture_piece, 
+            captured: capture_piece, 
             promotion: Piece::Empty
         };
         self.board.make_move(&mv);

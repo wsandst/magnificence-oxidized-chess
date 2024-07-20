@@ -2,6 +2,7 @@
 mod tests {
     use crate::core::bitboard::*;
     use crate::core::*;
+    use strum::IntoEnumIterator;
 
 
     #[test]
@@ -10,16 +11,16 @@ mod tests {
 
         // Ensure that there are no out of bounds problems with edges
         board.set_piece_pos(0, 0, &Piece::WhiteQueen);
-        assert_eq!(*board.get_piece(0, 0), Piece::WhiteQueen);
+        assert_eq!(board.get_piece_pos(0, 0), Piece::WhiteQueen);
         board.validate();
         board.set_piece_pos(0, 7, &Piece::WhiteQueen);
-        assert_eq!(*board.get_piece(0, 7), Piece::WhiteQueen);
+        assert_eq!(board.get_piece_pos(0, 7), Piece::WhiteQueen);
         board.validate();
         board.set_piece_pos(7, 0, &Piece::WhiteQueen);
-        assert_eq!(*board.get_piece(7, 0), Piece::WhiteQueen);
+        assert_eq!(board.get_piece_pos(7, 0), Piece::WhiteQueen);
         board.validate();
         board.set_piece_pos(7, 7, &Piece::WhiteQueen);
-        assert_eq!(*board.get_piece(7, 7), Piece::WhiteQueen);
+        assert_eq!(board.get_piece_pos(7, 7), Piece::WhiteQueen);
         board.validate();
 
         // Check that overwriting of pieces works as intended
@@ -27,13 +28,13 @@ mod tests {
         board.validate();
         board.set_piece_pos(0, 0, &Piece::BlackQueen);
         board.validate();
-        assert_eq!(*board.get_piece(0, 0), Piece::BlackQueen);
+        assert_eq!(board.get_piece_pos(0, 0), Piece::BlackQueen);
         board.validate();
 
         // Check that every piece works as intended
         for piece in Piece::iter() {
             board.set_piece_pos(2, 3, &piece);
-            assert_eq!(*board.get_piece(2, 3), piece);
+            assert_eq!(board.get_piece_pos(2, 3), piece);
         }
         board.validate();
     }
@@ -43,7 +44,7 @@ mod tests {
         for piece in array_board.iter() {
             let x = i % 8;
             let y = i / 8;
-            assert_eq!(*board.get_piece(x, y), *piece);
+            assert_eq!(board.get_piece_pos(x, y), *piece);
             i += 1;
         }
     }
@@ -93,27 +94,99 @@ mod tests {
     fn test_make_unmake_moves() {
         let mut board = Board::from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
 
-        assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::BlackPawn);
-        assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::Empty);
+        assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::BlackPawn);
+        assert_eq!(board.get_piece_pos(2 % 8, 2 / 8), Piece::Empty);
         let mv = Move {from: 10, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
         board.make_move(&mv);
         println!("{}", board);
-        assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::Empty);
-        assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::BlackPawn);
+        assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::Empty);
+        assert_eq!(board.get_piece_pos(2 % 8, 2 / 8), Piece::BlackPawn);
         board.unmake_move(&mv);
-        assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::BlackPawn);
-        assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::Empty);
+        assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::BlackPawn);
+        assert_eq!(board.get_piece_pos(2 % 8, 2 / 8), Piece::Empty);
 
-        assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::WhiteRook);
-        assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::BlackPawn);
+        assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::WhiteRook);
+        assert_eq!(board.get_piece_pos(37 % 8, 37 / 8), Piece::BlackPawn);
         let mv = Move {from: 33, to: 37, promotion: Piece::Empty, captured: Piece::BlackPawn};
         board.make_move(&mv);
         println!("{}", board);
-        assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::Empty);
-        assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::WhiteRook);
+        assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::Empty);
+        assert_eq!(board.get_piece_pos(37 % 8, 37 / 8), Piece::WhiteRook);
         board.unmake_move(&mv);
-        assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::WhiteRook);
-        assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::BlackPawn);
+        assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::WhiteRook);
+        assert_eq!(board.get_piece_pos(37 % 8, 37 / 8), Piece::BlackPawn);
+    }
+
+    #[test]
+    fn test_make_unmake_moves_special() {
+        // Castling
+        let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+        // Black left side
+        let mv = Move {from: 4, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
+        board.make_move(&mv);
+        assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
+        assert_eq!(board.get_piece_pos(3, 0), Piece::BlackRook);
+        assert_eq!(board.get_piece_pos(2, 0), Piece::BlackKing);
+        assert_eq!(board.get_piece_pos(0, 0), Piece::Empty);
+        board.validate();
+        board.unmake_move(&mv);
+        assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+
+        // Black right side
+        board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+        let mv = Move {from: 4, to: 6, promotion: Piece::Empty, captured: Piece::Empty};
+        board.make_move(&mv);
+        assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
+        assert_eq!(board.get_piece_pos(5, 0), Piece::BlackRook);
+        assert_eq!(board.get_piece_pos(6, 0), Piece::BlackKing);
+        assert_eq!(board.get_piece_pos(7, 0), Piece::Empty);
+        board.validate();
+        board.unmake_move(&mv);
+        assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+
+        // White left side
+        board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+        let mv = Move {from: 60, to: 62, promotion: Piece::Empty, captured: Piece::Empty};
+        board.make_move(&mv);
+        assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
+        assert_eq!(board.get_piece_pos(5, 7), Piece::WhiteRook);
+        assert_eq!(board.get_piece_pos(6, 7), Piece::WhiteKing);
+        assert_eq!(board.get_piece_pos(7, 7), Piece::Empty);
+        board.validate();
+        board.unmake_move(&mv);
+        assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+
+        // White right side
+        board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+        let mv = Move {from: 60, to: 58, promotion: Piece::Empty, captured: Piece::Empty};
+        board.make_move(&mv);
+        assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
+        assert_eq!(board.get_piece_pos(3, 7), Piece::WhiteRook);
+        assert_eq!(board.get_piece_pos(2, 7), Piece::WhiteKing);
+        assert_eq!(board.get_piece_pos(0, 7), Piece::Empty);
+        board.validate();
+        board.unmake_move(&mv);
+        assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+
+        // Promotions
+        board = Board::from_fen("1r6/P7/8/8/8/8/p7/1R6 b");
+        let mv = Move {from: 48, to: 56, promotion: Piece::BlackQueen, captured: Piece::Empty};
+        board.make_move(&mv);
+        assert_eq!(board.get_piece_pos(0, 6), Piece::Empty);
+        assert_eq!(board.get_piece_pos(0, 7), Piece::BlackQueen);
+        board.validate();
+        println!("{}", board);
+        board.unmake_move(&mv);
+        assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "1r6/P7/8/8/8/8/p7/1R6");
+
+        board = Board::from_fen("1r6/P7/8/8/8/8/p7/1R6");
+        let mv = Move {from: 8, to: 0, promotion: Piece::WhiteBishop, captured: Piece::Empty};
+        board.make_move(&mv);
+        assert_eq!(board.get_piece_pos(0, 1), Piece::Empty);
+        assert_eq!(board.get_piece_pos(0, 0), Piece::WhiteBishop);
+        board.validate();
+        board.unmake_move(&mv);
+        assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "1r6/P7/8/8/8/8/p7/1R6");
     }
 
     #[test]
