@@ -31,7 +31,7 @@ impl ChessEngine {
 
     pub fn set_piece(&mut self, x: usize, y: usize, piece_value: usize) {
         let piece = Piece::from_u8(piece_value as u8);
-        self.board.set_piece(x, y, &piece);
+        self.board.set_piece_pos(x, y, &piece);
     }
 
     pub fn get_pieces(&self) -> Vec<PiecePosition> {
@@ -53,7 +53,7 @@ impl ChessEngine {
             from: (from_y * 8 + from_x) as u8, 
             to: (to_y * 8 + to_x) as u8, 
             captured: *capture_piece, 
-            promotion: 0
+            promotion: Piece::Empty
         };
         self.board.make_move(&mv);
     }

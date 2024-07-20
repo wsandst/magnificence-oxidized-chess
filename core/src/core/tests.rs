@@ -9,23 +9,23 @@ mod tests {
         let mut board = Board::new();
 
         // Ensure that there are no out of bounds problems with edges
-        board.set_piece(0, 0, &Piece::WhiteQueen);
+        board.set_piece_pos(0, 0, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(0, 0), Piece::WhiteQueen);
-        board.set_piece(0, 7, &Piece::WhiteQueen);
+        board.set_piece_pos(0, 7, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(0, 7), Piece::WhiteQueen);
-        board.set_piece(7, 0, &Piece::WhiteQueen);
+        board.set_piece_pos(7, 0, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(7, 0), Piece::WhiteQueen);
-        board.set_piece(7, 7, &Piece::WhiteQueen);
+        board.set_piece_pos(7, 7, &Piece::WhiteQueen);
         assert_eq!(*board.get_piece(7, 7), Piece::WhiteQueen);
 
         // Check that overwriting of pieces works as intended
-        board.set_piece(0, 0, &Piece::WhiteQueen);
-        board.set_piece(0, 0, &Piece::BlackQueen);
+        board.set_piece_pos(0, 0, &Piece::WhiteQueen);
+        board.set_piece_pos(0, 0, &Piece::BlackQueen);
         assert_eq!(*board.get_piece(0, 0), Piece::BlackQueen);
 
         // Check that every piece works as intended
         for piece in Piece::iter() {
-            board.set_piece(2, 3, &piece);
+            board.set_piece_pos(2, 3, &piece);
             assert_eq!(*board.get_piece(2, 3), piece);
         }
     }
@@ -77,7 +77,7 @@ mod tests {
 
         assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::BlackPawn);
         assert_eq!(*board.get_piece(2 % 8, 2 / 8), Piece::Empty);
-        let mv = Move {from: 10, to: 2, promotion: 0, captured: Piece::Empty};
+        let mv = Move {from: 10, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
         board.make_move(&mv);
         println!("{}", board);
         assert_eq!(*board.get_piece(10 % 8, 10 / 8), Piece::Empty);
@@ -88,7 +88,7 @@ mod tests {
 
         assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::WhiteRook);
         assert_eq!(*board.get_piece(37 % 8, 37 / 8), Piece::BlackPawn);
-        let mv = Move {from: 33, to: 37, promotion: 0, captured: Piece::BlackPawn};
+        let mv = Move {from: 33, to: 37, promotion: Piece::Empty, captured: Piece::BlackPawn};
         board.make_move(&mv);
         println!("{}", board);
         assert_eq!(*board.get_piece(33 % 8, 33 / 8), Piece::Empty);

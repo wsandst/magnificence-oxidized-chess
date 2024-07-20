@@ -12,8 +12,7 @@ pub static STARTING_POS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter, FromPrimitive, ToPrimitive)]
 pub enum Piece {
-    Empty = 0,
-    WhitePawn,
+    WhitePawn = 0,
     WhiteBishop,
     WhiteKnight,
     WhiteRook,
@@ -25,13 +24,14 @@ pub enum Piece {
     BlackRook,
     BlackQueen,
     BlackKing,
+    Empty,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Move {
     pub from : u8,
     pub to : u8,
-    pub promotion : u8,
+    pub promotion : Piece,
     pub captured : Piece
 }
 
@@ -53,6 +53,10 @@ impl Piece {
             Piece::BlackKing => 'k',
             Piece::Empty => '.',
         }
+    }
+
+    pub fn is_white(&self) -> bool{
+        return true;
     }
 
     pub fn from_char(c: char) -> Piece {

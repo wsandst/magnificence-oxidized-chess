@@ -6,6 +6,8 @@ use lazy_static::lazy_static;
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
 // Use count_ones() for popcnt
 
+const ONE: u64 = 1;
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
     piece_sets: [u64; 12],
@@ -62,7 +64,7 @@ impl Board {
                 else {
                     // Map the character to the correct piece
                     let piece = Piece::from_char(c);
-                    board.set_piece(x, y, &piece);
+                    board.set_piece_pos(x, y, &piece);
                     x += 1;
                 }
                 if x >= 8 {
@@ -81,19 +83,30 @@ impl Board {
 
     pub fn make_move(&mut self, mv: &Move) {
         let piece_to_move = *self.get_piece(mv.from as usize % 8, mv.from as usize / 8);
-        self.set_piece(mv.to as usize % 8, mv.to as usize / 8, &piece_to_move);
-        self.set_piece(mv.from as usize % 8, mv.from as usize / 8, &Piece::Empty);
+        self.set_piece_pos(mv.to as usize % 8, mv.to as usize / 8, &piece_to_move);
+        self.set_piece_pos(mv.from as usize % 8, mv.from as usize / 8, &Piece::Empty);
         // Set en passant and such here too
     }
 
     pub fn unmake_move(&mut self, mv: &Move) {
         let moved_piece = *self.get_piece(mv.to as usize % 8, mv.to as usize / 8);
-        self.set_piece(mv.to as usize % 8, mv.to as usize / 8, &mv.captured);
-        self.set_piece(mv.from as usize % 8, mv.from as usize / 8, &moved_piece);
+        self.set_piece_pos(mv.to as usize % 8, mv.to as usize / 8, &mv.captured);
+        self.set_piece_pos(mv.from as usize % 8, mv.from as usize / 8, &moved_piece);
     }
 
-    pub fn set_piece(&mut self, x: usize, y: usize, piece: &Piece) {
-        self.mailboard[y * 8 + x] = *piece;
+    pub fn set_piece_pos(&mut self, x: usize, y: usize, piece: &Piece) {
+        self.set_piece((y * 8 + x) as u8, *piece)
+    }
+
+    pub fn set_piece(&mut self, pos: u8, piece: Piece) {
+        let old_piece : Piece = self.mailboard[pos as usize];
+        if old_piece != Piece::Empty {
+            let piecenum = old_piece.to_u8() as usize;
+            self.piece_sets[piecenum] = Board::unset_bit(self.piece_sets[piecenum], pos);
+        }
+        let piecenum = piece.to_u8() as usize;
+        self.piece_sets[piecenum] = Board::set_bit(self.piece_sets[piecenum], pos);
+        self.mailboard[pos as usize] = piece;
     }
 
     pub fn get_piece(&self, x: usize, y: usize) -> &Piece {
@@ -102,8 +115,16 @@ impl Board {
 
     // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
     pub fn get_moves(&self) -> Vec<Move> {
-        let null_move = Move {from: 0, to: 0, promotion: 0, captured: Piece::Empty};
+        let null_move = Move {from: 0, to: 0, promotion: Piece::Empty, captured: Piece::Empty};
         return vec![null_move, null_move, null_move, null_move, null_move];
+    }
+
+    fn set_bit(num: u64, pos: u8) -> u64{
+        return num | (1u64 << pos);
+    }
+    
+    fn unset_bit(num: u64, pos: u8) -> u64 {
+        return num & (!1u64).rotate_left(pos as u32);
     }
 
     #[cfg(target_feature = "bmi2")]
