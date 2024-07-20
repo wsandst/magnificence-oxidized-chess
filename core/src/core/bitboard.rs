@@ -5,6 +5,10 @@ use rand::Rng;
 
 mod formatting;
 
+const CASTLING_RIGHTS_INDEX: usize = 13*64;
+const EP_INDEX: usize = 13 * 64 + 4;
+const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
+
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
 // Use count_ones() for popcnt
@@ -56,6 +60,46 @@ impl Board {
         let moved_piece = *self.get_piece(mv.to as usize % 8, mv.to as usize / 8);
         self.set_piece_pos(mv.to as usize % 8, mv.to as usize / 8, &mv.captured);
         self.set_piece_pos(mv.from as usize % 8, mv.from as usize / 8, &moved_piece);
+    }
+
+
+    /// Generate a u8 representing castling rights from named booleans.
+    pub fn generate_castling_u8(white_kingside: bool, white_queenside: bool, black_kingside: bool, 
+            black_queenside: bool) -> u8 {
+        return (white_kingside as u8) | ((white_queenside as u8) << 1) | 
+            ((black_kingside as u8) << 2) | ((black_kingside as u8) << 3)
+    }
+
+    /// Set castling rights by named booleans.
+    pub fn set_castling_bools(&mut self, white_kingside: bool, white_queenside: bool, black_kingside: bool, 
+            black_queenside: bool) {
+        self.set_castling(Board::generate_castling_u8(
+            white_kingside, white_queenside, black_kingside, black_queenside
+            )
+        )
+    }
+
+    /// Gets the castling rights for given player. Returns queenside castling rights if 
+    /// ```queenside``` is ```true```, kingside otherwise.
+    pub fn get_castling(&self, player: Color, queenside: bool) -> bool {
+        let color_offset = match player {
+            Color::White => 0,
+            Color::Black => 2
+        };
+        let index = color_offset + queenside as u8;
+        return (self.castling & (1u8 << index)) > 0;
+    }
+
+    /// Set castling rights.
+    pub fn set_castling(&mut self, new_val: u8) {
+        let old_val = self.castling;
+        self.castling = new_val;
+        let mut difference = old_val ^ self.castling;
+        while difference > 0 { 
+            let index = difference.trailing_zeros() as usize;
+            self.hash_key = self.hash_key ^ ZOOBRIST_KEYS[index + CASTLING_RIGHTS_INDEX];
+            difference &= difference - 1;
+        }
     }
 
     pub fn set_piece_pos(&mut self, x: usize, y: usize, piece: &Piece) {
