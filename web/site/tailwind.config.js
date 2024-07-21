@@ -14,10 +14,19 @@ export default {
                 "dark-square": {
                     "DEFAULT": "#B58863",
                     "hightlight": "#AAA23A"
+                },
+                "container": {
+                    "DEFAULT": "rgb(53, 53, 53)",
+                    "lighter": "rgb(74, 74, 74)"
+                },
+                "primary": {
+                    "DEFAULT": "hsla(0, 0%, 100%, 0.92)",
+                    "darker": "hsla(0, 0%, 100%, 0.72)"
                 }
             },
             fontFamily: {
                 'sans': ['ProximaNova', 'Arial', 'sans-serif'],
+                'mono': ['DroidSansMono'],
             },
         },
     },

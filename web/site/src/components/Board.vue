@@ -106,7 +106,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div @mousemove="boardMouseMove" @touchmove="boardTouchMove" class="flex flex-col w-full aspect-square rounded-[12px] relative" ref="boardElement">
+    <div @mousemove="boardMouseMove" @touchmove="boardTouchMove" class="flex flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
             <div class="w-[12.5%] h-full" 
                 :class="{ 'bg-dark-square': boardPositionModulo(row, col) == 1, 'bg-light-square': boardPositionModulo(row, col) == 0}"
