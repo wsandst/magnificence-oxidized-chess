@@ -63,4 +63,9 @@ impl ChessEngine {
     pub fn reset_board(&mut self) {
         self.board = Board::new();
     }
+
+    pub fn get_allowed_engines() -> Vec<String> {
+        // Iterate over some list of engines here
+        return vec!["Magnificence".to_owned(), "Magnificence Experimental".to_owned()];
+    }
 }
