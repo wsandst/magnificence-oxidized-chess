@@ -20,6 +20,7 @@ onMounted(async () => {
     // Init wasm
     await init();
     engine = ChessEngine.new();
+    store.initAvailablePlayers(engine);
     currentPieces.value = engine.get_pieces();
 });
 
@@ -35,12 +36,12 @@ function onPieceMove({from, to}) {
         <div class="flex flex-col justify-center items-center gap-4 w-[min(500px,100vw)]">
             <div class="w-full px-6 flex flex-col gap-3">
               <div class="flex flex-row justify-between">
-                <PlayerInfo image="src/assets/images/robot-profile.png" name="Magnificence"/>
+                <PlayerInfo player-number="1" image="src/assets/images/robot-profile.png" name="Magnificence"/>
                 <TopControls class="mt-auto invisible md:visible"/>
               </div>
               <Board class="rounded-[8px] overflow-hidden" :pieces="currentPieces" @piece-moved="onPieceMove"/>
               <div class="flex flex-row justify-between">
-                <PlayerInfo image="src/assets/images/human-profile.png" name="Human"/>
+                <PlayerInfo player-number="2" image="src/assets/images/human-profile.png" name="Human"/>
                 <BottomControls/>
               </div>
             </div>
