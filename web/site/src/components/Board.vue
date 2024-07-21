@@ -2,12 +2,15 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue';
+import { useMainStore } from '../store/store';
 
 const emit = defineEmits(['pieceMoved']);
 
 const boardElement : any = ref(null);
 const refreshPieces : any = ref(0);
 const movingPiece : any = ref(null);
+
+const store = useMainStore();
 
 function boardPositionModulo(row : number, col: number) : number {
     return (row * 8 + col + row) % 2;
@@ -44,12 +47,10 @@ function calculateTranslationBasedOnPosition(x : number, y: number) {
 function calculateTranslationBasedMousePosition(x : number, y: number) {
     // It needs to be relative to the board element position
     var rect = boardElement.value.getBoundingClientRect();
-
     let xPos = x - rect.left - (0.125 / 2) * boardElement.value.clientWidth;
     let yPos = y - rect.top - (0.125 / 2) * boardElement.value.clientHeight;
     return `transform: translate(${xPos}px, ${yPos}px);`
 }
-
 
 function pieceDragStart(e: any) {
     movingPiece.value = e.target;
@@ -61,8 +62,8 @@ function pieceDragStop(e: any, x: number, y: number) {
     let dragStopY = null;
     let squareSizePx = 0.125 * boardElement.value.clientWidth;
     if (e.type == "touchend") {
-        dragStopX = e.touches[0].pageX;
-        dragStopY = e.touches[0].pageY;
+        dragStopX = e.changedTouches[0].pageX;
+        dragStopY = e.changedTouches[0].pageY;
     }
     else if (e.type == "mouseup") {
         dragStopX = e.x;
@@ -73,8 +74,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         let to_y = Math.floor((dragStopY - rect.top) / squareSizePx);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
             emit("pieceMoved", {from: [x, y], to: [to_x, to_y]});
-            refreshPieces.value += 1;
-
+            movingPiece.value.style = calculateTranslationBasedOnPosition(to_x, to_y);
         }
         else {
             movingPiece.value.style = calculateTranslationBasedOnPosition(x, y);
@@ -96,7 +96,7 @@ function boardTouchMove(e: TouchEvent) {
 }
 
 function boardResized() {
-    refreshPieces.value += 1;
+    store.boardStateCounter += 1;
 }
 
 onMounted(() => {
@@ -108,12 +108,12 @@ onMounted(() => {
 <template>
     <div @mousemove="boardMouseMove" @touchmove="boardTouchMove" class="flex flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
-            <div class="w-[12.5%] h-full" 
+            <div class="w-[12.5%] h-full"
                 :class="{ 'bg-dark-square': boardPositionModulo(row, col) == 1, 'bg-light-square': boardPositionModulo(row, col) == 0}"
                 v-for="col in 8" :key="row * 8 + col">
             </div>
         </div>
-        <div class="absolute w-full" :key="refreshPieces" v-if="refreshPieces != 0">
+        <div class="absolute w-full" :key="store.boardStateCounter" v-if="store.boardStateCounter != 0">
             <img 
                 v-for="{x, y, piece} in pieces" :key="y * 8 + x + 'b'"
                 class="w-[12.5%] object-cover absolute select-none cursor-pointer" 

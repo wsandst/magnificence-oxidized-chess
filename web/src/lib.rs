@@ -2,6 +2,7 @@
 use wasm_bindgen::prelude::*;
 use engine_core::core::{Move, Piece};
 use engine_core::core::bitboard::*;
+use serde::{Serialize, Deserialize};
 
 #[wasm_bindgen]
 pub struct ChessEngine {
@@ -9,6 +10,7 @@ pub struct ChessEngine {
 }
 
 #[wasm_bindgen]
+#[derive(Serialize, Deserialize)]
 pub struct PiecePosition {
    pub x: usize,
    pub y: usize,
@@ -33,13 +35,14 @@ impl ChessEngine {
         self.board.set_piece_pos(x, y, &piece);
     }
 
-    pub fn get_pieces(&self) -> Vec<PiecePosition> {
-        let mut pieces : Vec<PiecePosition> = Vec::new();
+    pub fn get_pieces(&self) -> Vec<JsValue> {
+        let mut pieces : Vec<JsValue> = Vec::new();
         for y in 0..8 {
             for x in 0..8 {
                 let piece_value = self.board.get_piece_pos(x, y).to_u8();
-                if piece_value != 13 {
-                    pieces.push(PiecePosition {x, y, piece: piece_value as usize});
+                if piece_value != 12 {
+                    let position = PiecePosition {x, y, piece: piece_value as usize};
+                    pieces.push(serde_wasm_bindgen::to_value(&position).unwrap());
                 }
             }
         }

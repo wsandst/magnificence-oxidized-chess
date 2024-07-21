@@ -38,7 +38,6 @@ const playerInfo = computed(() => {
 
 function toggleDropdownVisibility() {
     dropdownVisible.value = !dropdownVisible.value;
-    console.log(dropdownVisible.value);
     if (dropdownVisible.value) {
         window.setTimeout(() => {
             window.addEventListener("click", function hideDropdown() {
