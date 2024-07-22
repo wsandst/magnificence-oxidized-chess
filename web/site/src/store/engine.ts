@@ -2,17 +2,18 @@
 import { defineStore } from 'pinia';
 import { ChessEngine } from '../../wasm/magnificence_oxidized_web';
 
+// Load web worker
 let worker = new Worker(new URL('../worker.js', import.meta.url), {
   type: 'module'
 });
 
-export const useMainStore = defineStore('main', {
+export const useChessEngineStore = defineStore('chess_engine', {
   state: () => ({
-    sidebarVisible: false,
     gamePaused: false,
     player1: null,
     player2: null,
     availablePlayers: [],
+
     currentBoardPieces: null,
     boardStateCounter: 0,
   }),
@@ -29,7 +30,7 @@ export const useMainStore = defineStore('main', {
     toggleSidebar() {
       this.sidebarVisible = !this.sidebarVisible;
     },
-    initEngineWorker() {
+    initWasmWorker() {
       worker.onmessage = function (e) {
           //console.log('Message received from worker: ', e.data);
           if (e.data == "initiated") {

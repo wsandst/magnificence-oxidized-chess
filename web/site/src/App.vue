@@ -7,20 +7,18 @@ import PlayerInfo from './components/PlayerInfo.vue';
 import BottomControls from './components/BottomControls.vue';
 import TopControls from './components/TopControls.vue';
 import EngineInfo from './components/EngineInfo.vue';
-import { useMainStore } from './store/store';
+import { useUiStore } from './store/ui';
+import { useChessEngineStore } from './store/engine';
 
-const store = useMainStore();
-const sidebarVisible = computed(() => store.sidebarVisible);
 
-let engine : ChessEngine | null = null;
+const uiStore = useUiStore();
+const chessEngine = useChessEngineStore();
+
+const sidebarVisible = computed(() => uiStore.sidebarVisible);
 
 onBeforeMount(async () => {
-  store.initEngineWorker();
+  chessEngine.initWasmWorker();
 });
-
-function onPieceMove({from, to}) {
-  store.makeMove(from, to);
-}
 
 </script>
 
@@ -32,7 +30,7 @@ function onPieceMove({from, to}) {
                 <PlayerInfo player-number="1"/>
                 <TopControls class="mt-auto invisible md:visible"/>
               </div>
-              <Board class="rounded-[8px] overflow-hidden" :pieces="store.currentBoardPieces" @piece-moved="onPieceMove"/>
+              <Board class="rounded-[8px] overflow-hidden"/>
               <div class="flex flex-row justify-between">
                 <PlayerInfo player-number="2"/>
                 <BottomControls/>

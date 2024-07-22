@@ -1,6 +1,10 @@
 
 <script setup lang="ts">
 
+import { useChessEngineStore } from '../store/engine';
+
+const chessEngine = useChessEngineStore();
+
 </script>
 
 <template>
