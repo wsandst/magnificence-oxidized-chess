@@ -16,6 +16,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
 
     currentBoardPieces: null,
     boardStateCounter: 0,
+    currentBoardFenString: null
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -36,6 +37,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
           if (e.data == "initiated") {
             worker.postMessage(["get_pieces"]);
             worker.postMessage(["get_allowed_engines"]);
+            worker.postMessage(["get_board_fen"]);
           }
           else if (e.data[0] == "get_pieces") {
             this.currentBoardPieces = e.data[1];
@@ -44,11 +46,15 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (e.data[0] == "get_allowed_engines") {
             this.setAvailableEngines(e.data[1]);
           }
+          else if (e.data[0] == "get_board_fen") {
+            this.currentBoardFenString  = e.data[1];
+          }
       }.bind(this);
     },
     makeMove(from, to) {
       worker.postMessage(["make_move", from[0], from[1], to[0], to[1]]);
       worker.postMessage(["get_pieces"]);
+      worker.postMessage(["get_board_fen"]);
     }
   }
 });

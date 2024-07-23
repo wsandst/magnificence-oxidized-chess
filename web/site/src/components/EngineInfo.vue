@@ -24,7 +24,7 @@ const chessEngine = useChessEngineStore();
         </div>
         <div class="flex flex-row gap-4">
             <div class="w-auto flex justify-center items-center bg-container-lighter rounded-[8px] px-[12px] py-[6px] font-bold">
-                <span>rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 </span>
+                <span>{{chessEngine.currentBoardFenString}} </span>
             </div>
         </div>
         <div class="flex-1 flex-col h-full bg-container-lighter rounded-[8px] pt-2">

@@ -71,4 +71,8 @@ impl ChessEngine {
         // Iterate over some list of engines here
         return vec!["Magnificence".to_owned(), "Magnificence Experimental".to_owned()];
     }
+
+    pub fn get_board_fen(&self) -> String {
+        return self.board.to_fen();
+    }
 }
