@@ -6,8 +6,14 @@ import { useChessEngineStore } from '../store/engine';
 
 const boardElement : any = ref(null);
 const movingPiece : any = ref(null);
+const selectedPiecePos: any = ref(null);
+const previousMoveFromPos: any = ref(null);
+const previousMoveToPos: any = ref(null);
+
 
 const chessEngine = useChessEngineStore();
+
+var moveSoundEffect = new Audio('./src/assets/sounds/move.mp3');
 
 const startingPosition = [
     {"x": 0, "y": 0, "piece": 9},
@@ -67,6 +73,14 @@ const pieceToIconMap : any = {
     11: "src/assets/icons/pieces/black-king.svg"
 }
 
+function getMousePosAsBoardPos(mouseX: number, mouseY: number) {
+    let squareSizePx = 0.125 * boardElement.value.clientWidth;
+    var rect = boardElement.value.getBoundingClientRect();
+    let x = Math.floor((mouseX - rect.left) / squareSizePx);
+    let y = Math.floor((mouseY - rect.top) / squareSizePx);
+    return [x, y];
+}
+
 function calculateTranslationBasedOnPosition(x : number, y: number) {
     let xPos = 0.125 * x * boardElement.value.clientWidth;
     let yPos = 0.125 * y * boardElement.value.clientHeight; 
@@ -81,9 +95,10 @@ function calculateTranslationBasedMousePosition(x : number, y: number) {
     return `translate(${xPos}px, ${yPos}px)`
 }
 
-function pieceDragStart(e: any) {
+function pieceDragStart(e: any, x: number, y: number) {
     movingPiece.value = e.target;
     movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.x, e.y);
+    selectedPiecePos.value = [x, y];
 }
 
 function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: any, from_y: any) {
@@ -99,10 +114,9 @@ function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: 
 }
 
 function pieceDragStop(e: any, x: number, y: number) {
-    var rect = boardElement.value.getBoundingClientRect();
+    [x, y] = selectedPiecePos.value;
     let dragStopX = null;
     let dragStopY = null;
-    let squareSizePx = 0.125 * boardElement.value.clientWidth;
     if (e.type == "touchend") {
         dragStopX = e.changedTouches[0].pageX;
         dragStopY = e.changedTouches[0].pageY;
@@ -112,10 +126,9 @@ function pieceDragStop(e: any, x: number, y: number) {
         dragStopY = e.y;
     }
     if (movingPiece.value != null) {
-        let to_x = Math.floor((dragStopX - rect.left) / squareSizePx);
-        let to_y = Math.floor((dragStopY - rect.top) / squareSizePx);
+        let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
-            chessEngine.makeMove([x, y], [to_x, to_y]);
+            makeMove(x, y, to_x, to_y);
             movingPiece.value.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
         }
         else {
@@ -123,7 +136,14 @@ function pieceDragStop(e: any, x: number, y: number) {
         }
     }
     movingPiece.value = null;
+}
 
+function makeMove(from_x: number, from_y: number, to_x: number, to_y: number) {
+    chessEngine.makeMove([from_x, from_y], [to_x, to_y]);
+    moveSoundEffect.play();
+    selectedPiecePos.value = null;
+    previousMoveFromPos.value = [from_x, from_y];
+    previousMoveToPos.value = [to_x, to_y];
 }
 
 function boardMouseMove(e: MouseEvent) {
@@ -142,6 +162,27 @@ function boardResized() {
     chessEngine.boardStateCounter += 1;
 }
 
+function shouldSquareBeHighlighted(x: number, y: number): boolean {
+    let positions = [selectedPiecePos.value, previousMoveFromPos.value, previousMoveToPos.value];
+    for (let position of positions) {
+        if (position != null && position[0] == x && position[1] == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getSquareColor(col: number, row: number) : string {
+    if (boardPositionModulo(row, col) == 0) {
+        // Dark square
+        return shouldSquareBeHighlighted(col, row) ? 'bg-dark-square-highlight' : 'bg-dark-square';
+    }
+    else {
+        // Light square
+        return shouldSquareBeHighlighted(col, row) ? 'bg-light-square-highlight' : 'bg-light-square';
+    }
+}
+
 onMounted(() => {
     new ResizeObserver(boardResized).observe(boardElement.value);
 })
@@ -152,7 +193,7 @@ onMounted(() => {
     <div @mousemove="boardMouseMove" @touchmove.passive="boardTouchMove" class="flex select-none flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
             <div class="w-[12.5%] h-full"
-                :class="{ 'bg-dark-square': boardPositionModulo(row, col) == 1, 'bg-light-square': boardPositionModulo(row, col) == 0}"
+                :class="[getSquareColor(col - 1, row - 1)]"
                 v-for="col in 8" :key="row * 8 + col">
             </div>
         </div>
@@ -164,8 +205,8 @@ onMounted(() => {
                 :src="pieceToIconMap[piece]"
                 :style="'transform:'+calculateTranslationBasedOnPosition(x, y)"
                 draggable="false"
-                @mousedown="pieceDragStart"
-                @touchstart.passive="pieceDragStart"
+                @mousedown="(e) => pieceDragStart(e, x, y)"
+                @touchstart.passive="(e) => pieceDragStart(e, x, y)"
                 @mouseup="(e) => pieceDragStop(e, x, y)"
                 @touchend="(e) => pieceDragStop(e, x, y)"
             />

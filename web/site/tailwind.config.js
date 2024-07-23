@@ -9,11 +9,11 @@ export default {
             colors: {
                 "light-square": {
                     "DEFAULT": "#F0D9B5",
-                    "hightlight": "#CDD26A"
+                    "highlight": "#CDD26A"
                 },
                 "dark-square": {
                     "DEFAULT": "#B58863",
-                    "hightlight": "#AAA23A"
+                    "highlight": "#AAA23A"
                 },
                 "container": {
                     "DEFAULT": "rgb(53, 53, 53)",
