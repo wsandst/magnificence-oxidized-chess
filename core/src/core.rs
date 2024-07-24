@@ -121,3 +121,21 @@ impl Color {
         };
     }
 }
+
+fn pos_to_algebraic_pos(x: u8, y: u8) -> String {
+    let col = 'a' as usize + x as usize;
+    let row = '0' as usize + (7 - y as usize);
+    return format!("{}{}", char::from(col as u8), char::from(row as u8));
+}
+
+impl Move {
+    pub fn to_algebraic(&self) -> String {
+        let from = pos_to_algebraic_pos(self.from % 8, self.from / 8);
+        let to = pos_to_algebraic_pos(self.to % 8, self.to / 8);
+        let mut algebraic_move = format!("{}{}", from, to);
+        if self.promotion != Piece::Empty {
+            algebraic_move.push(self.promotion.as_char());
+        }
+        return algebraic_move;
+    }
+}

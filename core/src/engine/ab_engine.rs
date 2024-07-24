@@ -1,27 +1,24 @@
 
-use super::Engine;
+use super::{Engine, SearchMetadataCallback};
 use crate::core::bitboard::Board;
+use crate::core::*;
 
 #[allow(unused)]
-struct StandardAlphaBetaEngine {
+pub struct StandardAlphaBetaEngine {
 
 }
 
 #[allow(unused)]
 impl Engine for StandardAlphaBetaEngine {
-    fn make_move(&mut self, mv: &crate::core::Move) {
-        todo!()
+    fn search(&mut self, board: &Board, metadata_callback: SearchMetadataCallback) -> Vec<Move> {
+        let pv = vec![Move { from: 12, to: 20, promotion: Piece::Empty, captured: Piece::Empty}];
+        metadata_callback(super::SearchMetadata { depth: 2, eval: 7.0, pv: pv.clone() });
+        return pv;
     }
+}
 
-    fn search(&mut self) -> &Vec<crate::core::Move> {
-        todo!()
-    }
-
-    fn get_type(&self, mv: &crate::core::Move) -> &super::EngineType {
-        todo!()
-    }
-    
-    fn get_board(&mut self) -> &mut Board {
-        todo!()
+impl StandardAlphaBetaEngine {
+    pub fn new() -> StandardAlphaBetaEngine {
+        return StandardAlphaBetaEngine {};
     }
 }

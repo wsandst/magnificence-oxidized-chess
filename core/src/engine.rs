@@ -2,14 +2,18 @@ use super::core::Move;
 pub mod ab_engine;
 use crate::core::bitboard::Board;
 
+pub type SearchMetadataCallback = Box<dyn Fn(SearchMetadata) -> ()>;
+
+pub struct SearchMetadata {
+    pub depth: usize,
+    pub eval: f64,
+    pub pv: Vec<Move>
+}
+
 pub enum EngineType {
     Standard,
 }
 
 pub trait Engine {
-    fn make_move(&mut self, mv: &Move);
-    fn search(&mut self) -> &Vec<Move>;
-    fn get_type(&self, mv: &Move) -> &EngineType;
-
-    fn get_board(&mut self) -> &mut Board;
+    fn search(&mut self, board: &Board, metadata_callback: SearchMetadataCallback) -> Vec<Move>;
 }

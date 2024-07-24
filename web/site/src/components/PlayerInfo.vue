@@ -21,15 +21,15 @@ const props = defineProps({
 
 function switchPlayer(player) {
     if (props.playerNumber == "1") {
-        chessEngine.player1 = player;
+        chessEngine.setBlackPlayer(player);
     }
     else {
-        chessEngine.player2 = player;
+        chessEngine.setWhitePlayer(player);
     }
 }
 
 const playerInfo = computed(() => {
-    const player = props.playerNumber == 1 ? chessEngine.player1 : chessEngine.player2;
+    const player = props.playerNumber == 1 ? chessEngine.blackPlayer : chessEngine.whitePlayer;
     if (player == null) {
         return props.playerNumber == 1 ? player1Placeholder : player2Placeholder;
     }

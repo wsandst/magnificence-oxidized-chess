@@ -114,7 +114,6 @@ function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: 
 }
 
 function pieceDragStop(e: any, x: number, y: number) {
-    [x, y] = selectedPiecePos.value;
     let dragStopX = null;
     let dragStopY = null;
     if (e.type == "touchend") {
@@ -126,6 +125,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         dragStopY = e.y;
     }
     if (movingPiece.value != null) {
+        [x, y] = selectedPiecePos.value;
         let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
             makeMove(x, y, to_x, to_y);
