@@ -3,6 +3,8 @@ use crate::core::*;
 mod formatting;
 mod constants;
 use constants::*;
+mod move_gen;
+use move_gen::*;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
@@ -224,10 +226,8 @@ impl Board {
         return self.current_player;
     }
 
-    // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
-    pub fn get_moves(&self) -> Vec<Move> {
-        let null_move = Move {from: 0, to: 0, promotion: Piece::Empty, captured: Piece::Empty};
-        return vec![null_move, null_move, null_move, null_move, null_move];
+    pub fn switch_current_player(&mut self) {
+        self.current_player = self.current_player.next_player();
     }
 
     /// Sets the bit at ```pos``` to ```1```.

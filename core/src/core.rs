@@ -2,6 +2,7 @@ pub mod bitboard;
 #[cfg(test)]
 mod tests;
 
+use bitboard::Board;
 use strum_macros::EnumIter;
 use num;
 use num_derive::{FromPrimitive, ToPrimitive};
@@ -124,7 +125,7 @@ impl Color {
 
 fn pos_to_algebraic_pos(x: u8, y: u8) -> String {
     let col = 'a' as usize + x as usize;
-    let row = '0' as usize + (7 - y as usize);
+    let row = '1' as usize + (7 - y as usize);
     return format!("{}{}", char::from(col as u8), char::from(row as u8));
 }
 
@@ -137,5 +138,30 @@ impl Move {
             algebraic_move.push(self.promotion.as_char());
         }
         return algebraic_move;
+    }
+
+    pub fn from_pos(board: &Board, from_x: usize, from_y: usize, to_x: usize, to_y: usize) -> Move {
+        return Move {
+            from: (from_y * 8 + from_x) as u8,
+            to: (to_y * 8 + to_x) as u8,
+            captured: board.get_piece_pos(to_x, to_y),
+            promotion: Piece::Empty
+        }
+    }
+
+    pub fn from_algebraic(board: &Board, algebraic: &str) -> Move {
+        let from_x = algebraic.chars().nth(0).unwrap() as usize - 'a' as usize;
+        let from_y = 7 - (algebraic.chars().nth(1).unwrap() as usize - '1' as usize);
+        let to_x = algebraic.chars().nth(2).unwrap() as usize - 'a' as usize;
+        let to_y = 7 - (algebraic.chars().nth(3).unwrap() as usize - '1' as usize);
+        let promotion = if algebraic.len() > 4 {
+            Piece::from_char(algebraic.chars().nth(4).unwrap())
+        }   
+        else {
+            Piece::Empty
+        };
+        let mut mv = Move::from_pos(board, from_x, from_y, to_x, to_y);
+        mv.promotion = promotion;
+        return mv;
     }
 }

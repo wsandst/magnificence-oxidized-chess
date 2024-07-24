@@ -32,7 +32,6 @@ impl Board {
         }
 
         if parts.len() > 1 {
-            println!("{}", parts[1].chars().nth(0).unwrap());
             board.current_player = Color::from_char(parts[1].chars().nth(0).unwrap());
         }
         if parts.len() > 2 {
@@ -83,6 +82,13 @@ impl Board {
         fen_string.push_str(&format!(" {}", self.quiet));
         // Full move number
         return fen_string;
+    }
+
+    pub fn print_bits(bits: u64) {
+        for i in 0..8 {
+            println!("{:08b}", (bits.reverse_bits() >> (i*8)) as u8);
+        }
+        println!("");
     }
 }
 

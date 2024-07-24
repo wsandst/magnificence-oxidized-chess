@@ -8,6 +8,7 @@ pub fn perft(depth: usize, board: &mut Board) -> usize {
     for mv in board.get_moves() {
         board.make_move(&mv);
         total_move_count += perft(depth - 1, board);
+        board.unmake_move(&mv);
     }
     return total_move_count;
 }

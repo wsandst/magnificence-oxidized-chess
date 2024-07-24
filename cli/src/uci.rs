@@ -70,7 +70,7 @@ pub fn start_uci_protocol() {
     println!("Type 'help' for help");
 
     let mut state = UCIState {
-        board: Board::empty()
+        board: Board::new()
     };
 
     loop {
@@ -282,5 +282,5 @@ fn timeit<F: FnMut() -> T, T>(mut f: F) -> (T, f64) {
     let end = SystemTime::now();
     let duration = end.duration_since(start).unwrap();
     return (result, duration.as_secs_f64());
-  }
+}
   

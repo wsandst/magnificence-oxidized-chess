@@ -91,6 +91,17 @@ mod tests {
     }
 
     #[test]
+    fn test_algebraic_notation() {
+        let board = Board::from_fen(STARTING_POS_FEN);
+        assert_eq!("a2a3", Move::to_algebraic(&Move::from_algebraic(&board, "a2a3")));
+        assert_eq!("d4d5", Move::to_algebraic(&Move::from_algebraic(&board, "d4d5")));
+        assert_eq!("d8d1", Move::to_algebraic(&Move::from_algebraic(&board, "d8d1")));
+        assert_eq!("g2g1q", Move::to_algebraic(&Move::from_algebraic(&board, "g2g1q")));
+        assert_eq!("h2h1Q", Move::to_algebraic(&Move::from_algebraic(&board, "h2h1Q")));
+        assert_eq!("a2a1b", Move::to_algebraic(&Move::from_algebraic(&board, "a2a1b")));
+    }
+
+    #[test]
     fn test_make_unmake_moves() {
         let mut board = Board::from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
 
@@ -205,5 +216,65 @@ mod tests {
         Board::unset_bit(&mut num, 2); // 0b101010101011;
         Board::unset_bit(&mut num, 1); // 0b101010101001;
         assert_eq!(num, 0b101010101001);
+    }
+
+    fn assert_move_eq_algebraic(lhs: &Vec<Move>, rhs: &Vec<&str>) {
+        let mut lhs_algebraic : Vec<String> = lhs.iter().map(|mv| mv.to_algebraic()).collect();
+        lhs_algebraic.sort();
+        let mut rhs_algebraic = rhs.clone();
+        rhs_algebraic.sort();
+
+        let mut missing_moves = Vec::new();
+        let mut extra_moves = Vec::new();
+
+        // Check for extra generated moves
+        for mv1 in lhs_algebraic.iter() {
+            if rhs_algebraic.iter().position(|mv2| *mv2 == *mv1).is_none() {
+                extra_moves.push(mv1);
+            }
+        }
+        // Check for missing generated moves
+        for mv1 in rhs_algebraic.iter() {
+            if lhs_algebraic.iter().position(|mv2| *mv2 == *mv1).is_none() {
+                missing_moves.push(mv1);
+            }
+        }
+        assert!(missing_moves.len() == 0 && extra_moves.len() == 0, 
+            "Move generation did not return the expected moves.\nMissing moves: {:?}\nExtra moves: {:?}", missing_moves, extra_moves);
+    }
+
+    #[test]
+    fn test_pawn_move_gen() {
+        let mut board = Board::new();
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        let mut moves = Vec::new();
+        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+
+        assert_move_eq_algebraic(&moves, &vec!["a2a3","b2b3","c2c3","d2d3","e2e3","f2f3","g2g3","h2h3",
+                                               "a2a4","b2b4","c2c4","d2d4","e2e4","f2f4","g2g4","h2h4"]);
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_move_eq_algebraic(&moves, &vec!["a7a6","b7b6","c7c6","d7d6","e7e6","f7f6","g7g6","h7h6",
+                                               "a7a5","b7b5","c7c5","d7d5","e7e5","f7f5","g7g5","h7h5"]);
+
+        let board = Board::from_fen("r1bqkbnr/1P2pppp/5P2/2p3P1/1p5P/p7/PPPP2p1/RNBQKB1R");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+
+        assert_move_eq_algebraic(&moves, &vec![
+            "b2b3","c2c3","d2d3","g5g6","h4h5",
+            "c2c4", "d2d4",
+            "b2a3", "f6e7", "f6g7",
+            "b7a8Q", "b7b8Q", "b7c8Q", "b7a8R", "b7b8R", "b7c8R", "b7a8B", "b7b8B", "b7c8B", "b7a8N", "b7b8N", "b7c8N"
+        ]);
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_move_eq_algebraic(&moves, &vec![
+            "h7h6","g7g6","e7e6","c5c4","b4b3",
+            "h7h5", "e7e5",
+            "a3b2", "e7f6", "g7f6",
+            "g2f1q", "g2g1q", "g2h1q", "g2f1r", "g2g1r", "g2h1r", "g2f1b", "g2g1b", "g2h1b", "g2f1n", "g2g1n", "g2h1n"
+        ]);   
     }
 }

@@ -195,6 +195,7 @@ onMounted(() => {
             <div class="w-[12.5%] h-full"
                 :class="[getSquareColor(col - 1, row - 1)]"
                 v-for="col in 8" :key="row * 8 + col">
+                {{ (row - 1) * 8 + col - 1 }}
             </div>
         </div>
         <div class="absolute w-full" :key="chessEngine.boardStateCounter" v-if="chessEngine.boardStateCounter != 0">
