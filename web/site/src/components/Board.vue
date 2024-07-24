@@ -9,9 +9,10 @@ const movingPiece : any = ref(null);
 const selectedPiecePos: any = ref(null);
 const previousMoveFromPos: any = ref(null);
 const previousMoveToPos: any = ref(null);
-
+const allPieces : any = ref([]);
 
 const chessEngine = useChessEngineStore();
+chessEngine.makeBoardEngineMoveCallback = makeEngineMove;
 
 var moveSoundEffect = new Audio('./src/assets/sounds/move.mp3');
 
@@ -104,13 +105,6 @@ function pieceDragStart(e: any, x: number, y: number) {
 function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: any, from_y: any) {
     piece.style.transition = `all 300ms ease`;
     piece.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
-    console.log("Animate transform: ", piece.style.transform);
-    setTimeout(() => {
-        piece.style.transition = "";
-        if (from_x != null) {
-            chessEngine.makeMove([from_x, from_y], [to_x, to_y]);
-        }
-    }, 300);
 }
 
 function pieceDragStop(e: any, x: number, y: number) {
@@ -128,8 +122,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         [x, y] = selectedPiecePos.value;
         let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
-            makeMove(x, y, to_x, to_y);
-            movingPiece.value.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
+            makeHumanMove(x, y, to_x, to_y);
         }
         else {
             movingPiece.value.style.transform = calculateTranslationBasedOnPosition(x, y);
@@ -138,12 +131,35 @@ function pieceDragStop(e: any, x: number, y: number) {
     movingPiece.value = null;
 }
 
-function makeMove(from_x: number, from_y: number, to_x: number, to_y: number) {
-    chessEngine.makeMove([from_x, from_y], [to_x, to_y]);
+function makeHumanMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion : number|null = null) {
+        // Validate the legality of the move
+    if (!chessEngine.isMoveLegal([from_x, from_y], [to_x, to_y], promotion)) {
+        movingPiece.value.style.transform = calculateTranslationBasedOnPosition(from_x, from_y);
+        return;
+    }
+    makeMove(from_x, from_y, to_x, to_y, promotion);
+    movingPiece.value.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
+}
+
+function makeMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion : number|null = null) {
+    // Validate that it is this players turn and that the player is human
+    chessEngine.makeMove([from_x, from_y], [to_x, to_y], promotion);
     moveSoundEffect.play();
     selectedPiecePos.value = null;
     previousMoveFromPos.value = [from_x, from_y];
     previousMoveToPos.value = [to_x, to_y];
+}
+
+function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion: number) {
+    let piece = allPieces.value.find((piece: any) => piece.getAttribute("data-x") == from_x && piece.getAttribute("data-y") == from_y);
+    selectedPiecePos.value = [from_x, from_y];
+    animatePieceToPosition(piece, to_x, to_y, from_x, from_y);
+    setTimeout(() => {
+        piece.style.transition = "";
+        if (from_x != null) {
+            makeMove(from_x, from_y, to_x, to_y, promotion);
+        }
+    }, 300);
 }
 
 function boardMouseMove(e: MouseEvent) {
@@ -201,6 +217,9 @@ onMounted(() => {
         <div class="absolute w-full" :key="chessEngine.boardStateCounter" v-if="chessEngine.boardStateCounter != 0">
             <img 
                 v-for="{x, y, piece} in boardPieces" :key="y * 8 + x + 'b'"
+                ref="allPieces"
+                :data-x="x"
+                :data-y="y"
                 class="w-[12.5%] object-cover absolute select-none cursor-pointer" 
                 :class="{'cursor-grabbing': movingPiece != null}"
                 :src="pieceToIconMap[piece]"

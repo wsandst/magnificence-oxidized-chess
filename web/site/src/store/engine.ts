@@ -22,7 +22,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
     currentBoardPieces: null,
     boardStateCounter: 0,
     currentBoardFenString: null,
-    searchMetadata: null
+    searchMetadata: null,
+    makeBoardEngineMoveCallback: null,
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -72,7 +73,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "search") {
             console.log("Search complete: ", data);
             const move = data[0];
-            this.makeMove([move.from_x, move.from_y], [move.to_x, move.to_y], move.promotion)
+            this.makeBoardEngineMoveCallback(move.from_x, move.from_y, move.to_x, move.to_y, move.promotion)
           }
           else if (messageType == "search_metadata_update") {
             console.log("Search metadata update: ", data);
@@ -86,7 +87,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
           }
       }.bind(this);
     },
-    makeMove(from: [number, number], to: [number, number], promotion = null) {
+    makeMove(from: [number, number], to: [number, number], promotion : any|null = null) {
       if (promotion == null) {
         // Always promote pawns to queen for now
         promotion = 12;
@@ -107,8 +108,30 @@ export const useChessEngineStore = defineStore('chess_engine', {
 
       }
     },
+    isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null) {
+      // Make sure it is this players turn
+      if (this.currentPlayerColor == "white" && this.whitePlayer.type != "human") {
+        return false;
+      }
+      else if (this.currentPlayerColor == "black" && this.blackPlayer.type != "human") {
+        return false;
+      }
+      // The current player can only move its own pieces
+      const piece = getPiece(this.currentBoardPieces, from[0], from[1]).piece;
+      if (this.currentPlayerColor == "white" && piece >= 6) {
+        return false;
+      }
+      else if (this.currentPlayerColor == "black" && piece < 6) {
+        return false;
+      }
+      return true;
+    },  
     perft(depth: number) {
       worker.postMessage(["perft", depth]);
+    },
+    resetGame() {
+      worker.postMessage(["reset_board"]);
+      worker.postMessage(["get_pieces"]);
     }
   }
 });
