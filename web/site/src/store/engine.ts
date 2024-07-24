@@ -27,10 +27,10 @@ export const useChessEngineStore = defineStore('chess_engine', {
   }),
   actions: {
     setAvailableEngines(engines : any) {
-      let human = {"name": "Human", "profile": "src/assets/images/human-profile.png", "type": "human"}
+      let human = {"name": "Human", "profile": "./images/human-profile.png", "type": "human"}
       this.availablePlayers.push(human);
       for (const engineName of engines) {
-        this.availablePlayers.push({"name": engineName, "profile": "src/assets/images/robot-profile.png", "type": "engine"})
+        this.availablePlayers.push({"name": engineName, "profile": "./images/robot-profile.png", "type": "engine"})
       }
       this.setBlackPlayer(this.availablePlayers[1]);
       this.setWhitePlayer(human);

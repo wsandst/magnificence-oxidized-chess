@@ -14,7 +14,7 @@ const allPieces : any = ref([]);
 const chessEngine = useChessEngineStore();
 chessEngine.makeBoardEngineMoveCallback = makeEngineMove;
 
-var moveSoundEffect = new Audio('./src/assets/sounds/move.mp3');
+var moveSoundEffect = new Audio('./sounds/move.mp3');
 
 const startingPosition = [
     {"x": 0, "y": 0, "piece": 9},
@@ -60,18 +60,18 @@ function boardPositionModulo(row : number, col: number) : number {
 }
 
 const pieceToIconMap : any = {
-    0: "src/assets/icons/pieces/white-pawn.svg",
-    1: "src/assets/icons/pieces/white-bishop.svg",
-    2: "src/assets/icons/pieces/white-knight.svg",
-    3: "src/assets/icons/pieces/white-rook.svg",
-    4: "src/assets/icons/pieces/white-queen.svg",
-    5: "src/assets/icons/pieces/white-king.svg",
-    6: "src/assets/icons/pieces/black-pawn.svg",
-    7: "src/assets/icons/pieces/black-bishop.svg",
-    8: "src/assets/icons/pieces/black-knight.svg",
-    9: "src/assets/icons/pieces/black-rook.svg",
-    10: "src/assets/icons/pieces/black-queen.svg",
-    11: "src/assets/icons/pieces/black-king.svg"
+    0: "./icons/pieces/white-pawn.svg",
+    1: "./icons/pieces/white-bishop.svg",
+    2: "./icons/pieces/white-knight.svg",
+    3: "./icons/pieces/white-rook.svg",
+    4: "./icons/pieces/white-queen.svg",
+    5: "./icons/pieces/white-king.svg",
+    6: "./icons/pieces/black-pawn.svg",
+    7: "./icons/pieces/black-bishop.svg",
+    8: "./icons/pieces/black-knight.svg",
+    9: "./icons/pieces/black-rook.svg",
+    10: "./icons/pieces/black-queen.svg",
+    11: "./icons/pieces/black-king.svg"
 }
 
 function getMousePosAsBoardPos(mouseX: number, mouseY: number) {

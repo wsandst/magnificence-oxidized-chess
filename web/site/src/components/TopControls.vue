@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
 import { faCaretLeft } from '@fortawesome/free-solid-svg-icons/faCaretLeft';

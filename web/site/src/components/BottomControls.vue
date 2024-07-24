@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay'
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause'

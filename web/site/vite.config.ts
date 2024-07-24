@@ -8,6 +8,7 @@ export default defineConfig({
     vue(),
     ViteRsw(),
   ],
+  base: '/chess/',
   server: {
     fs: {
         allow: ["../"]

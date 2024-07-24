@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown'
@@ -7,8 +7,8 @@ import { useChessEngineStore } from '../store/engine';
 
 const chessEngine = useChessEngineStore();
 
-const player1Placeholder = {"name": "Magnificence", "profile": "src/assets/images/robot-profile.png"}
-const player2Placeholder = {"name": "Human", "profile": "src/assets/images/human-profile.png"}
+const player1Placeholder = {"name": "Magnificence", "profile": "./images/robot-profile.png"}
+const player2Placeholder = {"name": "Human", "profile": "./images/human-profile.png"}
 
 const dropdownVisible = ref(false);
 
@@ -29,9 +29,9 @@ function switchPlayer(player) {
 }
 
 const playerInfo = computed(() => {
-    const player = props.playerNumber == 1 ? chessEngine.blackPlayer : chessEngine.whitePlayer;
+    const player = props.playerNumber == "1" ? chessEngine.blackPlayer : chessEngine.whitePlayer;
     if (player == null) {
-        return props.playerNumber == 1 ? player1Placeholder : player2Placeholder;
+        return props.playerNumber == "1" ? player1Placeholder : player2Placeholder;
     }
     return player;
 });

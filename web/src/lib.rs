@@ -6,9 +6,7 @@ use wasm_bindgen::prelude::*;
 use engine_core::core::{Color, Move, Piece, STARTING_POS_FEN};
 use engine_core::core::bitboard::*;
 use serde::{Serialize, Deserialize};
-use js_sys::Promise;
 use gloo_timers::future::TimeoutFuture;
-use wasm_bindgen_futures::spawn_local;
 
 #[wasm_bindgen]
 pub struct ChessEngine {
