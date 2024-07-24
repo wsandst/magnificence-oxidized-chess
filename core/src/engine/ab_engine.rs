@@ -2,6 +2,7 @@
 use super::{Engine, SearchMetadataCallback};
 use crate::core::bitboard::Board;
 use crate::core::*;
+use rand::seq::SliceRandom;
 
 #[allow(unused)]
 pub struct StandardAlphaBetaEngine {
@@ -11,8 +12,9 @@ pub struct StandardAlphaBetaEngine {
 #[allow(unused)]
 impl Engine for StandardAlphaBetaEngine {
     fn search(&mut self, board: &Board, metadata_callback: SearchMetadataCallback) -> Vec<Move> {
-        let pv = vec![Move { from: 12, to: 20, promotion: Piece::Empty, captured: Piece::Empty}];
-        metadata_callback(super::SearchMetadata { depth: 2, eval: 7.0, pv: pv.clone() });
+        let moves = board.get_moves();
+        let pv = vec!(*moves.choose(&mut rand::thread_rng()).unwrap());
+        metadata_callback(super::SearchMetadata { depth: 2, eval: 7.0, pv: moves });
         return pv;
     }
 }

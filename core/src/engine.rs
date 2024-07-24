@@ -4,6 +4,7 @@ use crate::core::bitboard::Board;
 
 pub type SearchMetadataCallback = Box<dyn Fn(SearchMetadata) -> ()>;
 
+#[derive(Clone, PartialEq, Debug)]
 pub struct SearchMetadata {
     pub depth: usize,
     pub eval: f64,

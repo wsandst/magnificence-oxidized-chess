@@ -219,7 +219,7 @@ impl Board {
                 });
             }
         }
-
+        
         // TODO: En passant and king safety
     }
 }

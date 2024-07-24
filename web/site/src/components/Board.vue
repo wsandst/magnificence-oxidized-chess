@@ -74,16 +74,16 @@ const pieceToIconMap : any = {
 }
 
 function getMousePosAsBoardPos(mouseX: number, mouseY: number) {
-    let squareSizePx = 0.125 * boardElement.value.clientWidth;
-    var rect = boardElement.value.getBoundingClientRect();
+    let squareSizePx = 0.125 * boardElement.value?.clientWidth;
+    var rect = boardElement.value?.getBoundingClientRect();
     let x = Math.floor((mouseX - rect.left) / squareSizePx);
     let y = Math.floor((mouseY - rect.top) / squareSizePx);
     return [x, y];
 }
 
 function calculateTranslationBasedOnPosition(x : number, y: number) {
-    let xPos = 0.125 * x * boardElement.value.clientWidth;
-    let yPos = 0.125 * y * boardElement.value.clientHeight; 
+    let xPos = 0.125 * x * boardElement.value?.clientWidth;
+    let yPos = 0.125 * y * boardElement.value?.clientHeight; 
     return `translate(${xPos}px, ${yPos}px)`
 }
 
@@ -192,7 +192,7 @@ onMounted(() => {
 <template>
     <div @mousemove="boardMouseMove" @touchmove.passive="boardTouchMove" class="flex select-none flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
-            <div class="w-[12.5%] h-full"
+            <div class="w-[12.5%] h-full text-sm"
                 :class="[getSquareColor(col - 1, row - 1)]"
                 v-for="col in 8" :key="row * 8 + col">
                 {{ (row - 1) * 8 + col - 1 }}

@@ -81,6 +81,8 @@ impl Board {
         // Quiet move number
         fen_string.push_str(&format!(" {}", self.quiet));
         // Full move number
+        fen_string.push_str(&format!(" {}", 1));
+
         return fen_string;
     }
 

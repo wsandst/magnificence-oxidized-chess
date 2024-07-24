@@ -19,7 +19,7 @@ const chessEngine = useChessEngineStore();
         </div>
         <div class="flex flex-row gap-4">
             <div class="w-auto flex justify-center items-center bg-container-lighter rounded-[8px] px-[12px] py-[6px] font-bold">
-                PV: A1B2 A2A3 H1A2
+                PV: {{ chessEngine.searchMetadata?.pv }}
             </div>
         </div>
         <div class="flex flex-row gap-4">

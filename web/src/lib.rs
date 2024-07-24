@@ -3,7 +3,7 @@ use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
 use wasm_bindgen::prelude::*;
-use engine_core::core::{Color, Move, Piece};
+use engine_core::core::{Color, Move, Piece, STARTING_POS_FEN};
 use engine_core::core::bitboard::*;
 use serde::{Serialize, Deserialize};
 use js_sys::Promise;
@@ -65,7 +65,7 @@ impl ChessEngine {
 
     /// Create a new chess engine wrapper
     pub fn new() -> ChessEngine {
-        ChessEngine { board: Board::new(), white_player: None, black_player: None }
+        ChessEngine { board: Board::from_fen(STARTING_POS_FEN), white_player: None, black_player: None }
     }
 
     pub fn get_piece(&self, x: usize, y: usize) -> usize  {
@@ -153,12 +153,12 @@ impl ChessEngine {
             let moves = ChessEngine::moves_to_return_moves(&black_player.search(&self.board, Self::get_search_metadata_callback()));
             return serde_wasm_bindgen::to_value(&moves).unwrap();
         }
-        else {
+        else if self.white_player.is_some() {
             let white_player = self.white_player.as_mut().unwrap();
             let moves = ChessEngine::moves_to_return_moves(&white_player.search(&self.board, Self::get_search_metadata_callback()));
             return serde_wasm_bindgen::to_value(&moves).unwrap();
-
         }
+        return "".into();
     }
 
     fn moves_to_return_moves(moves: &Vec<Move> ) -> Vec<MoveWrapper> {

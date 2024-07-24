@@ -42,7 +42,6 @@ pub struct Move {
     pub captured : Piece
 }
 
-
 impl Piece {
     pub fn as_char(&self) -> char {
         match *self {

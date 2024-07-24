@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_pawn_move_gen() {
-        let mut board = Board::new();
+        let board = Board::new();
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         let mut moves = Vec::new();
         board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
@@ -275,6 +275,15 @@ mod tests {
             "h7h5", "e7e5",
             "a3b2", "e7f6", "g7f6",
             "g2f1q", "g2g1q", "g2h1q", "g2f1r", "g2g1r", "g2h1r", "g2f1b", "g2g1b", "g2h1b", "g2f1n", "g2g1n", "g2h1n"
+        ]);   
+
+
+        let board = Board::from_fen("8/8/1p6/p1p5/8/P1P5/1P6/8 b - - 0 1");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_move_eq_algebraic(&moves, &vec![
+            "a5a4", "b6b5", "c5c4",
         ]);   
     }
 }

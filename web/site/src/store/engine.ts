@@ -21,7 +21,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
     currentPlayerColor: "white",
     currentBoardPieces: null,
     boardStateCounter: 0,
-    currentBoardFenString: null
+    currentBoardFenString: null,
+    searchMetadata: null
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -75,6 +76,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
           }
           else if (messageType == "search_metadata_update") {
             console.log("Search metadata update: ", data);
+            this.searchMetadata = data;
           }
           else if (messageType == "perft") {
             const perft_count = data;
