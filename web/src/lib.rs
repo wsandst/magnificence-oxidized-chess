@@ -17,6 +17,16 @@ pub struct PiecePosition {
    pub piece: usize
 }
 
+#[wasm_bindgen]
+#[derive(Serialize, Deserialize)]
+pub struct ReturnMove {
+   pub from_x: usize,
+   pub from_y: usize,
+   pub to_x: usize,
+   pub to_y: usize,
+   pub promotion: usize
+}
+
 /// Wrap the chess engine with wasm_bindgen
 #[wasm_bindgen]
 impl ChessEngine {
@@ -49,7 +59,7 @@ impl ChessEngine {
         return pieces;
     }
 
-    pub fn make_move(&mut self, from_x: usize, from_y: usize, to_x: usize, to_y: usize) {
+    pub fn make_move(&mut self, from_x: usize, from_y: usize, to_x: usize, to_y: usize, promotion: usize) {
         if from_x == to_x && from_y == to_y {
             return;
         }
@@ -58,7 +68,7 @@ impl ChessEngine {
             from: (from_y * 8 + from_x) as u8, 
             to: (to_y * 8 + to_x) as u8, 
             captured: capture_piece, 
-            promotion: Piece::Empty
+            promotion: Piece::from_u8(promotion as u8)
         };
         self.board.make_move(&mv);
     }
@@ -74,5 +84,9 @@ impl ChessEngine {
 
     pub fn get_board_fen(&self) -> String {
         return self.board.to_fen();
+    }
+
+    pub fn search(&mut self) {
+        
     }
 }

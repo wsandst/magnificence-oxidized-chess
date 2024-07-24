@@ -7,6 +7,10 @@ let worker = new Worker(new URL('../worker.js', import.meta.url), {
   type: 'module'
 });
 
+function getPiece(currentBoardPieces: any, x: number, y: number) {
+  return currentBoardPieces.find((piece: any) => piece.x == x && piece.y == y) ?? 12;
+}
+
 export const useChessEngineStore = defineStore('chess_engine', {
   state: () => ({
     gamePaused: false,
@@ -52,7 +56,15 @@ export const useChessEngineStore = defineStore('chess_engine', {
       }.bind(this);
     },
     makeMove(from, to) {
-      worker.postMessage(["make_move", from[0], from[1], to[0], to[1]]);
+      // Always promote pawns to queen for now
+      let promotion = 12;
+      if (to[1] == 7 && getPiece(this.currentBoardPieces, from[0], from[1]).piece == 6) {
+        promotion = 10;
+      }
+      else if (to[1] == 0 && getPiece(this.currentBoardPieces, from[0], from[1]).piece  == 0) {
+        promotion = 4;
+      }
+      worker.postMessage(["make_move", from[0], from[1], to[0], to[1], promotion]);
       worker.postMessage(["get_pieces"]);
       worker.postMessage(["get_board_fen"]);
     }
