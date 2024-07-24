@@ -1,3 +1,4 @@
+use engine_core::commands;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
@@ -162,6 +163,11 @@ impl ChessEngine {
 
     fn moves_to_return_moves(moves: &Vec<Move> ) -> Vec<MoveWrapper> {
         return moves.iter().map(|&mv| MoveWrapper::from_move(&mv)).collect();
+    }
+
+    pub fn perft(&self, depth: usize) -> usize {
+        let mut board_copy = self.board.clone();
+        return commands::perft(depth, &mut board_copy);
     }
 }
 

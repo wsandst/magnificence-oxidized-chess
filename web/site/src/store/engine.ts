@@ -52,6 +52,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
           //console.log('Message received from worker: ', e.data);
           const messageType = e.data[0];
           const data = e.data[1];
+          const duration = e.data[2];
           if (e.data == "initiated") {
             worker.postMessage(["get_pieces"]);
             worker.postMessage(["get_allowed_engines"]);
@@ -75,6 +76,12 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "search_metadata_update") {
             console.log("Search metadata update: ", data);
           }
+          else if (messageType == "perft") {
+            const perft_count = data;
+            const million_moves_per_second = (perft_count / 1000000) / (duration / 1000);
+            console.log(`Perft completed in ${duration/1000} seconds (${million_moves_per_second}M moves per second)`)
+            console.log("Perft result: ", perft_count);
+          }
       }.bind(this);
     },
     makeMove(from: [number, number], to: [number, number], promotion = null) {
@@ -97,6 +104,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
         worker.postMessage(["search"]);
 
       }
+    },
+    perft(depth: number) {
+      worker.postMessage(["perft", depth]);
     }
   }
 });

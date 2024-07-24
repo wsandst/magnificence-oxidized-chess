@@ -112,11 +112,7 @@ impl Board {
             }
         }
 
-        // Left: en passant and king safety
-
-        // En passant: get en passant square. If occupied and + 7 or + 9 is occupied, create en passant move.
-
-        // King safety: ?
+        // TODO: En passant and king safety
     }
 
     pub fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
@@ -223,5 +219,7 @@ impl Board {
                 });
             }
         }
+
+        // TODO: En passant and king safety
     }
 }
