@@ -1,3 +1,7 @@
 target/
 .vscode/
 web/pkg
+perf.data
+log.txt
+flamegraph.svg
+perf.data.old

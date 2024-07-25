@@ -231,11 +231,13 @@ impl Board {
     }
 
     /// Sets the bit at ```pos``` to ```1```.
+    #[inline]
     pub fn set_bit(num: &mut u64, pos: u8){
         *num  = (*num) | (1u64 << pos);
     }
     
     /// Sets the bit at ```pos % 64``` to ```0```.
+    #[inline]
     pub fn unset_bit(num: &mut u64, pos: u8) {
         *num = (*num) & (!1u64).rotate_left(pos as u32);
     }

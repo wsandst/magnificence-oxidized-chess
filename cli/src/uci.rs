@@ -91,7 +91,7 @@ pub fn start_uci_protocol() {
 
 pub fn run_single_uci_command(command_line: &str) {
     let mut state = UCIState {
-        board: Board::empty(),
+        board: Board::new(),
         engine: StandardAlphaBetaEngine::new()
     };
 
