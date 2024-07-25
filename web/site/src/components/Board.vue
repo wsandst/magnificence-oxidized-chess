@@ -13,6 +13,7 @@ const allPieces : any = ref([]);
 
 const chessEngine = useChessEngineStore();
 chessEngine.makeBoardEngineMoveCallback = makeEngineMove;
+chessEngine.clearBoardSelectionsCallback = clearSelections;
 
 var moveSoundEffect = new Audio('./sounds/move.mp3');
 
@@ -150,6 +151,8 @@ function makeMove(from_x: number, from_y: number, to_x: number, to_y: number, pr
     previousMoveToPos.value = [to_x, to_y];
 }
 
+// Callbacks from Chess Engine store
+
 function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion: number) {
     let piece = allPieces.value.find((piece: any) => piece.getAttribute("data-x") == from_x && piece.getAttribute("data-y") == from_y);
     selectedPiecePos.value = [from_x, from_y];
@@ -160,6 +163,12 @@ function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: numb
             makeMove(from_x, from_y, to_x, to_y, promotion);
         }
     }, 300);
+}
+
+function clearSelections() {
+    selectedPiecePos.value = null;
+    previousMoveFromPos.value = null;
+    previousMoveToPos.value = null;
 }
 
 function boardMouseMove(e: MouseEvent) {

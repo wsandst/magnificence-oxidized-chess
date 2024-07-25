@@ -13,6 +13,7 @@ pub struct ChessEngine {
     board: Board,
     white_player: Option<Box<dyn Engine>>,
     black_player: Option<Box<dyn Engine>>,
+    game_moves: Vec<Move>
 }
 
 #[wasm_bindgen]
@@ -63,7 +64,12 @@ impl ChessEngine {
 
     /// Create a new chess engine wrapper
     pub fn new() -> ChessEngine {
-        ChessEngine { board: Board::from_fen(STARTING_POS_FEN), white_player: None, black_player: None }
+        ChessEngine { 
+            board: Board::from_fen(STARTING_POS_FEN), 
+            white_player: None, 
+            black_player: None,
+            game_moves: Vec::new()
+        }
     }
 
     pub fn get_piece(&self, x: usize, y: usize) -> usize  {
@@ -101,10 +107,19 @@ impl ChessEngine {
             promotion: Piece::from_u8(promotion as u8)
         };
         self.board.make_move(&mv);
+        self.game_moves.push(mv);
     }
 
     pub fn reset_board(&mut self) {
         self.board = Board::new();
+        self.game_moves = Vec::new();
+    }
+
+    pub fn undo_move(&mut self) {
+        let prev_move = self.game_moves.pop();
+        if let Some(mv) = prev_move {
+            self.board.unmake_move(&mv);
+        }
     }
 
     pub fn get_allowed_engines() -> Vec<String> {

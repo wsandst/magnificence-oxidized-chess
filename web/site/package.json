@@ -2,7 +2,7 @@
   "name": "my-app",
   "version": "0.0.0",
   "scripts": {
-    "dev": "rsw dev & vite",
+    "dev": "rsw watch & vite",
     "build": "rsw build && npm run fe:build",
     "fe:build": "vue-tsc && vite build",
     "rsw": "rsw",

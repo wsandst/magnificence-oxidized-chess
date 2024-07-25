@@ -37,6 +37,9 @@ async function initWorker() {
         else if (functionName in ChessEngine) {
             result = await ChessEngine[functionName](...args);
         }   
+        else {
+            console.log(`Worker received WASM function '${functionName}', which does not appear to exist.`)
+        }
         var endTime = performance.now()
 
         // Send response back to be handled by callback in main thread.

@@ -23,8 +23,11 @@ export const useChessEngineStore = defineStore('chess_engine', {
     boardStateCounter: 0,
     currentBoardFenString: null,
     searchMetadata: null,
+    logHistory: [],
+
+    // Callbacks
     makeBoardEngineMoveCallback: null,
-    logHistory: []
+    clearBoardSelectionsCallback: null
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -109,6 +112,11 @@ export const useChessEngineStore = defineStore('chess_engine', {
 
       }
     },
+    undoMove() {
+      worker.postMessage(["undo_move"]);
+      worker.postMessage(["get_pieces"]);
+      this.clearBoardSelectionsCallback();
+    },
     isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null) {
       // Make sure it is this players turn
       if (this.currentPlayerColor == "white" && this.whitePlayer.type != "human") {
@@ -133,6 +141,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
     resetGame() {
       worker.postMessage(["reset_board"]);
       worker.postMessage(["get_pieces"]);
+      this.clearBoardSelectionsCallback();
     }
   }
 });
