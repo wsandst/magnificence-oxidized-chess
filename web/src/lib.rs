@@ -165,7 +165,8 @@ impl ChessEngine {
 
     pub fn perft(&self, depth: usize) -> usize {
         let mut board_copy = self.board.clone();
-        return commands::perft(depth, &mut board_copy);
+        let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+        return commands::perft(depth, &mut board_copy, &mut reserved_moves);
     }
 }
 

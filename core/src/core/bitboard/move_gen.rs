@@ -7,14 +7,15 @@ use super::Board;
 
 impl Board {
     // NOTE: Should probably use https://docs.rs/arrayvec/latest/arrayvec/ here in the future 
-    pub fn get_moves(&self) -> Vec<Move> {
+    pub fn get_moves(&self, moves: &mut Vec<Move>) -> (usize, usize)  {
         let (white_occupancy, black_occupancy) = self.get_occupancy();
-        let mut moves : Vec<Move> = Vec::with_capacity(20);
+        let current_end = moves.len();
         match self.current_player {
-            Color::White => self.generate_moves_white(&mut moves, white_occupancy, black_occupancy),
-            Color::Black => self.generate_moves_black(&mut moves, white_occupancy, black_occupancy)
+            Color::White => self.generate_moves_white(moves, white_occupancy, black_occupancy),
+            Color::Black => self.generate_moves_black(moves, white_occupancy, black_occupancy)
         }
-        return moves;
+        let new_end = moves.len();
+        return (current_end, new_end);
     }
 
     fn generate_moves_white(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {

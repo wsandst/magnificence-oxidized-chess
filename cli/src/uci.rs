@@ -123,7 +123,9 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata)))
         }
         CommandType::LegalMoves => {
-            let moves : Vec<String> = state.board.get_moves().iter().map(|mv| mv.to_algebraic()).collect();
+            let mut move_vector = Vec::new();
+            state.board.get_moves(&mut move_vector);
+            let moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
             println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
         }
         _ => {}
@@ -136,7 +138,8 @@ fn handle_search_metadata(metadata: SearchMetadata) {
 
 fn perft(depth: &usize, state: &mut UCIState) {
     println!("Performing perft of depth {}", depth);
-    let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board));
+    let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+    let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
     println!("Result: {}", perft_count);
