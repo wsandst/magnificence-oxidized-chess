@@ -32,8 +32,8 @@ const chessEngine = useChessEngineStore();
                 Log output
             </div>
             <div class="overflow-auto flex flex-col px-2">
-                <span v-for="i in 30">
-                    Searching position deeper...
+                <span v-for="entry in chessEngine.logHistory">
+                    {{entry}}
                 </span>
             </div>
         </div>

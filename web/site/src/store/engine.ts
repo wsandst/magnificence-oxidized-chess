@@ -24,6 +24,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
     currentBoardFenString: null,
     searchMetadata: null,
     makeBoardEngineMoveCallback: null,
+    logHistory: []
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -82,8 +83,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "perft") {
             const perft_count = data;
             const million_moves_per_second = (perft_count / 1000000) / (duration / 1000);
-            console.log(`Perft completed in ${duration/1000} seconds (${million_moves_per_second}M moves per second)`)
-            console.log("Perft result: ", perft_count);
+            this.logHistory.push(`Perft completed in ${duration/1000} seconds (${million_moves_per_second}M moves per second)`)
+            this.logHistory.push(`Perft result: ${perft_count}`)
           }
       }.bind(this);
     },
