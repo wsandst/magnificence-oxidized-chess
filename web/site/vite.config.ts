@@ -10,6 +10,7 @@ export default defineConfig({
   ],
   base: '/chess/',
   server: {
+    host: "0.0.0.0",
     fs: {
         allow: ["../"]
     }

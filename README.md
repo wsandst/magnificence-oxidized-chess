@@ -5,8 +5,6 @@ Chess engine written in Rust, built on the previous Magnificence revisions
 **Build native**:  
 `RUSTFLAGS="-C target-cpu=native" cargo build --release` 
 
-
-
 ## Todo web
 - [ ] Implement player/engine select dropdown
 - [ ] Implement web worker for engine. It must run on a separate thread.

@@ -206,7 +206,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div @mousemove="boardMouseMove" @touchmove.passive="boardTouchMove" class="flex select-none flex-col w-full aspect-square relative" ref="boardElement">
+    <div @mousemove="boardMouseMove" @touchmove.prevent="boardTouchMove" class="flex select-none flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
             <div class="w-[12.5%] h-full text-sm"
                 :class="[getSquareColor(col - 1, row - 1)]"
@@ -226,7 +226,7 @@ onMounted(() => {
                 :style="'transform:'+calculateTranslationBasedOnPosition(x, y)"
                 draggable="false"
                 @mousedown="(e) => pieceDragStart(e, x, y)"
-                @touchstart.passive="(e) => pieceDragStart(e, x, y)"
+                @touchstart.prevent="(e) => pieceDragStart(e, x, y)"
                 @mouseup="(e) => pieceDragStop(e, x, y)"
                 @touchend="(e) => pieceDragStop(e, x, y)"
             />
