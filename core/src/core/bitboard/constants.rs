@@ -58,22 +58,25 @@ pub const ROWS: [u64; 8] = {
     masks
 };
 
-static ZOOBRIST_KEYS2: Lazy<[u64;13*64 + 4 + 8 + 1]> = Lazy::new(|| {
-    let mut keys = [0u64; 13*64 + 4 + 8 + 1];
-    let mut rng = rand::thread_rng();
-    for i in 0..keys.len() {
-        keys[i] = rng.gen::<u64>();
-    }
-    for i in 0..64 {
-        keys[(Piece::Empty.to_u8() as usize) * 64 + i] = 0;
-    }
-    return keys;
-});
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct BitboardRuntimeConstants {
+    pub bishop_magic_table: Vec<u64>,
+    pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
+}
 
-// Lazy initialize some state
-lazy_static! {
-    /// Zoobrist keys
-    pub static ref ZOOBRIST_KEYS: [u64;13*64 + 4 + 8 + 1] = {
+impl BitboardRuntimeConstants{
+    pub fn create() -> BitboardRuntimeConstants {
+        BitboardRuntimeConstants {
+            bishop_magic_table: Self::create_magic_table(),
+            zoobrist_keys: Self::create_zoobrist_keys()
+        }
+    }
+
+    fn create_magic_table() -> Vec<u64> {
+        return vec![];
+    }
+
+    fn create_zoobrist_keys() -> [u64;13*64 + 4 + 8 + 1] {
         let mut keys = [0u64; 13*64 + 4 + 8 + 1];
         let mut rng = rand::thread_rng();
         for i in 0..keys.len() {
@@ -83,23 +86,5 @@ lazy_static! {
             keys[(Piece::Empty.to_u8() as usize) * 64 + i] = 0;
         }
         return keys;
-    };
-}
-
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct BitboardRuntimeConstants {
-    bishop_magic_table: Vec<u64>
-}
-
-impl BitboardRuntimeConstants{
-    pub fn create() -> BitboardRuntimeConstants {
-        BitboardRuntimeConstants {
-            bishop_magic_table: Self::create_magic_table()
-        }
-    }
-
-    fn create_magic_table() -> Vec<u64> {
-        return vec![];
     }
 }

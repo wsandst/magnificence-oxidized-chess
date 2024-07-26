@@ -20,7 +20,7 @@ impl Board {
     /// Updates the zoobrist key based on the addition/removal of `piece` at `pos`.
     pub(super) fn flip_zoobrist_piece(&mut self, pos: u8, piece: Piece) {
         let index = (piece.to_u8() as usize) * 64 + (pos as usize);
-        let key = ZOOBRIST_KEYS[index];
+        let key =  self.runtime_constants.zoobrist_keys[index];
         self.hash_key = self.hash_key ^ key;
     }
 
@@ -29,12 +29,12 @@ impl Board {
         let mut result = 0;
         for i in 0..64 {
             let index = i + (self.mailboard[i].to_u8() as usize) * 64;
-            result = result ^ ZOOBRIST_KEYS[index];
+            result = result ^ self.runtime_constants.zoobrist_keys[index];
         }
         let mut castling = self.castling;
         while castling > 0 { 
             let index = castling.trailing_zeros() as usize;
-            result = result ^ ZOOBRIST_KEYS[index + CASTLING_RIGHTS_INDEX];
+            result = result ^ self.runtime_constants.zoobrist_keys[index + CASTLING_RIGHTS_INDEX];
             castling &= castling - 1;
         }
         return result;
@@ -58,7 +58,7 @@ impl Board {
         let mut difference = old_val ^ self.castling;
         while difference > 0 { 
             let index = difference.trailing_zeros() as usize;
-            self.hash_key = self.hash_key ^ ZOOBRIST_KEYS[index + CASTLING_RIGHTS_INDEX];
+            self.hash_key = self.hash_key ^ self.runtime_constants.zoobrist_keys[index + CASTLING_RIGHTS_INDEX];
             difference &= difference - 1;
         }
     }
