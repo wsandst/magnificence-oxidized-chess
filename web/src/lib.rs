@@ -131,6 +131,10 @@ impl ChessEngine {
         return self.board.to_fen();
     }
 
+    pub fn set_board_fen(&mut self, fen: String) {
+        self.board = Board::from_fen(&fen);
+    }
+
     pub fn set_white_player(&mut self, engine_name: String) {
         if engine_name.to_lowercase() == "human" {
             self.white_player = None;
@@ -149,6 +153,13 @@ impl ChessEngine {
         }
     }
 
+    pub fn get_current_player_color(&self) -> String {
+        match self.board.get_current_player() {
+            Color::Black => "black".to_string(),
+            Color::White => "white".to_string()
+        }
+    }
+
     fn handle_search_metadata(metadata: SearchMetadata) {
         let pv = metadata.pv.iter().map(|&mv| mv.to_algebraic()).collect::<Vec<String>>().join(" ");
         let wrapped_metadata = SearchMetadataWrapper { depth: metadata.depth, eval: metadata.eval, pv};
@@ -162,7 +173,6 @@ impl ChessEngine {
     fn get_search_metadata_callback() -> SearchMetadataCallback {
         return Box::new(Self::handle_search_metadata);
     }
-
 
     pub async fn search(&mut self) -> JsValue {
         for _ in 0..20 {

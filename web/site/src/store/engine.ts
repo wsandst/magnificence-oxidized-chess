@@ -79,9 +79,14 @@ export const useChessEngineStore = defineStore('chess_engine', {
             return;
           }
           if (e.data == "initiated") {
+            const savedBoardFen = localStorage.getItem("current_board_fen");
+            if (savedBoardFen) {
+              worker.postMessage(["set_board_fen", savedBoardFen]);
+            }
             worker.postMessage(["get_pieces"]);
             worker.postMessage(["get_allowed_engines"]);
             worker.postMessage(["get_board_fen"]);
+            worker.postMessage(["get_current_player_color"]);
           }
           else if (messageType == "get_pieces") {
             this.currentBoardPieces = data;
@@ -92,6 +97,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
           }
           else if (messageType == "get_board_fen") {
             this.currentBoardFenString = data;
+            localStorage.setItem("current_board_fen", data);
           }
           else if (messageType == "search") {
             console.log("Search complete: ", data);
@@ -109,6 +115,10 @@ export const useChessEngineStore = defineStore('chess_engine', {
             const million_moves_per_second = (perft_count / 1000000) / (duration / 1000);
             this.logHistory.push(`Perft completed in ${duration/1000} seconds (${million_moves_per_second}M moves per second)`)
             this.logHistory.push(`Perft result: ${perft_count}`)
+          }
+          else if (messageType == "get_current_player_color") {
+            this.currentPlayerColor = data;
+            this.startSearchIfNecessary();
           }
       }.bind(this);
     },
@@ -163,6 +173,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["abort"]);
       worker.postMessage(["reset_board"]);
       worker.postMessage(["get_pieces"]);
+      worker.postMessage(["get_board_fen"]);
       this.currentPlayerColor = "white";
       this.clearBoardSelectionsCallback();
       this.startSearchIfNecessary();
