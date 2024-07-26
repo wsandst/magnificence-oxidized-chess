@@ -280,6 +280,9 @@ impl BitboardRuntimeConstants{
         for i in 0..keys.len() {
             keys[i] = rng.gen::<u64>();
         }
+        for i in 0..64 {
+            keys[(Piece::Empty.to_u8() as usize) * 64 + i] = 0;
+        }
         return keys;
     }
 }
