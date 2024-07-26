@@ -235,7 +235,7 @@ fn get_named_argument(words : &[&str], name: &str) -> Option<String> {
 // Returns a CommandType::Error if the command is not well formed
 fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
     if words.len() > 0 {
-        return match words[1] {
+        return match words[0] {
             "startpos" | "sp" if words.len() > 1 => { 
                 CommandType::Position(STARTING_POS_FEN.to_string()) 
             }

@@ -191,7 +191,6 @@ mod tests {
         assert_eq!(board.get_piece_pos(0, 6), Piece::Empty);
         assert_eq!(board.get_piece_pos(0, 7), Piece::BlackQueen);
         board.validate();
-        println!("{}", board);
         board.unmake_move(&mv);
         assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "1r6/P7/8/8/8/8/p7/1R6");
 
@@ -205,29 +204,33 @@ mod tests {
         assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "1r6/P7/8/8/8/8/p7/1R6");
 
         // En passant
-        board = Board::from_fen(STARTING_POS_FEN);
+        board = Board::from_fen("8/6p1/8/7P/1p6/8/P7/8 w - - 0 1");
         let move1 = Move::from_algebraic(&board, "a2a4");
         board.make_move(&move1);
         assert_eq!(board.get_ep(), 1);
-        let move2 = &Move::from_algebraic(&board, "b2b4");
+        let move2 = &Move::from_algebraic(&board, "b4a3");
         board.make_move(&move2);
-        assert_eq!(board.get_ep(), 2);
+        assert_eq!(board.to_fen(), "8/6p1/8/7P/8/p7/8/8 w - - 0 3");
+        assert_eq!(board.get_ep(), 0);
         board.unmake_move(&move2);
         assert_eq!(board.get_ep(), 1);
         board.unmake_move(&move1);
         assert_eq!(board.get_ep(), 0);
+        assert_eq!(board.to_fen(), "8/6p1/8/7P/1p6/8/P7/8 w - - 0 1");
 
-        board = Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1");
-        let move1 = Move::from_algebraic(&board, "a7a5");
+        board = Board::from_fen("8/6p1/8/7P/1p6/8/P7/8 b - - 0 1");
+        let move1 = Move::from_algebraic(&board, "g7g5");
         board.make_move(&move1);
-        assert_eq!(board.get_ep(), 1);
-        let move2 = &Move::from_algebraic(&board, "b7b5");
+        assert_eq!(board.get_ep(), 7);
+        let move2 = &Move::from_algebraic(&board, "h5g6");
         board.make_move(&move2);
-        assert_eq!(board.get_ep(), 2);
+        assert_eq!(board.to_fen(), "8/8/6P1/8/1p6/8/P7/8 b - - 0 3");
+        assert_eq!(board.get_ep(), 0);
         board.unmake_move(&move2);
-        assert_eq!(board.get_ep(), 1);
+        assert_eq!(board.get_ep(), 7);
         board.unmake_move(&move1);
         assert_eq!(board.get_ep(), 0);
+        assert_eq!(board.to_fen(), "8/6p1/8/7P/1p6/8/P7/8 b - - 0 1");
     }
 
     #[test]
@@ -314,7 +317,24 @@ mod tests {
         board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
         assert_move_eq_algebraic(&moves, &vec![
             "a5a4", "b6b5", "c5c4",
-        ]);   
+        ]);
+
+        // En passant
+        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 w - b6");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_move_eq_algebraic(&moves, &vec![
+            "c5c6", "c5b6", "f4f5",
+        ]);
+
+        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 b - f3");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_move_eq_algebraic(&moves, &vec![
+            "g4g3", "g4f3", "b5b4",
+        ]);
     }
 
 

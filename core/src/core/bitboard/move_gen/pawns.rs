@@ -59,20 +59,25 @@ impl Board {
         // Second rank double move
         let double_move_mask = ((forward_move_mask & ROWS[5]) >> 8) & !(full_occupancy);
         self.extract_pawn_loop::<16, false, true, false>(double_move_mask, moves);
+
+        // Add EP square to occupancy as a virtual piece
+        let black_occupancy_with_ep = match self.ep {
+            0 => black_occupancy,
+            _ => black_occupancy | (1 << (self.ep + 16 - 1)) 
+        };
         
         // Captures left
-        let left_captures_mask = (white_pawn_occupancy >> 9) & !(COLUMNS[7]) & black_occupancy;
+        let left_captures_mask = (white_pawn_occupancy >> 9) & !(COLUMNS[7]) & black_occupancy_with_ep;
         self.extract_pawn_moves::<9, true, true>(left_captures_mask, moves);
 
         // Captures right
-        let right_captures_mask = (white_pawn_occupancy >> 7) & !(COLUMNS[0]) & black_occupancy;
+        let right_captures_mask = (white_pawn_occupancy >> 7) & !(COLUMNS[0]) & black_occupancy_with_ep;
         self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
     }
 
     pub fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         let full_occupancy = white_occupancy | black_occupancy;
         let black_pawn_occupancy = self.piece_sets[Piece::BlackPawn.to_u8() as usize];
-        let mut move_mask: u64;
 
         // Move forward
         let forward_move_mask = (black_pawn_occupancy << 8) & !(full_occupancy);
@@ -82,12 +87,18 @@ impl Board {
         let double_move_mask = ((forward_move_mask & ROWS[2]) << 8) & !(full_occupancy);
         self.extract_pawn_loop::<-16, false, false, false>(double_move_mask, moves);
         
+        // Add EP square to occupancy as a virtual piece
+        let white_occupancy_with_ep = match self.ep {
+            0 => white_occupancy,
+            _ => white_occupancy | (1 << (40 + self.ep - 1)) 
+        };
+
         // Captures left
-        let left_captures_mask = (black_pawn_occupancy << 9) & !(COLUMNS[0]) & white_occupancy;
+        let left_captures_mask = (black_pawn_occupancy << 9) & !(COLUMNS[0]) & white_occupancy_with_ep;
         self.extract_pawn_moves::<-9, true, false>(left_captures_mask, moves);
 
         // Captures right
-        let right_captures_mask = (black_pawn_occupancy << 7) & !(COLUMNS[7]) & white_occupancy;
+        let right_captures_mask = (black_pawn_occupancy << 7) & !(COLUMNS[7]) & white_occupancy_with_ep;
         self.extract_pawn_moves::<-7, true, false>(right_captures_mask, moves);
     }
 }

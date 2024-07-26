@@ -106,7 +106,7 @@ impl Board {
     /// Print the `bits` of a u64 integer, formatted as a chess board. Used for debugging.
     pub fn print_bits(bits: u64) {
         for i in 0..8 {
-            println!("{:08b}", (bits.reverse_bits() >> (i*8)) as u8);
+            println!("{:08b}", (bits.reverse_bits() >> ((7 - i)*8)) as u8);
         }
         println!("");
     }
