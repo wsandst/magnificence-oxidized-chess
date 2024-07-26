@@ -7,219 +7,91 @@ const PROMOTION_PIECES_BLACK : [Piece; 4] = [Piece::BlackQueen, Piece::BlackRook
 
 
 impl Board {
+    fn extract_pawn_loop<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool, const PROMOTION: bool>(&self, mut move_mask: u64, moves : &mut Vec<Move>) {
+        let moved = match WHITE {
+            true => Piece::WhitePawn,
+            false => Piece::BlackPawn
+        };
+        while move_mask > 0 {
+            let index = move_mask.trailing_zeros() as u8;
+            move_mask &= move_mask - 1;
+            let taken = match CAPTURES {
+                true => Piece::Empty,
+                false => self.mailboard[index as usize]
+            };
+            if (PROMOTION) {
+                let promotion_pieces = match WHITE {
+                    true => PROMOTION_PIECES_WHITE,
+                    false => PROMOTION_PIECES_BLACK
+                };
+                for piece in promotion_pieces {
+                    moves.push(Move {
+                        to: index,
+                        from: (index as i8 + FROM_OFFSET) as u8,
+                        promotion: piece,
+                        captured: taken
+                    });
+                }
+            } else {
+                moves.push(Move {
+                    to: index,
+                    from: (index as i8 + FROM_OFFSET) as u8,
+                    promotion: Piece::Empty,
+                    captured: taken
+                });
+            }
+        }
+    }
+
+    fn extract_pawn_moves<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool>(&self, move_mask: u64, moves : &mut Vec<Move>) {
+        let promotion_mask = match WHITE {
+            true => ROWS[0],
+            false => ROWS[7]
+        };
+        self.extract_pawn_loop::<FROM_OFFSET, CAPTURES, WHITE, true>(move_mask & promotion_mask, moves);
+        self.extract_pawn_loop::<FROM_OFFSET, CAPTURES, WHITE, false>(move_mask & (!promotion_mask), moves);
+    }
+
     pub fn generate_white_pawn_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         let full_occupancy = white_occupancy | black_occupancy;
         let white_pawn_occupancy = self.piece_sets[Piece::WhitePawn.to_u8() as usize];
 
         // Move forward
         let forward_move_mask = (white_pawn_occupancy >> 8) & !(full_occupancy);
-        let mut move_mask = forward_move_mask & !ROWS[0];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index + 8, 
-                promotion: Piece::Empty, 
-                captured: Piece::Empty
-            });
-        }
-
-        // Move forward promotions
-        move_mask = forward_move_mask & ROWS[0];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            for piece in PROMOTION_PIECES_WHITE {
-                moves.push(Move {
-                    to: index, 
-                    from: index + 8, 
-                    promotion: piece, 
-                    captured: Piece::Empty
-                });
-            }
-        }
+        self.extract_pawn_moves::<8, false, true>(forward_move_mask, moves);
 
         // Second rank double move
         let double_move_mask = ((forward_move_mask & ROWS[5]) >> 8) & !(full_occupancy);
-        let mut move_mask = double_move_mask;
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index + 16, 
-                promotion: Piece::Empty, 
-                captured: self.mailboard[index as usize]
-            });
-        }
+        self.extract_pawn_loop::<16, false, true, false>(double_move_mask, moves);
         
         // Captures left
         let left_captures_mask = (white_pawn_occupancy >> 9) & !(COLUMNS[7]) & black_occupancy;
-        move_mask = left_captures_mask & !ROWS[0];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index + 9, 
-                promotion: Piece::Empty, 
-                captured: self.mailboard[index as usize]
-            });
-        }
-
-        // Captures left promotions
-        move_mask = left_captures_mask & ROWS[0];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            for piece in PROMOTION_PIECES_WHITE {
-                moves.push(Move {
-                    to: index, 
-                    from: index + 9, 
-                    promotion: piece, 
-                    captured: Piece::Empty
-                });
-            }
-        }
+        self.extract_pawn_moves::<9, true, true>(left_captures_mask, moves);
 
         // Captures right
         let right_captures_mask = (white_pawn_occupancy >> 7) & !(COLUMNS[0]) & black_occupancy;
-        move_mask = right_captures_mask & !ROWS[0];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index + 7, 
-                promotion: Piece::Empty, 
-                captured: self.mailboard[index as usize]
-            });
-        }
-
-        // Captures right promotions
-        move_mask = right_captures_mask & ROWS[0];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            for piece in PROMOTION_PIECES_WHITE {
-                moves.push(Move {
-                    to: index, 
-                    from: index + 7, 
-                    promotion: piece, 
-                    captured: Piece::Empty
-                });
-            }
-        }
-
-        // TODO: En passant and king safety
+        self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
     }
 
     pub fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         let full_occupancy = white_occupancy | black_occupancy;
         let black_pawn_occupancy = self.piece_sets[Piece::BlackPawn.to_u8() as usize];
+        let mut move_mask: u64;
 
         // Move forward
         let forward_move_mask = (black_pawn_occupancy << 8) & !(full_occupancy);
-        let mut move_mask = forward_move_mask & !ROWS[7];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index - 8, 
-                promotion: Piece::Empty, 
-                captured: Piece::Empty
-            });
-        }
-
-        // Move forward promotions
-        move_mask = forward_move_mask & ROWS[7];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            for piece in PROMOTION_PIECES_BLACK {
-                moves.push(Move {
-                    to: index, 
-                    from: index - 8, 
-                    promotion: piece, 
-                    captured: Piece::Empty
-                });
-            }
-        }
+        self.extract_pawn_moves::<-8, false, false>(forward_move_mask, moves);
 
         // Second rank double move
         let double_move_mask = ((forward_move_mask & ROWS[2]) << 8) & !(full_occupancy);
-        let mut move_mask = double_move_mask;
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index - 16, 
-                promotion: Piece::Empty, 
-                captured: self.mailboard[index as usize]
-            });
-        }
+        self.extract_pawn_loop::<-16, false, false, false>(double_move_mask, moves);
         
         // Captures left
         let left_captures_mask = (black_pawn_occupancy << 9) & !(COLUMNS[0]) & white_occupancy;
-        move_mask = left_captures_mask & !ROWS[7];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index - 9, 
-                promotion: Piece::Empty, 
-                captured: self.mailboard[index as usize]
-            });
-        }
-
-        // Captures left promotions
-        move_mask = left_captures_mask & ROWS[7];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            for piece in PROMOTION_PIECES_BLACK {
-                moves.push(Move {
-                    to: index, 
-                    from: index - 9, 
-                    promotion: piece, 
-                    captured: Piece::Empty
-                });
-            }
-        }
+        self.extract_pawn_moves::<-9, true, false>(left_captures_mask, moves);
 
         // Captures right
         let right_captures_mask = (black_pawn_occupancy << 7) & !(COLUMNS[7]) & white_occupancy;
-        move_mask = right_captures_mask & !ROWS[7];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            moves.push(Move {
-                to: index, 
-                from: index - 7, 
-                promotion: Piece::Empty, 
-                captured: self.mailboard[index as usize]
-            });
-        }
-
-        // Captures right promotions
-        move_mask = right_captures_mask & ROWS[7];
-        while move_mask > 0 {
-            let index = move_mask.trailing_zeros() as u8;
-            Self::unset_bit(&mut move_mask, index);
-            for piece in PROMOTION_PIECES_BLACK {
-                moves.push(Move {
-                    to: index, 
-                    from: index - 7, 
-                    promotion: piece, 
-                    captured: Piece::Empty
-                });
-            }
-        }
-        
-        // TODO: En passant and king safety
+        self.extract_pawn_moves::<-7, true, false>(right_captures_mask, moves);
     }
 }
