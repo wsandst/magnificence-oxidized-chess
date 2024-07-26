@@ -1,3 +1,4 @@
+use constants::BitboardRuntimeConstants;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata};
 /// Functionality for running the Universal Chess Protocol
@@ -10,6 +11,7 @@ use engine_core::engine::{Engine, SearchMetadata};
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use std::rc::Rc;
 use std::time::SystemTime;
 
 use engine_core::core::*;
@@ -35,6 +37,7 @@ struct GoState {
 }
 
 struct UCIState {
+    board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
     engine: StandardAlphaBetaEngine
 }
@@ -72,8 +75,10 @@ pub fn start_uci_protocol() {
     println!("Created by the Prog Boys\n");
     println!("Type 'help' for help");
 
+    let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
     let mut state = UCIState {
-        board: Board::from_fen(STARTING_POS_FEN),
+        board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
+        board_constant_state,
         engine: StandardAlphaBetaEngine::new()
     };
 
@@ -88,8 +93,11 @@ pub fn start_uci_protocol() {
 }
 
 pub fn run_single_uci_command(command_line: &str) {
+    let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
+
     let mut state = UCIState {
-        board: Board::new(),
+        board: Board::new(Rc::clone(&board_constant_state)),
+        board_constant_state,
         engine: StandardAlphaBetaEngine::new()
     };
 
@@ -112,7 +120,7 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             perft(depth, state);
         }
         CommandType::Position(fen) => {
-            state.board = Board::from_fen(fen);
+            state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
         }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());

@@ -1,7 +1,7 @@
 use crate::core::*;
 
 mod formatting;
-mod constants;
+pub mod constants;
 mod helpers;
 mod move_gen;
 use constants::*;
@@ -10,6 +10,7 @@ use helpers::*;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
+use std::rc::Rc;
 // Use count_ones() for popcnt
 
 /// Represents a chess board.
@@ -30,11 +31,12 @@ pub struct Board {
     current_player: Color,
     quiet: u8,
     half_moves: u8,
-    mailboard: [Piece; 64]
+    mailboard: [Piece; 64],
+    runtime_constants: Rc<BitboardRuntimeConstants>
 }
 
 impl Board {
-    pub fn empty() -> Board {
+    pub fn empty(runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
         let mut board = Board {
             piece_sets: [0; 13],
             hash_key: 0,
@@ -46,14 +48,15 @@ impl Board {
             current_player: Color::White,
             quiet: 0,
             half_moves: 1,
-            mailboard: [Piece::Empty; 64]
+            mailboard: [Piece::Empty; 64],
+            runtime_constants
         };
         board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
         return board;
     }
 
-    pub fn new() -> Board {
-        return Board::from_fen(STARTING_POS_FEN);
+    pub fn new(runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
+        return Board::from_fen(STARTING_POS_FEN, runtime_constants);
     }
 
     pub fn make_move(&mut self, mv: &Move) {

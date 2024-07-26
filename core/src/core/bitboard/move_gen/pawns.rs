@@ -111,7 +111,8 @@ mod tests {
 
     #[test]
     fn test_pawn_move_gen() {
-        let board = Board::new();
+        let constant_state = Rc::from(BitboardRuntimeConstants::create());
+        let board = Board::new(Rc::clone(&constant_state));
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         let mut moves = Vec::new();
         board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
@@ -123,7 +124,7 @@ mod tests {
         assert_moves_eq_algebraic(&moves, &vec!["a7a6","b7b6","c7c6","d7d6","e7e6","f7f6","g7g6","h7h6",
                                                "a7a5","b7b5","c7c5","d7d5","e7e5","f7f5","g7g5","h7h5"]);
 
-        let board = Board::from_fen("r1bqkbnr/1P2pppp/5P2/2p3P1/1p5P/p7/PPPP2p1/RNBQKB1R");
+        let board = Board::from_fen("r1bqkbnr/1P2pppp/5P2/2p3P1/1p5P/p7/PPPP2p1/RNBQKB1R", Rc::clone(&constant_state));
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         moves.clear();
         board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
@@ -144,7 +145,7 @@ mod tests {
         ]);   
 
 
-        let board = Board::from_fen("8/8/1p6/p1p5/8/P1P5/1P6/8 b - - 0 1");
+        let board = Board::from_fen("8/8/1p6/p1p5/8/P1P5/1P6/8 b - - 0 1", Rc::clone(&constant_state));
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
@@ -153,7 +154,7 @@ mod tests {
         ]);
 
         // En passant
-        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 w - b6");
+        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 w - b6", Rc::clone(&constant_state));
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         moves.clear();
         board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
@@ -161,7 +162,7 @@ mod tests {
             "c5c6", "c5b6", "f4f5",
         ]);
 
-        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 b - f3");
+        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 b - f3", Rc::clone(&constant_state));
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);

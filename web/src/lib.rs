@@ -1,3 +1,6 @@
+use std::rc::Rc;
+
+use constants::BitboardRuntimeConstants;
 use engine_core::commands;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
@@ -10,6 +13,7 @@ use gloo_timers::future::TimeoutFuture;
 
 #[wasm_bindgen]
 pub struct ChessEngine {
+    board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
     white_player: Option<Box<dyn Engine>>,
     black_player: Option<Box<dyn Engine>>,
@@ -64,8 +68,10 @@ impl ChessEngine {
 
     /// Create a new chess engine wrapper
     pub fn new() -> ChessEngine {
+        let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
         ChessEngine { 
-            board: Board::from_fen(STARTING_POS_FEN), 
+            board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
+            board_constant_state, 
             white_player: None, 
             black_player: None,
             game_moves: Vec::new()
@@ -111,7 +117,7 @@ impl ChessEngine {
     }
 
     pub fn reset_board(&mut self) {
-        self.board = Board::new();
+        self.board = Board::new(Rc::clone(&self.board_constant_state));
         self.game_moves = Vec::new();
     }
 
@@ -132,7 +138,7 @@ impl ChessEngine {
     }
 
     pub fn set_board_fen(&mut self, fen: String) {
-        self.board = Board::from_fen(&fen);
+        self.board = Board::from_fen(&fen, Rc::clone(&self.board_constant_state));
     }
 
     pub fn set_white_player(&mut self, engine_name: String) {

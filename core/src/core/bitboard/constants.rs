@@ -8,6 +8,16 @@ pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
 pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
 
+pub const WHITE_QUEENSIDE_CASTLING_MASK: u64 = 0b11111 << 56;
+pub const WHITE_KINGSIDE_CASTLING_MASK: u64 = 0b1111 << 60;
+pub const BLACK_QUEENSIDE_CASTLING_MASK: u64 = 0b11111;
+pub const BLACK_KINGSIDE_CASTLING_MASK: u64 = 0b1111 << 4;
+
+pub const WHITE_QUEENSIDE_FREE_CASTLING_MASK: u64 = 0b11111 << 56;
+pub const WHITE_KINGSIDE_FREE_CASTLING_MASK: u64 = 0b1111 << 60;
+pub const BLACK_QUEENSIDE_FREE_CASTLING_MASK: u64 = 0b01110;
+pub const BLACK_KINGSIDE_FREE_CASTLING_MASK: u64 = 0b0110 << 4;
+
 const fn p_rng(state: u128) -> (u128, u64) {
     let state = state * 0xaadec8c3186345282b4e141f3a1232d5;
     let mask = (1u128 << 64) - 1;
@@ -74,4 +84,22 @@ lazy_static! {
         }
         return keys;
     };
+}
+
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct BitboardRuntimeConstants {
+    bishop_magic_table: Vec<u64>
+}
+
+impl BitboardRuntimeConstants{
+    pub fn create() -> BitboardRuntimeConstants {
+        BitboardRuntimeConstants {
+            bishop_magic_table: Self::create_magic_table()
+        }
+    }
+
+    fn create_magic_table() -> Vec<u64> {
+        return vec![];
+    }
 }

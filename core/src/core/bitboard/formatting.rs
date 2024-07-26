@@ -1,13 +1,14 @@
+use bitboard::BitboardRuntimeConstants;
 use num::cast;
 
 use crate::core::*;
-use std::fmt;
+use std::{fmt, rc::Rc};
 use super::Board;
 
 impl Board {
     // Create a new board from a FEN string
-    pub fn from_fen(fen: &str) -> Board {
-        let mut board = Board::empty();
+    pub fn from_fen(fen: &str, runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
+        let mut board = Board::empty(runtime_constants);
         let parts: Vec<&str> = fen.split(" ").collect();
 
         let pieces = parts[0];
