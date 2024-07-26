@@ -31,6 +31,12 @@ impl Board {
             let index = i + (self.mailboard[i].to_u8() as usize) * 64;
             result = result ^ ZOOBRIST_KEYS[index];
         }
+        let mut castling = self.castling;
+        while castling > 0 { 
+            let index = castling.trailing_zeros() as usize;
+            result = result ^ ZOOBRIST_KEYS[index + CASTLING_RIGHTS_INDEX];
+            castling &= castling - 1;
+        }
         return result;
     }
 
@@ -61,7 +67,7 @@ impl Board {
     pub(super) fn generate_castling_u8(white_kingside: bool, white_queenside: bool, black_kingside: bool, 
             black_queenside: bool) -> u8 {
         return (white_kingside as u8) | ((white_queenside as u8) << 1) | 
-            ((black_kingside as u8) << 2) | ((black_kingside as u8) << 3)
+            ((black_kingside as u8) << 2) | ((black_queenside as u8) << 3)
     }
 
     /// Set castling rights by named booleans.

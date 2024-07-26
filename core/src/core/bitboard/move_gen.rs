@@ -38,7 +38,6 @@ impl Board {
         return (white_occupancy, black_occupancy);
     }
 
-
     // Example of conditional functions based on BMI2
     #[cfg(target_feature = "bmi2")]
     fn bmi_conditional_example() -> bool {

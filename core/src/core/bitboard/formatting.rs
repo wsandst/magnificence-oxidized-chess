@@ -1,3 +1,5 @@
+use num::cast;
+
 use crate::core::*;
 use std::fmt;
 use super::Board;
@@ -38,6 +40,11 @@ impl Board {
         // Castling
         if parts.len() > 2 {
             // let castling = parts[2];
+            let white_kingside = parts[2].contains('K');
+            let white_queenside = parts[2].contains('Q');
+            let black_kingside = parts[2].contains('k');
+            let black_queenside = parts[2].contains('q');
+            board.set_castling_bools(white_kingside, white_queenside, black_kingside, black_queenside);
         }
         // EP
         if parts.len() > 3 && parts[3] != "-" {
@@ -83,18 +90,9 @@ impl Board {
         // Current player
         fen_string.push_str(&format!(" {}", self.current_player.to_char()));
         // Castling
-        fen_string.push_str(" -");
-        fen_string.push_str(" ");
+        fen_string.push_str(&format!(" {}", &self.get_castling_str()));
         // EP
-        if self.get_ep() == 0 {
-            fen_string.push_str("-");
-        }
-        else if self.current_player == Color::White {
-            fen_string.push_str(&pos_to_algebraic_pos(self.get_ep() - 1, 5));
-        }
-        else if self.current_player == Color::Black {
-            fen_string.push_str(&pos_to_algebraic_pos(self.get_ep() - 1, 2));
-        }
+        fen_string.push_str(&format!(" {}", &self.get_ep_str()));
         // Quiet move number
         fen_string.push_str(&format!(" {}", self.quiet));
         // Full move number
@@ -109,6 +107,37 @@ impl Board {
             println!("{:08b}", (bits.reverse_bits() >> ((7 - i)*8)) as u8);
         }
         println!("");
+    }
+
+    pub fn get_castling_str(&self) -> String {
+        let mut castling_str = "".to_string();
+        if self.get_castling(Color::White, false) {
+            castling_str.push('K');
+        }
+        if self.get_castling(Color::White, true) {
+            castling_str.push('Q');
+        }
+        if self.get_castling(Color::Black, false) {
+            castling_str.push('k');
+        }
+        if self.get_castling(Color::Black, true) {
+            castling_str.push('q');
+        }
+        if castling_str.len() == 0 {
+            return "-".to_string();
+        }
+        return castling_str;
+    }
+
+    pub fn get_ep_str(&self) -> String {
+        let mut ep_str : String = "-".to_string();
+        if self.get_ep() > 0 && self.current_player == Color::White {
+            ep_str = pos_to_algebraic_pos(self.get_ep() - 1, 5);
+        }
+        else if self.get_ep() > 0 && self.current_player == Color::Black {
+            ep_str = pos_to_algebraic_pos(self.get_ep() - 1, 2);
+        }
+        return ep_str;
     }
 }
 
