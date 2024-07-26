@@ -11,6 +11,11 @@ pub static STARTING_POS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter, FromPrimitive, ToPrimitive)]
+/// Represents a piece or square on the board
+/// 
+/// #### NOTE
+/// Changing order of values changes their integer representation and may cause bugs 
+/// in other parts of the code.
 pub enum Piece {
     WhitePawn = 0,
     WhiteBishop,

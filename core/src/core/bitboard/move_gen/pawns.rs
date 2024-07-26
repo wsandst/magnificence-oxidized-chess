@@ -11,7 +11,7 @@ impl Board {
         let moved = match WHITE {
             true => Piece::WhitePawn,
             false => Piece::BlackPawn
-        };
+        };  
         while move_mask > 0 {
             let index = move_mask.trailing_zeros() as u8;
             move_mask &= move_mask - 1;

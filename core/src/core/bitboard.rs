@@ -1,7 +1,7 @@
 use crate::core::*;
 
 mod formatting;
-mod constants;
+pub mod constants;
 mod helpers;
 mod move_gen;
 use constants::*;
