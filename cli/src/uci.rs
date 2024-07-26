@@ -1,5 +1,5 @@
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
-use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback};
+use engine_core::engine::{Engine, SearchMetadata};
 /// Functionality for running the Universal Chess Protocol
 /// 
 /// This is a standardized way for chess engines to communicate.
@@ -10,13 +10,11 @@ use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback};
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
-use std::process::Command;
 use std::time::SystemTime;
 
 use engine_core::core::*;
 use engine_core::core::bitboard::*;
 use engine_core::commands;
-
 
 #[derive(Debug, PartialEq)]
 struct GoState {
