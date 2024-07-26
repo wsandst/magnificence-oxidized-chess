@@ -5,6 +5,7 @@ use rand::Rng;
 
 mod formatting;
 
+
 const CASTLING_RIGHTS_INDEX: usize = 13*64;
 const EP_INDEX: usize = 13 * 64 + 4;
 const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
