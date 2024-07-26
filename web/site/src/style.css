@@ -7,19 +7,25 @@
         font-family: 'ProximaNova';
         font-style: normal;
         font-weight: 100;
-        src: url(src/assets/fonts/ProximaNova-Thin.woff2) format('woff2');
+        src: url(./assets/fonts/ProximaNova-Thin.woff2) format('woff2');
     }
     @font-face {
         font-family: 'ProximaNova';
         font-style: normal;
         font-weight: 400;
-        src: url(src/assets/fonts/ProximaNova-Regular.woff2) format('woff2');
+        src: url(./assets/fonts/ProximaNova-Regular.woff2) format('woff2');
     }
     @font-face {
         font-family: 'ProximaNova';
         font-style: normal;
         font-weight: 700;
-        src: url(src/assets/fonts/ProximaNova-Bold.woff2) format('woff2');
+        src: url(./assets/fonts/ProximaNova-Bold.woff2) format('woff2');
+    }
+    @font-face {
+        font-family: 'DroidSansMono';
+        font-style: normal;
+        font-weight: 400;
+        src: url(./assets/fonts/DroidSansMono.woff2) format('woff2');
     }
 }
 
@@ -53,4 +59,24 @@ body {
 .wrapper {
     padding-top: 40px;
     height: 100%;
+}
+
+/* Transitions */
+
+.slide-leave-active,
+.slide-enter-active {
+  transition: all 0.5s ease-in-out;
+}
+
+.slide-enter-from, .slide-leave-to {
+    max-width: 0;
+}
+
+.slide-enter-to, .slide-leave-from {
+    @media screen(sm) {
+        max-width: 300px;
+    }
+    @media screen(3xl) {
+        max-width: 400px;
+    }
 }

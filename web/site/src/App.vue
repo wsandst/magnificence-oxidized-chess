@@ -1,41 +1,47 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed, onBeforeMount } from 'vue';
 import Board from './components/Board.vue';
 import Header from './components/Header.vue';
-import init, { ChessEngine } from '../wasm';
+import init, { ChessEngine, PiecePosition } from '../wasm';
 import PlayerInfo from './components/PlayerInfo.vue';
-import GameControls from './components/GameControls.vue';
+import BottomControls from './components/BottomControls.vue';
+import TopControls from './components/TopControls.vue';
+import EngineInfo from './components/EngineInfo.vue';
+import { useUiStore } from './store/ui';
+import { useChessEngineStore } from './store/engine';
 
-const currentPieces : any = ref(null);
-let engine : ChessEngine | null = null;
 
-onMounted(async () => {
-    // Init wasm
-    await init();
-    engine = ChessEngine.new();
-    currentPieces.value = engine.get_pieces();
+const uiStore = useUiStore();
+const chessEngine = useChessEngineStore();
+
+const sidebarVisible = computed(() => uiStore.sidebarVisible);
+
+onBeforeMount(async () => {
+  chessEngine.initWasmWorker();
 });
-
-function onPieceMove({from, to}) {
-  engine?.make_move(from[0], from[1], to[0], to[1]);
-  currentPieces.value = engine?.get_pieces();
-}
 
 </script>
 
 <template>
-    <div class="layout bg-primary h-screen text-primary">
-        <Header/>
-        <div class="flex flex-col justify-center items-center gap-4 mx-auto w-[min(500px,100vw)] pt-32">
+    <div class="layout h-screen text-primary flex flex-row items-center justify-center">
+        <div class="flex flex-col justify-center items-center gap-4 w-[min(500px,100vw)] 2xl:w-[62vh]">
             <div class="w-full px-6 flex flex-col gap-3">
-              <PlayerInfo image="src/assets/images/robot-profile.png" name="Magnificence"/>
-              <Board :pieces="currentPieces" @piece-moved="onPieceMove"/>
               <div class="flex flex-row justify-between">
-                <PlayerInfo image="src/assets/images/human-profile.png" name="Human"/>
-                <GameControls/>
+                <PlayerInfo player-color="black"/>
+                <TopControls class="mt-auto invisible md:visible"/>
+              </div>
+              <Board class="rounded-[8px] overflow-hidden"/>
+              <div class="flex flex-row justify-between">
+                <PlayerInfo player-color="white"/>
+                <BottomControls/>
               </div>
             </div>
-        </div>
+        </div>  
+        <transition name="slide" mode="in-out">
+          <div v-if="sidebarVisible" class="invisible w-0 md:visible md:w-[300px] 3xl:w-[400px] h-[530px] max-h-[530px] 2xl:h-[calc(62vh+30px)] 2xl:max-h-[calc(62vh+30px)] md:px-0 rounded-[8px] overflow-hidden">
+            <EngineInfo/>
+          </div>
+        </transition>
     </div>
 </template>
 

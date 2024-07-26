@@ -6,13 +6,8 @@ impl Board {
     pub fn from_fen(fen: &str) -> Board {
         let mut board = Board::empty();
         let parts: Vec<&str> = fen.split(" ").collect();
-        let pieces = parts[0];
-        //let player_to_move = parts[1];
-        //let castling = parts[2];
-        //let en_passant = parts[3];
-        //let half_move_counter = parts[4];
-        //let full_move_counter = parts[5];
 
+        let pieces = parts[0];
         let mut y: usize = 0;
         // Place pieces
         for row in pieces.split("/") {
@@ -36,11 +31,28 @@ impl Board {
             y += 1;
         }
 
+        if parts.len() > 1 {
+            board.current_player = Color::from_char(parts[1].chars().nth(0).unwrap());
+        }
+        if parts.len() > 2 {
+            // Castling
+            // let castling = parts[2];
+        }
+        if parts.len() > 3 {
+            // EP
+            // let en_passant = parts[3];
+        }
+        if parts.len() > 4 {
+            // Quiet move number
+            board.quiet = str::parse(parts[4]).unwrap();
+        }
+
         return board;
     }
 
     pub fn to_fen(&self) -> String {
         let mut fen_string = String::with_capacity(64);
+        // Pieces
         let mut run_of_empty = 0;
         for (i, piece) in self.mailboard.iter().enumerate() {
             if run_of_empty > 0 && (*piece != Piece::Empty || i != 0 && i % 8 == 0) {
@@ -60,7 +72,25 @@ impl Board {
         if run_of_empty > 0 {
             fen_string.push_str(&format!("{}", run_of_empty));
         }
+        // Current player
+        fen_string.push_str(&format!(" {}", self.current_player.to_char()));
+        // Castling
+        fen_string.push_str(" -");
+        // EP
+        fen_string.push_str(" -");
+        // Quiet move number
+        fen_string.push_str(&format!(" {}", self.quiet));
+        // Full move number
+        fen_string.push_str(&format!(" {}", 1));
+
         return fen_string;
+    }
+
+    pub fn print_bits(bits: u64) {
+        for i in 0..8 {
+            println!("{:08b}", (bits.reverse_bits() >> (i*8)) as u8);
+        }
+        println!("");
     }
 }
 
@@ -72,7 +102,7 @@ impl fmt::Display for Board {
         for y in 0..8 {
             board_string.push_str(&format!("\n{} ", 8 - y));
             for x in 0..8 {
-                let piece = self.get_piece(x, y);
+                let piece = self.get_piece_pos(x, y);
                 board_string.push(piece.as_char());
             }
         }

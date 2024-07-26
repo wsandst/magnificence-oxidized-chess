@@ -1,100 +1,215 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted } from 'vue';
-
-const emit = defineEmits(['pieceMoved']);
+import { ref, onMounted, computed } from 'vue';
+import { useChessEngineStore } from '../store/engine';
 
 const boardElement : any = ref(null);
-const refreshPieces : any = ref(0);
 const movingPiece : any = ref(null);
+const selectedPiecePos: any = ref(null);
+const previousMoveFromPos: any = ref(null);
+const previousMoveToPos: any = ref(null);
+const allPieces : any = ref([]);
+
+const chessEngine = useChessEngineStore();
+chessEngine.makeBoardEngineMoveCallback = makeEngineMove;
+chessEngine.clearBoardSelectionsCallback = clearSelections;
+
+var moveSoundEffect = new Audio('./sounds/move.mp3');
+
+const startingPosition = [
+    {"x": 0, "y": 0, "piece": 9},
+    {"x": 1, "y": 0, "piece": 8},
+    {"x": 2, "y": 0, "piece": 7},
+    {"x": 3, "y": 0, "piece": 10},
+    {"x": 4, "y": 0, "piece": 11},
+    {"x": 5, "y": 0, "piece": 7},
+    {"x": 6, "y": 0, "piece": 8},
+    {"x": 7, "y": 0, "piece": 9},
+    {"x": 0, "y": 1, "piece": 6},
+    {"x": 1, "y": 1, "piece": 6},
+    {"x": 2, "y": 1, "piece": 6},
+    {"x": 3, "y": 1, "piece": 6},
+    {"x": 4, "y": 1, "piece": 6},
+    {"x": 5, "y": 1, "piece": 6},
+    {"x": 6, "y": 1, "piece": 6},
+    {"x": 7, "y": 1, "piece": 6},
+    {"x": 0, "y": 6, "piece": 0},
+    {"x": 1, "y": 6, "piece": 0},
+    {"x": 2, "y": 6, "piece": 0},
+    {"x": 3, "y": 6, "piece": 0},
+    {"x": 4, "y": 6, "piece": 0},
+    {"x": 5, "y": 6, "piece": 0},
+    {"x": 6, "y": 6, "piece": 0},
+    {"x": 7, "y": 6, "piece": 0},
+    {"x": 0, "y": 7, "piece": 3},
+    {"x": 1, "y": 7, "piece": 2},
+    {"x": 2, "y": 7, "piece": 1},
+    {"x": 3, "y": 7, "piece": 4},
+    {"x": 4, "y": 7, "piece": 5},
+    {"x": 5, "y": 7, "piece": 1},
+    {"x": 6, "y": 7, "piece": 2},
+    {"x": 7, "y": 7, "piece": 3}
+]
+
+const boardPieces = computed(() => {
+    return chessEngine.currentBoardPieces ?? startingPosition;
+})
 
 function boardPositionModulo(row : number, col: number) : number {
     return (row * 8 + col + row) % 2;
 }
 
-const props = defineProps({
-    pieces: {
-        type: Array,
-        required: true
-    },
-})
-
 const pieceToIconMap : any = {
-    1: "src/assets/icons/pieces/white-pawn.svg",
-    2: "src/assets/icons/pieces/white-bishop.svg",
-    3: "src/assets/icons/pieces/white-knight.svg",
-    4: "src/assets/icons/pieces/white-rook.svg",
-    5: "src/assets/icons/pieces/white-queen.svg",
-    6: "src/assets/icons/pieces/white-king.svg",
-    7: "src/assets/icons/pieces/black-pawn.svg",
-    8: "src/assets/icons/pieces/black-bishop.svg",
-    9: "src/assets/icons/pieces/black-knight.svg",
-    10: "src/assets/icons/pieces/black-rook.svg",
-    11: "src/assets/icons/pieces/black-queen.svg",
-    12: "src/assets/icons/pieces/black-king.svg"
+    0: "./icons/pieces/white-pawn.svg",
+    1: "./icons/pieces/white-bishop.svg",
+    2: "./icons/pieces/white-knight.svg",
+    3: "./icons/pieces/white-rook.svg",
+    4: "./icons/pieces/white-queen.svg",
+    5: "./icons/pieces/white-king.svg",
+    6: "./icons/pieces/black-pawn.svg",
+    7: "./icons/pieces/black-bishop.svg",
+    8: "./icons/pieces/black-knight.svg",
+    9: "./icons/pieces/black-rook.svg",
+    10: "./icons/pieces/black-queen.svg",
+    11: "./icons/pieces/black-king.svg"
+}
+
+function getMousePosAsBoardPos(mouseX: number, mouseY: number) {
+    let squareSizePx = 0.125 * boardElement.value?.clientWidth;
+    var rect = boardElement.value?.getBoundingClientRect();
+    let x = Math.floor((mouseX - rect.left) / squareSizePx);
+    let y = Math.floor((mouseY - rect.top) / squareSizePx);
+    return [x, y];
 }
 
 function calculateTranslationBasedOnPosition(x : number, y: number) {
-    let xPos = 0.125 * x * boardElement.value.clientWidth;
-    let yPos = 0.125 * y * boardElement.value.clientHeight; 
-    return `transform: translate(${xPos}px, ${yPos}px);`
+    let xPos = 0.125 * x * boardElement.value?.clientWidth;
+    let yPos = 0.125 * y * boardElement.value?.clientHeight; 
+    return `translate(${xPos}px, ${yPos}px)`
 }
 
 function calculateTranslationBasedMousePosition(x : number, y: number) {
     // It needs to be relative to the board element position
     var rect = boardElement.value.getBoundingClientRect();
-
     let xPos = x - rect.left - (0.125 / 2) * boardElement.value.clientWidth;
     let yPos = y - rect.top - (0.125 / 2) * boardElement.value.clientHeight;
-    return `transform: translate(${xPos}px, ${yPos}px);`
+    return `translate(${xPos}px, ${yPos}px)`
 }
 
-
-function pieceDragStart(e: any) {
+function pieceDragStart(e: any, x: number, y: number) {
     movingPiece.value = e.target;
+    movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.x, e.y);
+    movingPiece.value.style.zIndex = 100;
+    selectedPiecePos.value = [x, y];
+}
+
+function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: any, from_y: any) {
+    piece.style.transition = `all 300ms ease`;
+    piece.style.zIndex = `100`;
+    piece.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
 }
 
 function pieceDragStop(e: any, x: number, y: number) {
-    var rect = boardElement.value.getBoundingClientRect();
     let dragStopX = null;
     let dragStopY = null;
-    let squareSizePx = 0.125 * boardElement.value.clientWidth;
     if (e.type == "touchend") {
-        dragStopX = e.touches[0].pageX;
-        dragStopY = e.touches[0].pageY;
+        dragStopX = e.changedTouches[0].pageX;
+        dragStopY = e.changedTouches[0].pageY;
     }
     else if (e.type == "mouseup") {
         dragStopX = e.x;
         dragStopY = e.y;
     }
     if (movingPiece.value != null) {
-        let to_x = Math.floor((dragStopX - rect.left) / squareSizePx);
-        let to_y = Math.floor((dragStopY - rect.top) / squareSizePx);
-        if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8) {
-            emit("pieceMoved", {from: [x, y], to: [to_x, to_y]})
+        movingPiece.value.style.zIndex = 1;
+        [x, y] = selectedPiecePos.value;
+        let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
+        if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
+            makeHumanMove(x, y, to_x, to_y);
         }
         else {
-            movingPiece.value.style = calculateTranslationBasedOnPosition(x, y);
+            movingPiece.value.style.transform = calculateTranslationBasedOnPosition(x, y);
         }
     }
     movingPiece.value = null;
 }
 
+function makeHumanMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion : number|null = null) {
+        // Validate the legality of the move
+    if (!chessEngine.isMoveLegal([from_x, from_y], [to_x, to_y], promotion)) {
+        movingPiece.value.style.transform = calculateTranslationBasedOnPosition(from_x, from_y);
+        return;
+    }
+    makeMove(from_x, from_y, to_x, to_y, promotion);
+    movingPiece.value.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
+}
+
+function makeMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion : number|null = null) {
+    // Validate that it is this players turn and that the player is human
+    chessEngine.makeMove([from_x, from_y], [to_x, to_y], promotion);
+    moveSoundEffect.play();
+    selectedPiecePos.value = null;
+    previousMoveFromPos.value = [from_x, from_y];
+    previousMoveToPos.value = [to_x, to_y];
+}
+
+// Callbacks from Chess Engine store
+
+function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion: number) {
+    let piece = allPieces.value.find((piece: any) => piece.getAttribute("data-x") == from_x && piece.getAttribute("data-y") == from_y);
+    selectedPiecePos.value = [from_x, from_y];
+    animatePieceToPosition(piece, to_x, to_y, from_x, from_y);
+    setTimeout(() => {
+        piece.style.transition = "";
+        piece.style.zIndex = 100;
+        if (from_x != null) {
+            makeMove(from_x, from_y, to_x, to_y, promotion);
+        }
+    }, 300);
+}
+
+function clearSelections() {
+    selectedPiecePos.value = null;
+    previousMoveFromPos.value = null;
+    previousMoveToPos.value = null;
+}
+
 function boardMouseMove(e: MouseEvent) {
     if (movingPiece.value) {
-        movingPiece.value.style = calculateTranslationBasedMousePosition(e.x, e.y);
+        movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.x, e.y);
     }
 }
 
 function boardTouchMove(e: TouchEvent) {
     if (movingPiece.value) {
-        movingPiece.value.style = calculateTranslationBasedMousePosition(e.touches[0].pageX, e.touches[0].pageY);
+        movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.touches[0].pageX, e.touches[0].pageY);
     }
 }
 
 function boardResized() {
-    refreshPieces.value += 1;
+    chessEngine.boardStateCounter += 1;
+}
+
+function shouldSquareBeHighlighted(x: number, y: number): boolean {
+    let positions = [selectedPiecePos.value, previousMoveFromPos.value, previousMoveToPos.value];
+    for (let position of positions) {
+        if (position != null && position[0] == x && position[1] == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getSquareColor(col: number, row: number) : string {
+    if (boardPositionModulo(row, col) == 0) {
+        // Dark square
+        return shouldSquareBeHighlighted(col, row) ? 'bg-dark-square-highlight' : 'bg-dark-square';
+    }
+    else {
+        // Light square
+        return shouldSquareBeHighlighted(col, row) ? 'bg-light-square-highlight' : 'bg-light-square';
+    }
 }
 
 onMounted(() => {
@@ -104,22 +219,27 @@ onMounted(() => {
 </script>
 
 <template>
-    <div @mousemove="boardMouseMove" @touchmove="boardTouchMove" class="flex flex-col w-full aspect-square rounded-[12px] relative" ref="boardElement">
+    <div @mousemove="boardMouseMove" @touchmove.prevent="boardTouchMove" class="flex select-none flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
-            <div class="w-[12.5%] h-full" 
-                :class="{ 'bg-dark-square': boardPositionModulo(row, col) == 1, 'bg-light-square': boardPositionModulo(row, col) == 0}"
+            <div class="w-[12.5%] h-full text-sm"
+                :class="[getSquareColor(col - 1, row - 1)]"
                 v-for="col in 8" :key="row * 8 + col">
+                {{ (row - 1) * 8 + col - 1 }}
             </div>
         </div>
-        <div class="absolute w-full" :key="refreshPieces" v-if="refreshPieces != 0">
+        <div class="absolute w-full" :key="chessEngine.boardStateCounter" v-if="chessEngine.boardStateCounter != 0">
             <img 
-                v-for="{x, y, piece} in pieces" :key="y * 8 + x + 'b'"
+                v-for="{x, y, piece} in boardPieces" :key="y * 8 + x + 'b'"
+                ref="allPieces"
+                :data-x="x"
+                :data-y="y"
                 class="w-[12.5%] object-cover absolute select-none cursor-pointer" 
+                :class="{'cursor-grabbing': movingPiece != null}"
                 :src="pieceToIconMap[piece]"
-                :style="calculateTranslationBasedOnPosition(x, y)"
+                :style="'transform:'+calculateTranslationBasedOnPosition(x, y)"
                 draggable="false"
-                @mousedown="pieceDragStart"
-                @touchstart="pieceDragStart"
+                @mousedown="(e) => pieceDragStart(e, x, y)"
+                @touchstart.prevent="(e) => pieceDragStart(e, x, y)"
                 @mouseup="(e) => pieceDragStop(e, x, y)"
                 @touchend="(e) => pieceDragStop(e, x, y)"
             />

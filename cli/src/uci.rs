@@ -1,3 +1,5 @@
+use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
+use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback};
 /// Functionality for running the Universal Chess Protocol
 /// 
 /// This is a standardized way for chess engines to communicate.
@@ -8,11 +10,11 @@
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use std::process::Command;
 use std::time::SystemTime;
 
 use engine_core::core::*;
 use engine_core::core::bitboard::*;
-use engine_core::engine::*;
 use engine_core::commands;
 
 
@@ -35,10 +37,12 @@ struct GoState {
 }
 
 struct UCIState {
-    board: Board
+    board: Board,
+    engine: StandardAlphaBetaEngine
 }
 
 #[derive(Debug, PartialEq)]
+#[allow(unused)]
 // UCI Command types sent from GUI to engine
 enum CommandType {
     // UCI commands
@@ -55,6 +59,7 @@ enum CommandType {
     Perft(usize),
     DisplayBoard,
     EvaluateBoard,
+    LegalMoves,
     Help,
     Unknown,
     Error(String),
@@ -70,7 +75,8 @@ pub fn start_uci_protocol() {
     println!("Type 'help' for help");
 
     let mut state = UCIState {
-        board: Board::empty()
+        board: Board::from_fen(STARTING_POS_FEN),
+        engine: StandardAlphaBetaEngine::new()
     };
 
     loop {
@@ -85,7 +91,8 @@ pub fn start_uci_protocol() {
 
 pub fn run_single_uci_command(command_line: &str) {
     let mut state = UCIState {
-        board: Board::empty()
+        board: Board::new(),
+        engine: StandardAlphaBetaEngine::new()
     };
 
     let command = parse_command(command_line);
@@ -107,19 +114,32 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             perft(depth, state);
         }
         CommandType::Position(fen) => {
-            println!("{}", fen);
             state.board = Board::from_fen(fen);
         }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
+        },
+        CommandType::Go(go_state) => {
+            println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false)))
+        }
+        CommandType::LegalMoves => {
+            let mut move_vector = Vec::new();
+            state.board.get_moves(&mut move_vector);
+            let moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
+            println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
         }
         _ => {}
     }
 }
 
+fn handle_search_metadata(metadata: SearchMetadata) {
+    println!("Go status: {:?}", metadata);
+}
+
 fn perft(depth: &usize, state: &mut UCIState) {
     println!("Performing perft of depth {}", depth);
-    let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board));
+    let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+    let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
     println!("Result: {}", perft_count);
@@ -177,6 +197,7 @@ fn parse_command(line: &str) -> CommandType {
                 CommandType::Error("Please specify a perft depth".to_string())
             }
         }
+        "moves" | "legalmoves" => CommandType::LegalMoves,
         _ => CommandType::Unknown,
     };
     return command;
@@ -282,5 +303,5 @@ fn timeit<F: FnMut() -> T, T>(mut f: F) -> (T, f64) {
     let end = SystemTime::now();
     let duration = end.duration_since(start).unwrap();
     return (result, duration.as_secs_f64());
-  }
+}
   
