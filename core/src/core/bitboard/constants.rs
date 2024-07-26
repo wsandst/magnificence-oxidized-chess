@@ -251,7 +251,7 @@ pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
             max_index += 1;
         }
 
-        magic[i] = generate_pext_rook_table(1u64 << i,ROOK_MASKS[i], 0, max_index, 0, &bits, keys);
+        //magic[i] = generate_pext_rook_table(1u64 << i,ROOK_MASKS[i], 0, max_index, 0, &bits, keys);
         i += 1;
     }
     magic
