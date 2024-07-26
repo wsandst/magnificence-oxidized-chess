@@ -62,24 +62,6 @@ pub const ROWS: [u64; 8] = {
     masks
 };
 
-pub const ZOOBRIST_KEYS : [u64; 13*64 + 4 + 8 + 1] = {
-    let mut keys = [0u64; 13*64 + 4 + 8 + 1];
-    let mut state: u128 = 23598723948723894;
-    let mut key: u64;
-    let mut i = 0;
-    while i < 13*64 + 4 + 8 + 1 {
-        (state, key) = p_rng(state);
-        keys[i] = key;
-        i += 1;
-    }
-    i = 0;
-    while i < 64 {
-        keys[12 * 64 + i] = 0;
-        i += 1;
-    }
-    keys
-};
-
 const fn directional_shift(lhs: u64, rhs: i32) -> u64 {
     if rhs > 0 {
         return  lhs << rhs;
@@ -186,19 +168,7 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
 }
 
 
-/*fn generate_pext_bishop_table<const N: usize>(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
 
-    if  bits.len() > 0 {
-        let top_bit = bits.pop().unwrap();
-        generate_pext_bishop_table(position, occupancy, bits, keys);
-        generate_pext_bishop_table(position, occupancy ^ (1u64 << top_bit), bits, keys);
-        bits.push(top_bit);
-    } else { 
-        let i: usize = pext_const(occupancy, mask) as usize;
-        keys[i] = generate_bishop_moves_slow(position_mask, occupancy);
-    }
-    return keys;
-}   */
 
 const fn generate_pext_rook_table<const N: usize>(position_mask: u64,mask: u64, occupancy: u64, max_index: usize, index: usize, bits: &[usize], mut keys: [u64;N]) -> [u64;N] {
     if index < max_index {
@@ -213,26 +183,7 @@ const fn generate_pext_rook_table<const N: usize>(position_mask: u64,mask: u64, 
 }   
 
 
-//#[cfg(target_feature = "bmi2")]
-pub const PEXT_BISHOP_MAGIC: [[u64;512];64] = {
-    let mut magic = [[0u64; 512]; 64];
-    let mut i = 0;
-    while i < 64 {
-        let mut bits = [0usize; 9];
-        let mut keys = [0u64; 512];
 
-        let mut tmp = BISHOP_MASKS[i];
-        let mut max_index = 0;
-        while tmp > 0 {
-            bits[max_index] = tmp.trailing_zeros() as usize;
-            tmp &= tmp - 1;
-            max_index += 1;
-        }
-        //magic[i] = generate_pext_bishop_table(1u64 << i,BISHOP_MASKS[i], 0, max_index, 0, &bits, keys);
-        i += 1;
-    }
-    magic
-};
 
 
 //#[cfg(target_feature = "bmi2")]
@@ -258,20 +209,50 @@ pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
 };
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
-    pub bishop_magic_table: Vec<u64>,
+    pub bishop_magic_table: Vec<Vec<u64>>,
     pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
 }
 
 impl BitboardRuntimeConstants{
     pub fn create() -> BitboardRuntimeConstants {
         BitboardRuntimeConstants {
-            bishop_magic_table: Self::create_magic_table(),
+            bishop_magic_table: Self::generate_bishop_magic(),
             zoobrist_keys: Self::create_zoobrist_keys()
         }
     }
 
-    fn create_magic_table() -> Vec<u64> {
-        return vec![];
+    fn generate_pext_bishop_table(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
+        if  bits.len() > 0 {
+            let top_bit = bits.pop().unwrap();
+            BitboardRuntimeConstants::generate_pext_bishop_table(position, occupancy, bits, keys);
+            BitboardRuntimeConstants::generate_pext_bishop_table(position, occupancy ^ (1u64 << top_bit), bits, keys);
+            bits.push(top_bit);
+        } else { 
+            let mask = BISHOP_MASKS[position as usize];
+            let i: usize = pext_const(occupancy, mask) as usize;
+            while i >= keys.len() {
+                keys.push(0);
+            }
+            keys[i] = generate_bishop_moves_slow(1u64 << position, occupancy);
+        }
+    }
+
+    fn generate_bishop_magic() -> Vec<Vec<u64>> {
+        let mut magic = Vec::with_capacity(64);
+        let mut i = 0;
+        for i in 0..64 {
+            let mut bits = Vec::<usize>::new();
+            let mut keys = Vec::<u64>::with_capacity(1usize << BISHOP_MASKS[i].count_ones());
+    
+            let mut tmp = BISHOP_MASKS[i];
+            while tmp > 0 {
+                bits.push(tmp.trailing_zeros() as usize);
+                tmp &= tmp - 1;
+            }
+            BitboardRuntimeConstants::generate_pext_bishop_table(i as u8, 0, &mut bits, &mut keys);
+            magic.push(keys);
+        }
+        magic
     }
 
     fn create_zoobrist_keys() -> [u64;13*64 + 4 + 8 + 1] {
@@ -287,6 +268,7 @@ impl BitboardRuntimeConstants{
     }
 }
 
+/*
 pub fn bishop_magic(position: u8, occupancy: u64) -> u64 {
     let mask = BISHOP_MASKS[position as usize];
     let key;
@@ -300,3 +282,4 @@ pub fn bishop_magic(position: u8, occupancy: u64) -> u64 {
     }
     return PEXT_BISHOP_MAGIC[position as usize][key as usize];
 }
+*/
