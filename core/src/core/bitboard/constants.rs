@@ -2,6 +2,7 @@
 use lazy_static::lazy_static;
 use rand::Rng;
 use super::super::*;
+use once_cell::sync::Lazy;
 
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
@@ -47,9 +48,20 @@ pub const ROWS: [u64; 8] = {
     masks
 };
 
+static ZOOBRIST_KEYS2: Lazy<[u64;13*64 + 4 + 8 + 1]> = Lazy::new(|| {
+    let mut keys = [0u64; 13*64 + 4 + 8 + 1];
+    let mut rng = rand::thread_rng();
+    for i in 0..keys.len() {
+        keys[i] = rng.gen::<u64>();
+    }
+    for i in 0..64 {
+        keys[(Piece::Empty.to_u8() as usize) * 64 + i] = 0;
+    }
+    return keys;
+});
+
 // Lazy initialize some state
 lazy_static! {
-    
     /// Zoobrist keys
     pub static ref ZOOBRIST_KEYS: [u64;13*64 + 4 + 8 + 1] = {
         let mut keys = [0u64; 13*64 + 4 + 8 + 1];
