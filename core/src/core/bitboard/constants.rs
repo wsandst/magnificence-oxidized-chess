@@ -7,6 +7,7 @@ pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
 pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
 
+/// Bit-filled columns, used for masking columns.
 pub const COLUMNS: [u64; 8] = {
     let mut masks = [0u64; 8];
     let mut i = 0;
@@ -23,6 +24,7 @@ pub const COLUMNS: [u64; 8] = {
     masks
 };
 
+/// Bit-filled rows, used for masking rows.
 pub const ROWS: [u64; 8] = {
     let mut masks = [0u64; 8];
     let mut i = 0;
@@ -41,6 +43,8 @@ pub const ROWS: [u64; 8] = {
 
 // Lazy initialize some state
 lazy_static! {
+    
+    /// Zoobrist keys
     pub static ref ZOOBRIST_KEYS: [u64;13*64 + 4 + 8 + 1] = {
         let mut keys = [0u64; 13*64 + 4 + 8 + 1];
         let mut rng = rand::thread_rng();

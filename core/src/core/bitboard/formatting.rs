@@ -3,6 +3,7 @@ use std::fmt;
 use super::Board;
 
 impl Board {
+    // Create a new board from a FEN string
     pub fn from_fen(fen: &str) -> Board {
         let mut board = Board::empty();
         let parts: Vec<&str> = fen.split(" ").collect();
@@ -50,6 +51,7 @@ impl Board {
         return board;
     }
 
+    /// Returns the current board as a FEN string
     pub fn to_fen(&self) -> String {
         let mut fen_string = String::with_capacity(64);
         // Pieces
@@ -86,6 +88,7 @@ impl Board {
         return fen_string;
     }
 
+    /// Print the `bits` of a u64 integer, formatted as a chess board. Used for debugging.
     pub fn print_bits(bits: u64) {
         for i in 0..8 {
             println!("{:08b}", (bits.reverse_bits() >> (i*8)) as u8);
@@ -95,7 +98,8 @@ impl Board {
 }
 
 impl fmt::Display for Board {
-    // String representation of board
+
+    /// Return a string representation of the board. Used for debugging.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut board_string = String::with_capacity(64 + 8 + 64);
         board_string.push_str("\n  ABCDEFGH\n");
