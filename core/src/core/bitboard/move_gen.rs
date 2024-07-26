@@ -48,8 +48,6 @@ impl Board {
         return true;
     }
 
-    
-
     #[cfg(not(target_feature = "bmi2"))]
     fn bmi_conditional_example() -> bool {
         return true;
