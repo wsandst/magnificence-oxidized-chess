@@ -29,6 +29,7 @@ pub struct Board {
     castling: u8,
     current_player: Color,
     quiet: u8,
+    half_moves: u8,
     mailboard: [Piece; 64]
 }
 
@@ -44,6 +45,7 @@ impl Board {
             castling: 0,
             current_player: Color::White,
             quiet: 0,
+            half_moves: 1,
             mailboard: [Piece::Empty; 64]
         };
         board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
@@ -57,6 +59,7 @@ impl Board {
     pub fn make_move(&mut self, mv: &Move) {
         self.current_player = self.current_player.next_player();
         let piece_to_move = self.get_piece(mv.from);
+        let mut ep = 0;
         if piece_to_move == Piece::WhitePawn || piece_to_move == Piece::BlackPawn {
             if mv.promotion != Piece::Empty {
                 // This piece is being promoted
@@ -65,6 +68,14 @@ impl Board {
                 return;
             }
             // Handle en passant
+            if piece_to_move == Piece::WhitePawn && mv.from.wrapping_sub(mv.to) == 16 {
+                // Double move, need to set en passant square
+                ep = (mv.from % 8) + 1;
+            }
+            else if piece_to_move == Piece::BlackPawn && mv.to.wrapping_sub(mv.from) == 16 {
+                // Double move, need to set en passant square
+                ep = (mv.from % 8) + 1;
+            }
         }
         else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
             // Black left side castling
@@ -102,6 +113,9 @@ impl Board {
         }
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
+        self.ep_history.push(self.ep);
+        self.ep = ep;
+        self.half_moves += 1;
     }
 
     pub fn unmake_move(&mut self, mv: &Move) {
@@ -157,6 +171,8 @@ impl Board {
 
         self.set_piece(mv.to, mv.captured);
         self.set_piece(mv.from, moved_piece);
+        self.ep = self.ep_history.pop().unwrap();
+        self.half_moves -= 1;
     }
 
     pub fn set_piece_pos(&mut self, x: usize, y: usize, piece: &Piece) {

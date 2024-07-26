@@ -72,6 +72,18 @@ impl Board {
             )
         )
     }
+
+    pub fn get_ep(&self) -> u8 {
+        return self.ep;
+    }
+
+    pub fn get_quiet_moves(&self) -> u8 {
+        return self.quiet;
+    }
+
+    pub fn get_half_moves(&self) -> u8 {
+        return self.half_moves;
+    }
     
     /// Validate that the bitboard is in a valid state
     pub fn validate(&self) {

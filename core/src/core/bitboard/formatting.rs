@@ -31,21 +31,27 @@ impl Board {
             }
             y += 1;
         }
-
+        // Extract current player color
         if parts.len() > 1 {
             board.current_player = Color::from_char(parts[1].chars().nth(0).unwrap());
         }
+        // Castling
         if parts.len() > 2 {
-            // Castling
             // let castling = parts[2];
         }
-        if parts.len() > 3 {
-            // EP
-            // let en_passant = parts[3];
+        // EP
+        if parts.len() > 3 && parts[3] != "-" {
+            let (x, _) = algebraic_pos_to_pos(parts[3]);
+            board.ep = x + 1;
         }
+        // Quiet move number
         if parts.len() > 4 {
-            // Quiet move number
             board.quiet = str::parse(parts[4]).unwrap();
+        }
+        // Half moves
+        if parts.len() > 5 {
+            // Half moves
+            board.half_moves = str::parse(parts[5]).unwrap();
         }
 
         return board;
@@ -78,12 +84,21 @@ impl Board {
         fen_string.push_str(&format!(" {}", self.current_player.to_char()));
         // Castling
         fen_string.push_str(" -");
+        fen_string.push_str(" ");
         // EP
-        fen_string.push_str(" -");
+        if self.get_ep() == 0 {
+            fen_string.push_str("-");
+        }
+        else if self.current_player == Color::White {
+            fen_string.push_str(&pos_to_algebraic_pos(self.get_ep() - 1, 5));
+        }
+        else if self.current_player == Color::Black {
+            fen_string.push_str(&pos_to_algebraic_pos(self.get_ep() - 1, 2));
+        }
         // Quiet move number
         fen_string.push_str(&format!(" {}", self.quiet));
         // Full move number
-        fen_string.push_str(&format!(" {}", 1));
+        fen_string.push_str(&format!(" {}", self.half_moves));
 
         return fen_string;
     }

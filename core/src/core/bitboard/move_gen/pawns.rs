@@ -8,10 +8,6 @@ const PROMOTION_PIECES_BLACK : [Piece; 4] = [Piece::BlackQueen, Piece::BlackRook
 
 impl Board {
     fn extract_pawn_loop<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool, const PROMOTION: bool>(&self, mut move_mask: u64, moves : &mut Vec<Move>) {
-        let moved = match WHITE {
-            true => Piece::WhitePawn,
-            false => Piece::BlackPawn
-        };
         while move_mask > 0 {
             let index = move_mask.trailing_zeros() as u8;
             move_mask &= move_mask - 1;
@@ -19,7 +15,7 @@ impl Board {
                 false => Piece::Empty,
                 true => self.mailboard[index as usize]
             };
-            if (PROMOTION) {
+            if PROMOTION {
                 let promotion_pieces = match WHITE {
                     true => PROMOTION_PIECES_WHITE,
                     false => PROMOTION_PIECES_BLACK
