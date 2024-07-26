@@ -73,9 +73,11 @@ pub fn start_uci_protocol() {
 
     println!("Magnificence Oxidized Chess Engine");
     println!("Created by the Prog Boys\n");
-    println!("Type 'help' for help");
 
-    let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let (board_constant_state, duration) = timeit(|| Rc::new(BitboardRuntimeConstants::create()));
+    println!("Constant state initialization took {:.3} seconds", duration);
+
+    println!("Type 'help' for help");
     let mut state = UCIState {
         board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
         board_constant_state,
