@@ -102,3 +102,71 @@ impl Board {
         self.extract_pawn_moves::<-7, true, false>(right_captures_mask, moves);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use tests::assert_moves_eq_algebraic;
+
+    use super::bitboard::*;
+
+    #[test]
+    fn test_pawn_move_gen() {
+        let board = Board::new();
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        let mut moves = Vec::new();
+        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+
+        assert_moves_eq_algebraic(&moves, &vec!["a2a3","b2b3","c2c3","d2d3","e2e3","f2f3","g2g3","h2h3",
+                                               "a2a4","b2b4","c2c4","d2d4","e2e4","f2f4","g2g4","h2h4"]);
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_moves_eq_algebraic(&moves, &vec!["a7a6","b7b6","c7c6","d7d6","e7e6","f7f6","g7g6","h7h6",
+                                               "a7a5","b7b5","c7c5","d7d5","e7e5","f7f5","g7g5","h7h5"]);
+
+        let board = Board::from_fen("r1bqkbnr/1P2pppp/5P2/2p3P1/1p5P/p7/PPPP2p1/RNBQKB1R");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+
+        assert_moves_eq_algebraic(&moves, &vec![
+            "b2b3","c2c3","d2d3","g5g6","h4h5",
+            "c2c4", "d2d4",
+            "b2a3", "f6e7", "f6g7",
+            "b7a8Q", "b7b8Q", "b7c8Q", "b7a8R", "b7b8R", "b7c8R", "b7a8B", "b7b8B", "b7c8B", "b7a8N", "b7b8N", "b7c8N"
+        ]);
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_moves_eq_algebraic(&moves, &vec![
+            "h7h6","g7g6","e7e6","c5c4","b4b3",
+            "h7h5", "e7e5",
+            "a3b2", "e7f6", "g7f6",
+            "g2f1q", "g2g1q", "g2h1q", "g2f1r", "g2g1r", "g2h1r", "g2f1b", "g2g1b", "g2h1b", "g2f1n", "g2g1n", "g2h1n"
+        ]);   
+
+
+        let board = Board::from_fen("8/8/1p6/p1p5/8/P1P5/1P6/8 b - - 0 1");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_moves_eq_algebraic(&moves, &vec![
+            "a5a4", "b6b5", "c5c4",
+        ]);
+
+        // En passant
+        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 w - b6");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_moves_eq_algebraic(&moves, &vec![
+            "c5c6", "c5b6", "f4f5",
+        ]);
+
+        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 b - f3");
+        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        moves.clear();
+        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_moves_eq_algebraic(&moves, &vec![
+            "g4g3", "g4f3", "b5b4",
+        ]);
+    }
+}

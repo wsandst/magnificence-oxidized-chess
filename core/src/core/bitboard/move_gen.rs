@@ -3,6 +3,7 @@ use std::arch::x86_64::{_pdep_u64, _pext_u64};
 // Use count_ones() for popcnt
 
 mod pawns;
+mod castling;
 
 use crate::core::*;
 use super::Board;
@@ -24,11 +25,14 @@ impl Board {
     /// Generate valid moves for white
     fn generate_moves_white(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         self.generate_white_pawn_moves(moves, white_occupancy, black_occupancy);
+        self.generate_white_castling_moves(moves, white_occupancy, black_occupancy);
+
     }
 
     /// Generate valid moves for black
     fn generate_moves_black(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         self.generate_black_pawn_moves(moves, white_occupancy, black_occupancy);
+        self.generate_black_castling_moves(moves, white_occupancy, black_occupancy);
     }
 
     /// Get the color piece occupancy of the board. Returns a tuple of `(white_occupancy, black_occupancy)`
