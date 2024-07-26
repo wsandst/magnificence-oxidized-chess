@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::core::bitboard::*;
-    use crate::core::*;
+    use crate::{commands, core::*};
     use strum::IntoEnumIterator;
 
 
@@ -285,5 +285,13 @@ mod tests {
         assert_move_eq_algebraic(&moves, &vec![
             "a5a4", "b6b5", "c5c4",
         ]);   
+    }
+
+
+    #[test]
+    fn debug_test() {
+        let mut board = Board::new();
+        let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+        commands::perft(4, &mut board, &mut reserved_moves);
     }
 }

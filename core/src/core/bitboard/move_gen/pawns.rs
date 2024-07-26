@@ -16,8 +16,8 @@ impl Board {
             let index = move_mask.trailing_zeros() as u8;
             move_mask &= move_mask - 1;
             let taken = match CAPTURES {
-                true => Piece::Empty,
-                false => self.mailboard[index as usize]
+                false => Piece::Empty,
+                true => self.mailboard[index as usize]
             };
             if (PROMOTION) {
                 let promotion_pieces = match WHITE {

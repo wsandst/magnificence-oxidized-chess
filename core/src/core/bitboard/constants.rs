@@ -7,6 +7,12 @@ pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
 pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
 
+const fn p_rng(state: u128) -> (u128, u64) {
+    let state = state * 0xaadec8c3186345282b4e141f3a1232d5;
+    let mask = (1u128 << 64) - 1;
+    return (state, (state & mask) as u64);
+}
+
 /// Bit-filled columns, used for masking columns.
 pub const COLUMNS: [u64; 8] = {
     let mut masks = [0u64; 8];
