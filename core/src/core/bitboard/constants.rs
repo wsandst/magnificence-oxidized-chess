@@ -81,7 +81,7 @@ pub const ZOOBRIST_KEYS : [u64; 13*64 + 4 + 8 + 1] = {
 };
 
 const fn directional_shift(lhs: u64, rhs: i32) -> u64 {
-    if (rhs > 0) {
+    if rhs > 0 {
         return  lhs << rhs;
     } else {
         return  lhs >> (-rhs);
@@ -136,7 +136,7 @@ pub const fn generate_rook_moves_slow(position: u64, occupancy: u64) -> u64 {
     return result;
 }
 
-//cfg(target_feature = "bmi2")]
+#[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
 
 pub const BISHOP_MASKS: [u64; 64] = {
