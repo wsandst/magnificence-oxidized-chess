@@ -25,7 +25,6 @@ export const useChessEngineStore = defineStore('chess_engine', {
     searchMetadata: null,
     logHistory: [],
     engineSearching: false,
-    searchOnUnpause: false,
 
     // Callbacks
     makeBoardEngineMoveCallback: null,
@@ -166,20 +165,24 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["get_pieces"]);
       this.currentPlayerColor = "white";
       this.clearBoardSelectionsCallback();
+      this.startSearchIfNecessary();
     },
     pauseGame() {
       if (this.engineSearching) {
         console.log("Aborting!");
         worker.postMessage(["abort"]);
       }
-      this.searchOnUnpause = this.engineSearching;
       this.gamePaused = true;
     },
     resumeGame() {
       this.gamePaused = false;
-      this.engineSearching = this.searchOnUnpause;
-      if (this.searchOnUnpause) {
-        this.searchOnUnpause = false;
+      this.startSearchIfNecessary();
+    },
+    startSearchIfNecessary() {
+      if (this.currentPlayerColor == "white" && this.whitePlayer.type == "engine" ||
+            this.currentPlayerColor == "black" && this.blackPlayer.type == "engine"
+      ) {
+        this.engineSearching = true;
         worker.postMessage(["search"]);
       }
     }

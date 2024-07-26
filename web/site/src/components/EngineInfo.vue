@@ -8,7 +8,7 @@ const chessEngine = useChessEngineStore();
 </script>
 
 <template>
-    <div class="flex flex-col gap-3 bg-container h-full w-[300px] p-3 font-mono text-[13px] break-words break-all">
+    <div class="flex flex-col gap-3 bg-container h-full md:w-[300px] 3xl:w-[400px]  p-3 font-mono text-[13px] break-words break-all">
         <div class="flex flex-row gap-4">
             <div class="w-auto flex justify-center items-center bg-container-lighter rounded-[8px] px-[12px] py-[6px] font-bold">
                 Eval: +30

@@ -24,7 +24,7 @@ onBeforeMount(async () => {
 
 <template>
     <div class="layout h-screen text-primary flex flex-row items-center justify-center">
-        <div class="flex flex-col justify-center items-center gap-4 w-[min(500px,100vw)]">
+        <div class="flex flex-col justify-center items-center gap-4 w-[min(500px,100vw)] 2xl:w-[62vh]">
             <div class="w-full px-6 flex flex-col gap-3">
               <div class="flex flex-row justify-between">
                 <PlayerInfo player-color="black"/>
@@ -38,7 +38,7 @@ onBeforeMount(async () => {
             </div>
         </div>  
         <transition name="slide" mode="in-out">
-          <div v-if="sidebarVisible" class="invisible w-0 md:visible md:w-[300px] h-[530px] max-h-[530px] md:px-0 rounded-[8px] overflow-hidden">
+          <div v-if="sidebarVisible" class="invisible w-0 md:visible md:w-[300px] 3xl:w-[400px] h-[530px] max-h-[530px] 2xl:h-[calc(62vh+30px)] 2xl:max-h-[calc(62vh+30px)] md:px-0 rounded-[8px] overflow-hidden">
             <EngineInfo/>
           </div>
         </transition>

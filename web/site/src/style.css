@@ -73,5 +73,10 @@ body {
 }
 
 .slide-enter-to, .slide-leave-from {
-    max-width: 300px;
+    @media screen(sm) {
+        max-width: 300px;
+    }
+    @media screen(3xl) {
+        max-width: 400px;
+    }
 }
