@@ -10,6 +10,7 @@ use helpers::*;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
+use std::rc::Rc;
 // Use count_ones() for popcnt
 
 /// Represents a chess board.
@@ -29,11 +30,13 @@ pub struct Board {
     castling: u8,
     current_player: Color,
     quiet: u8,
-    mailboard: [Piece; 64]
+    half_moves: u8,
+    mailboard: [Piece; 64],
+    runtime_constants: Rc<BitboardRuntimeConstants>
 }
 
 impl Board {
-    pub fn empty() -> Board {
+    pub fn empty(runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
         let mut board = Board {
             piece_sets: [0; 13],
             hash_key: 0,
@@ -44,19 +47,23 @@ impl Board {
             castling: 0,
             current_player: Color::White,
             quiet: 0,
-            mailboard: [Piece::Empty; 64]
+            half_moves: 1,
+            mailboard: [Piece::Empty; 64],
+            runtime_constants
         };
         board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
         return board;
     }
 
-    pub fn new() -> Board {
-        return Board::from_fen(STARTING_POS_FEN);
+    pub fn new(runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
+        return Board::from_fen(STARTING_POS_FEN, runtime_constants);
     }
 
     pub fn make_move(&mut self, mv: &Move) {
         self.current_player = self.current_player.next_player();
         let piece_to_move = self.get_piece(mv.from);
+        let mut ep = 0;
+        self.ep_history.push(self.ep);
         if piece_to_move == Piece::WhitePawn || piece_to_move == Piece::BlackPawn {
             if mv.promotion != Piece::Empty {
                 // This piece is being promoted
@@ -64,7 +71,22 @@ impl Board {
                 self.set_piece(mv.from, Piece::Empty);
                 return;
             }
-            // Handle en passant
+            // Check if this move generates an ep square
+            if piece_to_move == Piece::WhitePawn && mv.from.wrapping_sub(mv.to) == 16 {
+                // Double move, need to set en passant square
+                ep = (mv.from % 8) + 1;
+            }
+            else if piece_to_move == Piece::BlackPawn && mv.to.wrapping_sub(mv.from) == 16 {
+                // Double move, need to set en passant square
+                ep = (mv.from % 8) + 1;
+            }
+            // Check if this move performs en passant and zero the taken square
+            else if piece_to_move == Piece::WhitePawn && (self.ep + 16 - 1) == mv.to {
+                self.mailboard[self.ep as usize + 24 - 1] = Piece::Empty;
+            }
+            else if piece_to_move == Piece::BlackPawn && (self.ep + 40 - 1) == mv.to {
+                self.mailboard[self.ep as usize + 32 - 1] = Piece::Empty;
+            }
         }
         else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
             // Black left side castling
@@ -102,11 +124,14 @@ impl Board {
         }
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
+        self.ep = ep;
+        self.half_moves += 1;
     }
 
     pub fn unmake_move(&mut self, mv: &Move) {
         let moved_piece = self.get_piece(mv.to);
         self.current_player = self.current_player.next_player();
+        self.ep = self.ep_history.pop().unwrap();
 
         if mv.promotion != Piece::Empty {
             // Undo promotion
@@ -154,9 +179,17 @@ impl Board {
                 return;
             }
         }
+        else if moved_piece == Piece::WhitePawn && self.ep > 0 {
+            // Restore removed pawn from en passant
+            self.mailboard[self.ep as usize + 24 - 1] = Piece::BlackPawn;
+        }
+        else if moved_piece == Piece::BlackPawn && self.ep > 0 {
+            self.mailboard[self.ep as usize + 32 - 1] = Piece::WhitePawn;
+        }
 
         self.set_piece(mv.to, mv.captured);
         self.set_piece(mv.from, moved_piece);
+        self.half_moves -= 1;
     }
 
     pub fn set_piece_pos(&mut self, x: usize, y: usize, piece: &Piece) {

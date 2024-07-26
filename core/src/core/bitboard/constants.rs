@@ -12,6 +12,16 @@ pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
 pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
 
+pub const WHITE_QUEENSIDE_CASTLING_MASK: u64 = 0b11111 << 56;
+pub const WHITE_KINGSIDE_CASTLING_MASK: u64 = 0b1111 << 60;
+pub const BLACK_QUEENSIDE_CASTLING_MASK: u64 = 0b11111;
+pub const BLACK_KINGSIDE_CASTLING_MASK: u64 = 0b1111 << 4;
+
+pub const WHITE_QUEENSIDE_FREE_CASTLING_MASK: u64 = 0b11111 << 56;
+pub const WHITE_KINGSIDE_FREE_CASTLING_MASK: u64 = 0b1111 << 60;
+pub const BLACK_QUEENSIDE_FREE_CASTLING_MASK: u64 = 0b01110;
+pub const BLACK_KINGSIDE_FREE_CASTLING_MASK: u64 = 0b0110 << 4;
+
 const fn p_rng(state: u128) -> (u128, u64) {
     let state = state.wrapping_mul(0xaadec8c3186345282b4e141f3a1232d5);
     let val = state >> 64;
@@ -176,7 +186,7 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
 }
 
 
-fn generate_pext_bishop_table<const N: usize>(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
+/*fn generate_pext_bishop_table<const N: usize>(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
 
     if  bits.len() > 0 {
         let top_bit = bits.pop().unwrap();
@@ -188,7 +198,7 @@ fn generate_pext_bishop_table<const N: usize>(position: u8, occupancy: u64, bits
         keys[i] = generate_bishop_moves_slow(position_mask, occupancy);
     }
     return keys;
-}   
+}   */
 
 const fn generate_pext_rook_table<const N: usize>(position_mask: u64,mask: u64, occupancy: u64, max_index: usize, index: usize, bits: &[usize], mut keys: [u64;N]) -> [u64;N] {
     if index < max_index {
@@ -201,6 +211,7 @@ const fn generate_pext_rook_table<const N: usize>(position_mask: u64,mask: u64, 
     }
     return keys;
 }   
+
 
 //#[cfg(target_feature = "bmi2")]
 pub const PEXT_BISHOP_MAGIC: [[u64;512];64] = {
@@ -217,7 +228,6 @@ pub const PEXT_BISHOP_MAGIC: [[u64;512];64] = {
             tmp &= tmp - 1;
             max_index += 1;
         }
-
         //magic[i] = generate_pext_bishop_table(1u64 << i,BISHOP_MASKS[i], 0, max_index, 0, &bits, keys);
         i += 1;
     }
@@ -246,6 +256,33 @@ pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
     }
     magic
 };
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct BitboardRuntimeConstants {
+    pub bishop_magic_table: Vec<u64>,
+    pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
+}
+
+impl BitboardRuntimeConstants{
+    pub fn create() -> BitboardRuntimeConstants {
+        BitboardRuntimeConstants {
+            bishop_magic_table: Self::create_magic_table(),
+            zoobrist_keys: Self::create_zoobrist_keys()
+        }
+    }
+
+    fn create_magic_table() -> Vec<u64> {
+        return vec![];
+    }
+
+    fn create_zoobrist_keys() -> [u64;13*64 + 4 + 8 + 1] {
+        let mut keys = [0u64; 13*64 + 4 + 8 + 1];
+        let mut rng = rand::thread_rng();
+        for i in 0..keys.len() {
+            keys[i] = rng.gen::<u64>();
+        }
+        return keys;
+    }
+}
 
 pub fn bishop_magic(position: u8, occupancy: u64) -> u64 {
     let mask = BISHOP_MASKS[position as usize];
@@ -260,4 +297,3 @@ pub fn bishop_magic(position: u8, occupancy: u64) -> u64 {
     }
     return PEXT_BISHOP_MAGIC[position as usize][key as usize];
 }
-

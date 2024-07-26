@@ -20,7 +20,7 @@ impl Board {
     /// Updates the zoobrist key based on the addition/removal of `piece` at `pos`.
     pub(super) fn flip_zoobrist_piece(&mut self, pos: u8, piece: Piece) {
         let index = (piece.to_u8() as usize) * 64 + (pos as usize);
-        let key = ZOOBRIST_KEYS[index];
+        let key =  self.runtime_constants.zoobrist_keys[index];
         self.hash_key = self.hash_key ^ key;
     }
 
@@ -29,7 +29,13 @@ impl Board {
         let mut result = 0;
         for i in 0..64 {
             let index = i + (self.mailboard[i].to_u8() as usize) * 64;
-            result = result ^ ZOOBRIST_KEYS[index];
+            result = result ^ self.runtime_constants.zoobrist_keys[index];
+        }
+        let mut castling = self.castling;
+        while castling > 0 { 
+            let index = castling.trailing_zeros() as usize;
+            result = result ^ self.runtime_constants.zoobrist_keys[index + CASTLING_RIGHTS_INDEX];
+            castling &= castling - 1;
         }
         return result;
     }
@@ -52,7 +58,7 @@ impl Board {
         let mut difference = old_val ^ self.castling;
         while difference > 0 { 
             let index = difference.trailing_zeros() as usize;
-            self.hash_key = self.hash_key ^ ZOOBRIST_KEYS[index + CASTLING_RIGHTS_INDEX];
+            self.hash_key = self.hash_key ^ self.runtime_constants.zoobrist_keys[index + CASTLING_RIGHTS_INDEX];
             difference &= difference - 1;
         }
     }
@@ -61,7 +67,7 @@ impl Board {
     pub(super) fn generate_castling_u8(white_kingside: bool, white_queenside: bool, black_kingside: bool, 
             black_queenside: bool) -> u8 {
         return (white_kingside as u8) | ((white_queenside as u8) << 1) | 
-            ((black_kingside as u8) << 2) | ((black_kingside as u8) << 3)
+            ((black_kingside as u8) << 2) | ((black_queenside as u8) << 3)
     }
 
     /// Set castling rights by named booleans.
@@ -71,6 +77,18 @@ impl Board {
             white_kingside, white_queenside, black_kingside, black_queenside
             )
         )
+    }
+
+    pub fn get_ep(&self) -> u8 {
+        return self.ep;
+    }
+
+    pub fn get_quiet_moves(&self) -> u8 {
+        return self.quiet;
+    }
+
+    pub fn get_half_moves(&self) -> u8 {
+        return self.half_moves;
     }
     
     /// Validate that the bitboard is in a valid state

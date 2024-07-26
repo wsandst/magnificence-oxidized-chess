@@ -127,10 +127,16 @@ impl Color {
     }
 }
 
-fn pos_to_algebraic_pos(x: u8, y: u8) -> String {
+pub fn pos_to_algebraic_pos(x: u8, y: u8) -> String {
     let col = 'a' as usize + x as usize;
     let row = '1' as usize + (7 - y as usize);
     return format!("{}{}", char::from(col as u8), char::from(row as u8));
+}
+
+pub fn algebraic_pos_to_pos(pos: &str) -> (u8, u8) {
+    let x = pos.chars().nth(0).unwrap() as usize - 'a' as usize;
+    let y = 7 - (pos.chars().nth(1).unwrap() as usize - '1' as usize);
+    return (x as u8, y as u8);
 }
 
 impl Move {

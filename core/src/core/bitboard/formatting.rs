@@ -1,11 +1,14 @@
+use bitboard::BitboardRuntimeConstants;
+use num::cast;
+
 use crate::core::*;
-use std::fmt;
+use std::{fmt, rc::Rc};
 use super::Board;
 
 impl Board {
     // Create a new board from a FEN string
-    pub fn from_fen(fen: &str) -> Board {
-        let mut board = Board::empty();
+    pub fn from_fen(fen: &str, runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
+        let mut board = Board::empty(runtime_constants);
         let parts: Vec<&str> = fen.split(" ").collect();
 
         let pieces = parts[0];
@@ -31,21 +34,32 @@ impl Board {
             }
             y += 1;
         }
-
+        // Extract current player color
         if parts.len() > 1 {
             board.current_player = Color::from_char(parts[1].chars().nth(0).unwrap());
         }
+        // Castling
         if parts.len() > 2 {
-            // Castling
             // let castling = parts[2];
+            let white_kingside = parts[2].contains('K');
+            let white_queenside = parts[2].contains('Q');
+            let black_kingside = parts[2].contains('k');
+            let black_queenside = parts[2].contains('q');
+            board.set_castling_bools(white_kingside, white_queenside, black_kingside, black_queenside);
         }
-        if parts.len() > 3 {
-            // EP
-            // let en_passant = parts[3];
+        // EP
+        if parts.len() > 3 && parts[3] != "-" {
+            let (x, _) = algebraic_pos_to_pos(parts[3]);
+            board.ep = x + 1;
         }
+        // Quiet move number
         if parts.len() > 4 {
-            // Quiet move number
             board.quiet = str::parse(parts[4]).unwrap();
+        }
+        // Half moves
+        if parts.len() > 5 {
+            // Half moves
+            board.half_moves = str::parse(parts[5]).unwrap();
         }
 
         return board;
@@ -77,13 +91,13 @@ impl Board {
         // Current player
         fen_string.push_str(&format!(" {}", self.current_player.to_char()));
         // Castling
-        fen_string.push_str(" -");
+        fen_string.push_str(&format!(" {}", &self.get_castling_str()));
         // EP
-        fen_string.push_str(" -");
+        fen_string.push_str(&format!(" {}", &self.get_ep_str()));
         // Quiet move number
         fen_string.push_str(&format!(" {}", self.quiet));
         // Full move number
-        fen_string.push_str(&format!(" {}", 1));
+        fen_string.push_str(&format!(" {}", self.half_moves));
 
         return fen_string;
     }
@@ -94,6 +108,37 @@ impl Board {
             println!("{:08b}", (bits.reverse_bits() >> ((7-i)*8)) as u8);
         }
         println!("");
+    }
+
+    pub fn get_castling_str(&self) -> String {
+        let mut castling_str = "".to_string();
+        if self.get_castling(Color::White, false) {
+            castling_str.push('K');
+        }
+        if self.get_castling(Color::White, true) {
+            castling_str.push('Q');
+        }
+        if self.get_castling(Color::Black, false) {
+            castling_str.push('k');
+        }
+        if self.get_castling(Color::Black, true) {
+            castling_str.push('q');
+        }
+        if castling_str.len() == 0 {
+            return "-".to_string();
+        }
+        return castling_str;
+    }
+
+    pub fn get_ep_str(&self) -> String {
+        let mut ep_str : String = "-".to_string();
+        if self.get_ep() > 0 && self.current_player == Color::White {
+            ep_str = pos_to_algebraic_pos(self.get_ep() - 1, 5);
+        }
+        else if self.get_ep() > 0 && self.current_player == Color::Black {
+            ep_str = pos_to_algebraic_pos(self.get_ep() - 1, 2);
+        }
+        return ep_str;
     }
 }
 
