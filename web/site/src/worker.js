@@ -21,15 +21,21 @@ async function initWorker() {
     // Set callback to handle messages passed to the worker.
     self.onmessage = async (e) => {
         // console.log('Message received from main thread: ', e.data);
-        
+        let functionName = e.data[0];
+        let args = e.data.slice(1);
+        let result = null;
+
+        // Special handling for abort command, signals to currently running function to abort
+        if (functionName == "abort") {
+            self.shouldAbort = true;
+            return
+        }
+
         // Ensure only one message is processed at a time.
         await lock.promise;
         lock.enable();
 
         // Run function in chess engine
-        let functionName = e.data[0];
-        let args = e.data.slice(1);
-        let result = null;
         var startTime = performance.now();
         if (functionName in engine) {
             result = await engine[functionName](...args);
@@ -40,6 +46,7 @@ async function initWorker() {
         else {
             console.log(`Worker received WASM function '${functionName}', which does not appear to exist.`)
         }
+        self.shouldAbort = false;
         var endTime = performance.now()
 
         // Send response back to be handled by callback in main thread.

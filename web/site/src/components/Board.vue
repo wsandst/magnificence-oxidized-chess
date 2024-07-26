@@ -100,11 +100,13 @@ function calculateTranslationBasedMousePosition(x : number, y: number) {
 function pieceDragStart(e: any, x: number, y: number) {
     movingPiece.value = e.target;
     movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.x, e.y);
+    movingPiece.value.style.zIndex = 100;
     selectedPiecePos.value = [x, y];
 }
 
 function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: any, from_y: any) {
     piece.style.transition = `all 300ms ease`;
+    piece.style.zIndex = `100`;
     piece.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
 }
 
@@ -120,6 +122,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         dragStopY = e.y;
     }
     if (movingPiece.value != null) {
+        movingPiece.value.style.zIndex = 1;
         [x, y] = selectedPiecePos.value;
         let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
@@ -159,6 +162,7 @@ function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: numb
     animatePieceToPosition(piece, to_x, to_y, from_x, from_y);
     setTimeout(() => {
         piece.style.transition = "";
+        piece.style.zIndex = 100;
         if (from_x != null) {
             makeMove(from_x, from_y, to_x, to_y, promotion);
         }

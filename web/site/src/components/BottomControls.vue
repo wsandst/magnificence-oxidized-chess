@@ -17,8 +17,8 @@ const chessEngine = useChessEngineStore();
         <FontAwesomeIcon @click="chessEngine.perft(7)" class="cursor-pointer hover:scale-110 duration-300 ease-in-out" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faCalculator"/>
         <FontAwesomeIcon @click="chessEngine.resetGame()" class="cursor-pointer hover:scale-110 duration-300 ease-in-out" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faArrowsRotate"/>
         <FontAwesomeIcon @click="chessEngine.undoMove()" class="cursor-pointer hover:scale-110 duration-300 ease-in-out" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faRotateLeft"/>
-        <FontAwesomeIcon @click="chessEngine.gamePaused = false" v-if="chessEngine.gamePaused" class="cursor-pointer hover:scale-110 duration-300 ease-in-out w-[18px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faPlay"/>
-        <FontAwesomeIcon @click="chessEngine.gamePaused = true" v-else class="cursor-pointer hover:scale-110 duration-300 ease-in-out w-[18px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faPause"/>
+        <FontAwesomeIcon @click="chessEngine.resumeGame()" v-if="chessEngine.gamePaused" class="cursor-pointer hover:scale-110 duration-300 ease-in-out w-[18px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faPlay"/>
+        <FontAwesomeIcon @click="chessEngine.pauseGame()" v-else class="cursor-pointer hover:scale-110 duration-300 ease-in-out w-[18px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" size="xl" :icon="faPause"/>
     </div>
 </template>
 

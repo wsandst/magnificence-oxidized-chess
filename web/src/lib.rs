@@ -1,6 +1,6 @@
 use engine_core::commands;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
-use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback};
+use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
 use wasm_bindgen::prelude::*;
 use engine_core::core::{Color, Move, Piece, STARTING_POS_FEN};
@@ -155,20 +155,34 @@ impl ChessEngine {
         js_search_metadata_update(serde_wasm_bindgen::to_value(&wrapped_metadata).unwrap());
     }
 
+    fn get_should_abort_search_callback() -> ShouldAbortSearchCallback {
+        return Box::new(js_should_search_be_aborted);
+    }
+
     fn get_search_metadata_callback() -> SearchMetadataCallback {
         return Box::new(Self::handle_search_metadata);
     }
 
+
     pub async fn search(&mut self) -> JsValue {
-        TimeoutFuture::new(1_000).await;
+        for _ in 0..20 {
+            TimeoutFuture::new(50).await;
+            if js_should_search_be_aborted() {
+                return "aborted".into();
+            }
+        }
         if self.board.get_current_player() == Color::Black && self.black_player.is_some() {
             let black_player = self.black_player.as_mut().unwrap();
-            let moves = ChessEngine::moves_to_return_moves(&black_player.search(&self.board, Self::get_search_metadata_callback()));
+            let moves = ChessEngine::moves_to_return_moves(
+                &black_player.search(&self.board, Self::get_search_metadata_callback(), Self::get_should_abort_search_callback())
+            );
             return serde_wasm_bindgen::to_value(&moves).unwrap();
         }
         else if self.white_player.is_some() {
             let white_player = self.white_player.as_mut().unwrap();
-            let moves = ChessEngine::moves_to_return_moves(&white_player.search(&self.board, Self::get_search_metadata_callback()));
+            let moves = ChessEngine::moves_to_return_moves(
+                &white_player.search(&self.board, Self::get_search_metadata_callback(), Self::get_should_abort_search_callback())
+            );
             return serde_wasm_bindgen::to_value(&moves).unwrap();
         }
         return "".into();
@@ -188,4 +202,5 @@ impl ChessEngine {
 #[wasm_bindgen(raw_module = "../src/callbacks.js")]
 extern "C" {
     fn js_search_metadata_update(metadata: JsValue);
+    fn js_should_search_be_aborted() -> bool;
 }

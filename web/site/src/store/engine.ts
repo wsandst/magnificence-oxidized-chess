@@ -24,6 +24,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
     currentBoardFenString: null,
     searchMetadata: null,
     logHistory: [],
+    engineSearching: false,
+    searchOnUnpause: false,
 
     // Callbacks
     makeBoardEngineMoveCallback: null,
@@ -42,10 +44,24 @@ export const useChessEngineStore = defineStore('chess_engine', {
     setWhitePlayer(player: any) {
       this.whitePlayer = player;
       worker.postMessage(["set_white_player", player.name]);
+      if (player.type == "engine" && this.currentPlayerColor == "white") {
+        if (this.engineSearching) {
+          worker.postMessage(["abort"]);
+        }
+        worker.postMessage(["search"]);
+        this.engineSearching = true;
+      }
     },
     setBlackPlayer(player: any) {
       this.blackPlayer = player;
       worker.postMessage(["set_black_player", player.name]);
+      if (player.type == "engine" && this.currentPlayerColor == "black") {
+        if (this.engineSearching) {
+          worker.postMessage(["abort"]);
+        }
+        worker.postMessage(["search"]);
+        this.engineSearching = true;
+      }
     },
     progressTurn() {
       this.currentPlayerColor = this.currentPlayerColor == "white" ? "black" : "white";
@@ -59,6 +75,10 @@ export const useChessEngineStore = defineStore('chess_engine', {
           const messageType = e.data[0];
           const data = e.data[1];
           const duration = e.data[2];
+          if (data == "aborted") {
+            this.engineSearching = false;
+            return;
+          }
           if (e.data == "initiated") {
             worker.postMessage(["get_pieces"]);
             worker.postMessage(["get_allowed_engines"]);
@@ -76,6 +96,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
           }
           else if (messageType == "search") {
             console.log("Search complete: ", data);
+            this.engineSearching = false;
+            this.searchOnUnpause = false;
             const move = data[0];
             this.makeBoardEngineMoveCallback(move.from_x, move.from_y, move.to_x, move.to_y, move.promotion)
           }
@@ -108,8 +130,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["get_board_fen"]);
       this.progressTurn();
       if (this.getCurrentPlayer().type == "engine") {
+        this.engineSearching = true;
         worker.postMessage(["search"]);
-
       }
     },
     undoMove() {
@@ -132,16 +154,34 @@ export const useChessEngineStore = defineStore('chess_engine', {
       }
       else if (this.currentPlayerColor == "black" && piece < 6) {
         return false;
-      }
+      } true
       return true;
     },  
     perft(depth: number) {
       worker.postMessage(["perft", depth]);
     },
     resetGame() {
+      worker.postMessage(["abort"]);
       worker.postMessage(["reset_board"]);
       worker.postMessage(["get_pieces"]);
+      this.currentPlayerColor = "white";
       this.clearBoardSelectionsCallback();
+    },
+    pauseGame() {
+      if (this.engineSearching) {
+        console.log("Aborting!");
+        worker.postMessage(["abort"]);
+      }
+      this.searchOnUnpause = this.engineSearching;
+      this.gamePaused = true;
+    },
+    resumeGame() {
+      this.gamePaused = false;
+      this.engineSearching = this.searchOnUnpause;
+      if (this.searchOnUnpause) {
+        this.searchOnUnpause = false;
+        worker.postMessage(["search"]);
+      }
     }
   }
 });

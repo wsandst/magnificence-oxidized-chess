@@ -120,7 +120,7 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             println!("{}", state.board.to_string());
         },
         CommandType::Go(go_state) => {
-            println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata)))
+            println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false)))
         }
         CommandType::LegalMoves => {
             let mut move_vector = Vec::new();

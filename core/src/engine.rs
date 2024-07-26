@@ -3,6 +3,8 @@ pub mod ab_engine;
 use crate::core::bitboard::Board;
 
 pub type SearchMetadataCallback = Box<dyn Fn(SearchMetadata) -> ()>;
+pub type ShouldAbortSearchCallback = Box<dyn Fn() -> bool>;
+
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct SearchMetadata {
@@ -16,5 +18,5 @@ pub enum EngineType {
 }
 
 pub trait Engine {
-    fn search(&mut self, board: &Board, metadata_callback: SearchMetadataCallback) -> Vec<Move>;
+    fn search(&mut self, board: &Board, metadata_callback: SearchMetadataCallback, should_abort_search_callback: ShouldAbortSearchCallback) -> Vec<Move>;
 }

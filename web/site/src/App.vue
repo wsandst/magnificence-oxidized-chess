@@ -27,12 +27,12 @@ onBeforeMount(async () => {
         <div class="flex flex-col justify-center items-center gap-4 w-[min(500px,100vw)]">
             <div class="w-full px-6 flex flex-col gap-3">
               <div class="flex flex-row justify-between">
-                <PlayerInfo player-number="1"/>
+                <PlayerInfo player-color="black"/>
                 <TopControls class="mt-auto invisible md:visible"/>
               </div>
               <Board class="rounded-[8px] overflow-hidden"/>
               <div class="flex flex-row justify-between">
-                <PlayerInfo player-number="2"/>
+                <PlayerInfo player-color="white"/>
                 <BottomControls/>
               </div>
             </div>

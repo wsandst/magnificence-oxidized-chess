@@ -2,6 +2,7 @@
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner'
 import { ref, computed } from 'vue';
 import { useChessEngineStore } from '../store/engine';
 
@@ -13,14 +14,14 @@ const player2Placeholder = {"name": "Human", "profile": "./images/human-profile.
 const dropdownVisible = ref(false);
 
 const props = defineProps({
-    playerNumber: {
+    playerColor: {
         type: String,
         required: true
     },
 })
 
 function switchPlayer(player) {
-    if (props.playerNumber == "1") {
+    if (props.playerColor == "black") {
         chessEngine.setBlackPlayer(player);
     }
     else {
@@ -29,9 +30,9 @@ function switchPlayer(player) {
 }
 
 const playerInfo = computed(() => {
-    const player = props.playerNumber == "1" ? chessEngine.blackPlayer : chessEngine.whitePlayer;
+    const player = props.playerColor == "black" ? chessEngine.blackPlayer : chessEngine.whitePlayer;
     if (player == null) {
-        return props.playerNumber == "1" ? player1Placeholder : player2Placeholder;
+        return props.playerColor == "black" ? player1Placeholder : player2Placeholder;
     }
     return player;
 });
@@ -48,11 +49,16 @@ function toggleDropdownVisibility() {
     }
 }
 
+const shouldShowCalculationSpinner = computed(() => {
+    return chessEngine.engineSearching && props.playerColor == chessEngine.currentPlayerColor;
+})
+
 </script>
 
 <template>
     <div class="flex flex-row gap-2 relative z-10">
         <img width="55" height="55" class="w-[50px] h-[50px] rounded-[3px]" :src="playerInfo?.profile">
+        <FontAwesomeIcon v-if="shouldShowCalculationSpinner" title="Calculating..." spin class="absolute left-[52px] top-[25px] cursor-pointer hover:scale-110 duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" :icon="faSpinner"/>
         <div @click="toggleDropdownVisibility" class="cursor-pointer flex flex-row hover:scale-105 transition-all duration-300 ease-in-out">
             <span class="text-sm font-bold">{{ playerInfo?.name }}</span>
             <FontAwesomeIcon class="cursor-pointer hover:scale-110 duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" :icon="faCaretDown"/>
