@@ -8,4 +8,4 @@ fi
 # Build
 RUSTFLAGS="-C target-cpu=native" cargo build --release
 # Benchmark
-hyperfine --show-output --runs 10 "./target/release/magnificence-oxidized -c perft $1"
+hyperfine --show-output --warmup 3 --runs 15 "./target/release/magnificence-oxidized -c perft $1"
