@@ -10,11 +10,23 @@ impl Board {
     pub fn set_bit(num: &mut u64, pos: u8){
         *num  = (*num) | (1u64 << pos);
     }
+
+    /// Sets the bit at `pos % 8` to `1`.
+    #[inline]
+    pub fn set_bit_u8(num: &mut u8, pos: u8){
+        *num  = (*num) | (1u8 << pos);
+    }
     
     /// Sets the bit at `pos % 64` to `0`.
     #[inline]
     pub fn unset_bit(num: &mut u64, pos: u8) {
         *num = (*num) & (!1u64).rotate_left(pos as u32);
+    }
+
+    /// Sets the bit at `pos % 8` to `0`.
+    #[inline]
+    pub fn unset_bit_u8(num: &mut u8, pos: u8) {
+        *num = (*num) & (!1u8).rotate_left(pos as u32);
     }
 
     /// Updates the zoobrist key based on the addition/removal of `piece` at `pos`.

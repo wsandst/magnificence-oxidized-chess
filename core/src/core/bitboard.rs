@@ -89,36 +89,40 @@ impl Board {
             }
         }
         else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
-            // Black left side castling
+            // Black queen side castling
             if mv.from == 4 && mv.to == 2 {
                 self.set_piece(0, Piece::Empty);
                 self.set_piece(2, Piece::BlackKing);
                 self.set_piece(3, Piece::BlackRook);
                 self.set_piece(4, Piece::Empty);
+                Self::unset_bit_u8(&mut self.castling, 3);
                 return;
             }
-            // Black right side castling
+            // Black king side castling
             else if mv.from == 4 && mv.to == 6 {
                 self.set_piece(4, Piece::Empty);
                 self.set_piece(5, Piece::BlackRook);
                 self.set_piece(6, Piece::BlackKing);
                 self.set_piece(7, Piece::Empty);
+                Self::unset_bit_u8(&mut self.castling, 2);
                 return;
             }
-            // White left side castling
+            // White king side castling
             else if mv.from == 60 && mv.to == 62 {
                 self.set_piece(60, Piece::Empty);
                 self.set_piece(61, Piece::WhiteRook);
                 self.set_piece(62, Piece::WhiteKing);
                 self.set_piece(63, Piece::Empty);
+                Self::unset_bit_u8(&mut self.castling, 1);
                 return;
             }
-            // White right side castling
+            // White queen side castling
             else if mv.from == 60 && mv.to == 58 {
                 self.set_piece(56, Piece::Empty);
                 self.set_piece(58, Piece::WhiteKing);
                 self.set_piece(59, Piece::WhiteRook);
                 self.set_piece(60, Piece::Empty);
+                Self::unset_bit_u8(&mut self.castling, 0);
                 return;
             }
         }
@@ -152,6 +156,7 @@ impl Board {
                 self.set_piece(2, Piece::Empty);
                 self.set_piece(3, Piece::Empty);
                 self.set_piece(4, Piece::BlackKing);
+                Self::set_bit_u8(&mut self.castling, 3);
                 return;
             }
             // Black right side castling
@@ -160,6 +165,7 @@ impl Board {
                 self.set_piece(5, Piece::Empty);
                 self.set_piece(6, Piece::Empty);
                 self.set_piece(7, Piece::BlackRook);
+                Self::set_bit_u8(&mut self.castling, 2);
                 return;
             }
             // White left side castling
@@ -168,6 +174,7 @@ impl Board {
                 self.set_piece(61, Piece::Empty);
                 self.set_piece(62, Piece::Empty);
                 self.set_piece(63, Piece::WhiteRook);
+                Self::set_bit_u8(&mut self.castling, 1);
                 return;
             }
             // White right side castling
@@ -176,6 +183,7 @@ impl Board {
                 self.set_piece(58, Piece::Empty);
                 self.set_piece(59, Piece::Empty);
                 self.set_piece(60, Piece::WhiteKing);
+                Self::set_bit_u8(&mut self.castling, 0);
                 return;
             }
         }
