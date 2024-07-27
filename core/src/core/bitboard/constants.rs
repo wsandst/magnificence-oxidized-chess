@@ -170,20 +170,6 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
 
 
 
-const fn generate_pext_rook_table<const N: usize>(position_mask: u64,mask: u64, occupancy: u64, max_index: usize, index: usize, bits: &[usize], mut keys: [u64;N]) -> [u64;N] {
-    if index < max_index {
-        keys = generate_pext_rook_table(position_mask, mask, occupancy, max_index, index + 1, bits, keys);
-        keys = generate_pext_rook_table(position_mask, mask, occupancy ^ (1u64 << bits[index]), max_index, index + 1, bits, keys);
-        
-    } else {
-        let i: usize = pext_const(occupancy, mask) as usize;
-        keys[i] = generate_rook_moves_slow(position_mask, occupancy);
-    }
-    return keys;
-}   
-
-
-
 
 
 //#[cfg(target_feature = "bmi2")]
@@ -210,6 +196,7 @@ pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
     pub bishop_magic_table: Vec<Vec<u64>>,
+    pub rook_magic_table: Vec<Vec<u64>>,
     pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
 }
 
@@ -217,6 +204,7 @@ impl BitboardRuntimeConstants{
     pub fn create() -> BitboardRuntimeConstants {
         BitboardRuntimeConstants {
             bishop_magic_table: Self::generate_bishop_magic(),
+            rook_magic_table: Self::generate_rook_magic(),
             zoobrist_keys: Self::create_zoobrist_keys()
         }
     }
@@ -237,9 +225,24 @@ impl BitboardRuntimeConstants{
         }
     }
 
+    fn generate_pext_rook_table(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
+        if  bits.len() > 0 {
+            let top_bit = bits.pop().unwrap();
+            BitboardRuntimeConstants::generate_pext_rook_table(position, occupancy, bits, keys);
+            BitboardRuntimeConstants::generate_pext_rook_table(position, occupancy ^ (1u64 << top_bit), bits, keys);
+            bits.push(top_bit);
+        } else { 
+            let mask = ROOK_MASKS[position as usize];
+            let i: usize = pext_const(occupancy, mask) as usize;
+            while i >= keys.len() {
+                keys.push(0);
+            }
+            keys[i] = generate_rook_moves_slow(1u64 << position, occupancy);
+        }
+    }
+
     fn generate_bishop_magic() -> Vec<Vec<u64>> {
         let mut magic = Vec::with_capacity(64);
-        let mut i = 0;
         for i in 0..64 {
             let mut bits = Vec::<usize>::new();
             let mut keys = Vec::<u64>::with_capacity(1usize << BISHOP_MASKS[i].count_ones());
@@ -250,6 +253,23 @@ impl BitboardRuntimeConstants{
                 tmp &= tmp - 1;
             }
             BitboardRuntimeConstants::generate_pext_bishop_table(i as u8, 0, &mut bits, &mut keys);
+            magic.push(keys);
+        }
+        magic
+    }
+
+    fn generate_rook_magic() -> Vec<Vec<u64>> {
+        let mut magic = Vec::with_capacity(64);
+        for i in 0..64 {
+            let mut bits = Vec::<usize>::new();
+            let mut keys = Vec::<u64>::with_capacity(1usize << ROOK_MASKS[i].count_ones());
+    
+            let mut tmp = ROOK_MASKS[i];
+            while tmp > 0 {
+                bits.push(tmp.trailing_zeros() as usize);
+                tmp &= tmp - 1;
+            }
+            BitboardRuntimeConstants::generate_pext_rook_table(i as u8, 0, &mut bits, &mut keys);
             magic.push(keys);
         }
         magic
@@ -266,20 +286,32 @@ impl BitboardRuntimeConstants{
         }
         return keys;
     }
-}
 
-/*
-pub fn bishop_magic(position: u8, occupancy: u64) -> u64 {
-    let mask = BISHOP_MASKS[position as usize];
-    let key;
-    #[cfg(target_feature = "bmi2")]
-    unsafe {
-        key = _pext_u64(occupancy, mask);
+    pub fn bishop_magic(&self, position: usize, occupancy: u64) -> u64 {
+        let mask = BISHOP_MASKS[position as usize];
+        let key;
+        #[cfg(target_feature = "bmi2")]
+        unsafe {
+            key = _pext_u64(occupancy, mask);
+        }
+        #[cfg(not(target_feature = "bmi2"))] 
+        {
+            key = pext_const(occupancy, mask);
+        }
+        return self.bishop_magic_table[position as usize][key as usize];
     }
-    #[cfg(not(target_feature = "bmi2"))] 
-    {
-        key = pext_const(occupancy, mask);
+
+    pub fn rook_magic(&self, position: usize, occupancy: u64) -> u64 {
+        let mask = ROOK_MASKS[position as usize];
+        let key;
+        #[cfg(target_feature = "bmi2")]
+        unsafe {
+            key = _pext_u64(occupancy, mask);
+        }
+        #[cfg(not(target_feature = "bmi2"))] 
+        {
+            key = pext_const(occupancy, mask);
+        }
+        return self.rook_magic_table[position][key as usize];
     }
-    return PEXT_BISHOP_MAGIC[position as usize][key as usize];
 }
-*/

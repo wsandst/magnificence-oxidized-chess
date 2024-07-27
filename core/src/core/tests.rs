@@ -272,6 +272,17 @@ fn debug_test() {
 }
 
 
+#[test]
+fn debug_test_harald() {
+    let state = BitboardRuntimeConstants::create();
+    let position = 7;
+    let mut occupancy = 1u64 << 37;
+    occupancy |= 1u64 << 26;
+    occupancy |= 1u64 << 3 | 1 << 11 | 1 << 18;
+    Board::print_bits(state.rook_magic(position, occupancy));
+}
+
+
 pub fn assert_moves_eq_algebraic(lhs: &Vec<Move>, rhs: &Vec<&str>) {
     let mut lhs_algebraic : Vec<String> = lhs.iter().map(|mv| mv.to_algebraic()).collect();
     lhs_algebraic.sort();
