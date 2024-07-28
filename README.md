@@ -25,6 +25,9 @@ Install with: `cargo install rsw`
 
 ## Todo web
 - [ ] Improve sidebar
-- [ ] Implement undo move, board state switching and such. Pause.
+- [ ] Implement time controls
+- [ ] Implement game win condition
+- [ ] Implement local storage of current board
+- [ ] Implement undo move.
 - [ ] Implement display of valid moves. Mark previous moved squares. Only allow valid moves. 
 - [ ] Show lost material under PlayerInfo.

@@ -20,13 +20,12 @@ const BLACK_KING_SQUARE: u8 = 4;
 impl Board {
     pub fn generate_white_castling_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         let occupancy = white_occupancy | black_occupancy;
-        let can_castle_queenside: u64 = ((self.castling << 1) & 1) as u64;
-        let can_castle_kingside: u64 = ((self.castling << 0) & 1) as u64;
+        let can_castle_queenside: u64 = ((self.castling >> 1) & 1) as u64;
+        let can_castle_kingside: u64 = ((self.castling >> 0) & 1) as u64;
         let queenside_squares_free = ((occupancy & WHITE_QUEENSIDE_FREE_CASTLING_MASK) == 0) as u64;
         let kingside_squares_free = ((occupancy & WHITE_KINGSIDE_FREE_CASTLING_MASK) == 0) as u64;
         let mut move_mask: u64 = ((queenside_squares_free & can_castle_queenside) << 58) | 
                                  ((kingside_squares_free & can_castle_kingside) << 62);
-        println!("Queenside: {}", can_castle_queenside);
 
         while move_mask > 0 {
             let index = move_mask.trailing_zeros() as u8;
@@ -42,8 +41,8 @@ impl Board {
 
     pub fn generate_black_castling_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         let occupancy = white_occupancy | black_occupancy;
-        let can_castle_queenside: u64 = ((self.castling << 3) & 1) as u64;
-        let can_castle_kingside: u64 = ((self.castling << 2) & 1) as u64;
+        let can_castle_queenside: u64 = ((self.castling >> 3) & 1) as u64;
+        let can_castle_kingside: u64 = ((self.castling >> 2) & 1) as u64;
         let queenside_squares_free = ((occupancy & BLACK_QUEENSIDE_FREE_CASTLING_MASK) == 0) as u64;
         let kingside_squares_free = ((occupancy & BLACK_KINGSIDE_FREE_CASTLING_MASK) == 0) as u64;
         let mut move_mask: u64 = ((queenside_squares_free & can_castle_queenside) << 2) | 
