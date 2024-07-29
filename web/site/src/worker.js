@@ -61,7 +61,8 @@ async function initWorker() {
                 console.log(`Worker received WASM function '${functionName}', which does not appear to exist.`)
             }
         }
-        catch {
+        catch (e) {
+            console.error("Web assembly error: ", e);
             await resetWasm();
         }
 

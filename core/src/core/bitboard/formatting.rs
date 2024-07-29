@@ -9,7 +9,7 @@ impl Board {
     // Create a new board from a FEN string
     pub fn from_fen(fen: &str, runtime_constants: Rc<BitboardRuntimeConstants>) -> Board {
         let mut board = Board::empty(runtime_constants);
-        let parts: Vec<&str> = fen.split(" ").collect();
+        let parts: Vec<&str> = fen.trim().split(" ").collect();
 
         let pieces = parts[0];
         let mut y: usize = 0;

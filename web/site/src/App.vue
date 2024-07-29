@@ -9,6 +9,7 @@ import TopControls from './components/TopControls.vue';
 import EngineInfo from './components/EngineInfo.vue';
 import { useUiStore } from './store/ui';
 import { useChessEngineStore } from './store/engine';
+import PopupDialog from './components/PopupDialog.vue';
 
 
 const uiStore = useUiStore();
@@ -24,6 +25,9 @@ onBeforeMount(async () => {
 
 <template>
     <div class="layout h-screen text-primary flex flex-row items-center justify-center">
+        <div class="absolute">
+          <PopupDialog></PopupDialog>
+        </div>
         <div class="flex flex-col justify-center items-center gap-4 w-[min(500px,100vw)] 2xl:w-[62vh]">
             <div class="w-full px-6 flex flex-col gap-3">
               <div class="flex flex-row justify-between">

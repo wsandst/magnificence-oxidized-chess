@@ -31,7 +31,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
 
     // Callbacks
     makeBoardEngineMoveCallback: null,
-    clearBoardSelectionsCallback: null
+    clearBoardSelectionsCallback: null,
+    showCommandDialogCallback: null,
+    commandResponseCallback: null
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -107,6 +109,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
             this.engineSearching = false;
             this.searchOnUnpause = false;
             const move = data[0];
+            if (move == undefined) {
+              return;
+            }
             this.makeBoardEngineMoveCallback(move.from_x, move.from_y, move.to_x, move.to_y, move.promotion)
           }
           else if (messageType == "search_metadata_update") {
@@ -116,8 +121,10 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "perft") {
             const perft_count = data;
             const million_moves_per_second = (perft_count / 1000000) / (duration / 1000);
-            this.logHistory.push(`Perft completed in ${duration/1000} seconds (${million_moves_per_second}M moves per second)`)
-            this.logHistory.push(`Perft result: ${perft_count}`)
+            this.commandResponseCallback([
+              `Perft completed in ${(duration/1000).toFixed(2)} seconds (${million_moves_per_second.toFixed(2)}M moves per second)`,
+              `Perft result: ${perft_count}`
+            ]);
           }
           else if (messageType == "get_current_player_color") {
             this.currentPlayerColor = data;
@@ -136,6 +143,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
             if (currentFenCrashCount >= 3) {
               console.log("Engine crashed 3 times in a row with this position, resetting to starting position...");
               this.currentBoardFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+              this.clearBoardSelectionsCallback();
               localStorage.setItem("current_board_fen", this.currentBoardFenString);
             }
           }
@@ -163,8 +171,13 @@ export const useChessEngineStore = defineStore('chess_engine', {
       }
     },
     undoMove() {
+      if (this.engineSearching) {
+        worker.postMessage(["abort"]);
+      }
       worker.postMessage(["undo_move"]);
       worker.postMessage(["get_pieces"]);
+      this.progressTurn();
+      this.startSearchIfNecessary();
       this.clearBoardSelectionsCallback();
     },
     isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null) {
@@ -186,7 +199,16 @@ export const useChessEngineStore = defineStore('chess_engine', {
       return true;
     },  
     perft(depth: number) {
+      console.log("Perft: ", depth);
       worker.postMessage(["perft", depth]);
+    },
+    setBoardFen(fen: string) {
+      this.currentBoardFenString = fen;
+      this.clearBoardSelectionsCallback();
+      localStorage.setItem("current_board_fen", this.currentBoardFenString);
+      worker.postMessage(["set_board_fen", this.currentBoardFenString]);
+      worker.postMessage(["get_pieces"]);
+      worker.postMessage(["get_board_fen"]);
     },
     resetGame() {
       worker.postMessage(["abort"]);

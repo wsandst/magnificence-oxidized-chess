@@ -110,9 +110,11 @@ function pieceDragStart(e: any, x: number, y: number) {
 }
 
 function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: any, from_y: any) {
-    piece.style.transition = `all 300ms ease`;
-    piece.style.zIndex = `100`;
-    piece.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
+    if (piece) {
+        piece.style.transition = `all 300ms ease`;
+        piece.style.zIndex = `100`;
+        piece.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
+    }
 }
 
 function pieceDragStop(e: any, x: number, y: number) {

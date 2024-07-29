@@ -29,8 +29,7 @@ Install with: `cargo install rsw`
 - [ ] Improve sidebar
 - [ ] Implement game win condition (win popup)
 - [ ] Implement display of valid moves. Mark previous moved squares. Only allow valid moves. 
-- [ ] Implement command dropdown (perft, set fen)
-- [ ] Implement new game dialog
+- [ ] Add proper board square numbering
 
 ### UCI
 - [ ] Implement go/search properly
@@ -39,7 +38,6 @@ Install with: `cargo install rsw`
 ## Ideas
 * Using Stockfish NNUE for eval
 * Compile using PGO (https://en.wikipedia.org/wiki/Profile-guided_optimization, https://github.com/dede1751/carp?tab=readme-ov-file)
-
 
 ### Possible future web functionality
 - [ ] Time controls
