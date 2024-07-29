@@ -43,7 +43,7 @@ function runCommand() {
         }
     });
     currentCommand.value.command(...args);
-    if (!currentCommand.value.showResponse) {
+    if (!currentCommand.value.hasResponse) {
         hideCommandDialog();
     }
 }

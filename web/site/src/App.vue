@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, onBeforeMount } from 'vue';
 import Board from './components/Board.vue';
-import Header from './components/Header.vue';
-import init, { ChessEngine, PiecePosition } from '../wasm';
 import PlayerInfo from './components/PlayerInfo.vue';
 import BottomControls from './components/BottomControls.vue';
 import TopControls from './components/TopControls.vue';

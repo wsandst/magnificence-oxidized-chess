@@ -7,10 +7,6 @@ let worker = new Worker(new URL('../worker.js', import.meta.url), {
   type: 'module', name: "chess_worker"
 });
 
-function getPiece(currentBoardPieces: any, x: number, y: number) {
-  return currentBoardPieces.find((piece: any) => piece.x == x && piece.y == y) ?? 12;
-}
-
 let lastCrashFenString = null;
 let currentFenCrashCount = 0;
 
@@ -72,6 +68,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
     },
     getCurrentPlayer() : any {
       return this.currentPlayerColor == "white" ? this.whitePlayer : this.blackPlayer;
+    },
+    getPiece(x: number, y: number) {
+      return this.currentBoardPieces.find((piece: any) => piece.x == x && piece.y == y) ?? 12;
     },
     initWasmWorker() {
       worker.onmessage = function (e) {
@@ -153,10 +152,10 @@ export const useChessEngineStore = defineStore('chess_engine', {
       if (promotion == null) {
         // Always promote pawns to queen for now
         promotion = 12;
-        if (to[1] == 7 && getPiece(this.currentBoardPieces, from[0], from[1]).piece == 6) {
+        if (to[1] == 7 && this.getPiece(from[0], from[1]).piece == 6) {
           promotion = 10;
         }
-        else if (to[1] == 0 && getPiece(this.currentBoardPieces, from[0], from[1]).piece  == 0) {
+        else if (to[1] == 0 && this.getPiece(from[0], from[1]).piece  == 0) {
           promotion = 4;
         }
       }
@@ -189,7 +188,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
         return false;
       }
       // The current player can only move its own pieces
-      const piece = getPiece(this.currentBoardPieces, from[0], from[1]).piece;
+      const piece = this.getPiece(from[0], from[1]).piece;
       if (this.currentPlayerColor == "white" && piece >= 6) {
         return false;
       }

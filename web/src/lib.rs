@@ -21,12 +21,12 @@ pub struct ChessEngine {
     game_moves: Vec<Move>
 }
 
-#[wasm_bindgen]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct PiecePosition {
    pub x: usize,
    pub y: usize,
-   pub piece: usize
+   pub piece: usize,
+   pub legal_moves: Vec<MoveWrapper>
 }
 
 #[wasm_bindgen]
@@ -91,11 +91,20 @@ impl ChessEngine {
 
     pub fn get_pieces(&self) -> Vec<JsValue> {
         let mut pieces : Vec<JsValue> = Vec::new();
+        let mut legal_moves = Vec::new();
+        self.board.get_moves(&mut legal_moves);
+
         for y in 0..8 {
             for x in 0..8 {
                 let piece_value = self.board.get_piece_pos(x, y).to_u8();
                 if piece_value != 12 {
-                    let position = PiecePosition {x, y, piece: piece_value as usize};
+                    let mut piece_legal_moves: Vec<MoveWrapper> = Vec::new();
+                    for mv in &legal_moves {
+                        if (mv.from % 8) as usize == x && (mv.from / 8) as usize == y {
+                            piece_legal_moves.push(MoveWrapper::from_move(mv));
+                        }
+                    }
+                    let position = PiecePosition {x, y, piece: piece_value as usize, legal_moves: piece_legal_moves};
                     pieces.push(serde_wasm_bindgen::to_value(&position).unwrap());
                 }
             }

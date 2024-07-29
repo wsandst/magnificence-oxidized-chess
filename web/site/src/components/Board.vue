@@ -10,6 +10,7 @@ const selectedPiecePos: any = ref(null);
 const previousMoveFromPos: any = ref(null);
 const previousMoveToPos: any = ref(null);
 const allPieces : any = ref([]);
+const legalMovesHighlightedSquares: any = ref([]);
 
 const chessEngine = useChessEngineStore();
 chessEngine.makeBoardEngineMoveCallback = makeEngineMove;
@@ -18,38 +19,38 @@ chessEngine.clearBoardSelectionsCallback = clearSelections;
 var moveSoundEffect = new Audio('./sounds/move.mp3');
 
 const startingPosition = [
-    {"x": 0, "y": 0, "piece": 9},
-    {"x": 1, "y": 0, "piece": 8},
-    {"x": 2, "y": 0, "piece": 7},
-    {"x": 3, "y": 0, "piece": 10},
-    {"x": 4, "y": 0, "piece": 11},
-    {"x": 5, "y": 0, "piece": 7},
-    {"x": 6, "y": 0, "piece": 8},
-    {"x": 7, "y": 0, "piece": 9},
-    {"x": 0, "y": 1, "piece": 6},
-    {"x": 1, "y": 1, "piece": 6},
-    {"x": 2, "y": 1, "piece": 6},
-    {"x": 3, "y": 1, "piece": 6},
-    {"x": 4, "y": 1, "piece": 6},
-    {"x": 5, "y": 1, "piece": 6},
-    {"x": 6, "y": 1, "piece": 6},
-    {"x": 7, "y": 1, "piece": 6},
-    {"x": 0, "y": 6, "piece": 0},
-    {"x": 1, "y": 6, "piece": 0},
-    {"x": 2, "y": 6, "piece": 0},
-    {"x": 3, "y": 6, "piece": 0},
-    {"x": 4, "y": 6, "piece": 0},
-    {"x": 5, "y": 6, "piece": 0},
-    {"x": 6, "y": 6, "piece": 0},
-    {"x": 7, "y": 6, "piece": 0},
-    {"x": 0, "y": 7, "piece": 3},
-    {"x": 1, "y": 7, "piece": 2},
-    {"x": 2, "y": 7, "piece": 1},
-    {"x": 3, "y": 7, "piece": 4},
-    {"x": 4, "y": 7, "piece": 5},
-    {"x": 5, "y": 7, "piece": 1},
-    {"x": 6, "y": 7, "piece": 2},
-    {"x": 7, "y": 7, "piece": 3}
+    {"x": 0, "y": 0, "piece": 9, "legal_moves": []},
+    {"x": 1, "y": 0, "piece": 8, "legal_moves": []},
+    {"x": 2, "y": 0, "piece": 7, "legal_moves": []},
+    {"x": 3, "y": 0, "piece": 10, "legal_moves": []},
+    {"x": 4, "y": 0, "piece": 11, "legal_moves": []},
+    {"x": 5, "y": 0, "piece": 7, "legal_moves": []},
+    {"x": 6, "y": 0, "piece": 8, "legal_moves": []},
+    {"x": 7, "y": 0, "piece": 9, "legal_moves": []},
+    {"x": 0, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 1, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 2, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 3, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 4, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 5, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 6, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 7, "y": 1, "piece": 6, "legal_moves": []},
+    {"x": 0, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 1, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 2, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 3, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 4, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 5, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 6, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 7, "y": 6, "piece": 0, "legal_moves": []},
+    {"x": 0, "y": 7, "piece": 3, "legal_moves": []},
+    {"x": 1, "y": 7, "piece": 2, "legal_moves": []},
+    {"x": 2, "y": 7, "piece": 1, "legal_moves": []},
+    {"x": 3, "y": 7, "piece": 4, "legal_moves": []},
+    {"x": 4, "y": 7, "piece": 5, "legal_moves": []},
+    {"x": 5, "y": 7, "piece": 1, "legal_moves": []},
+    {"x": 6, "y": 7, "piece": 2, "legal_moves": []},
+    {"x": 7, "y": 7, "piece": 3, "legal_moves": []}
 ]
 
 const boardPieces = computed(() => {
@@ -84,11 +85,6 @@ function getMousePosAsBoardPos(mouseX: number, mouseY: number) {
 }
 
 function calculateTranslationBasedOnPosition(x : number, y: number) {
-    //if (movingPiece.value?.getAttribute("data-x") == x && movingPiece.value?.getAttribute("data-y") == y) {
-        // We already have a moving piece, need to handle this
-        //selectedPiecePos.value = [x, y];
-        //return movingPiece.value.style.transform;
-    //}
     let xPos = 0.125 * x * boardElement.value?.clientWidth;
     let yPos = 0.125 * y * boardElement.value?.clientHeight; 
     return `translate(${xPos}px, ${yPos}px)`
@@ -103,6 +99,8 @@ function calculateTranslationBasedMousePosition(x : number, y: number) {
 }
 
 function pieceDragStart(e: any, x: number, y: number) {
+    let piece = chessEngine.getPiece(x, y);
+    legalMovesHighlightedSquares.value = piece.legal_moves.map(move => [move.to_x, move.to_y])
     movingPiece.value = e.target;
     movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.x, e.y);
     movingPiece.value.style.zIndex = 100;
@@ -133,6 +131,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         [x, y] = selectedPiecePos.value;
         let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
+            legalMovesHighlightedSquares.value = null;
             makeHumanMove(x, y, to_x, to_y);
         }
         else {
@@ -168,8 +167,10 @@ function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: numb
     //selectedPiecePos.value = [from_x, from_y];
     animatePieceToPosition(piece, to_x, to_y, from_x, from_y);
     setTimeout(() => {
-        piece.style.transition = "";
-        piece.style.zIndex = 100;
+        if (piece) {
+            piece.style.transition = "";
+            piece.style.zIndex = 100;
+        }
         if (from_x != null) {
             makeMove(from_x, from_y, to_x, to_y, promotion);
         }
@@ -180,6 +181,7 @@ function clearSelections() {
     selectedPiecePos.value = null;
     previousMoveFromPos.value = null;
     previousMoveToPos.value = null;
+    legalMovesHighlightedSquares.value = null;
 }
 
 function boardMouseMove(e: MouseEvent) {
@@ -208,14 +210,38 @@ function shouldSquareBeHighlighted(x: number, y: number): boolean {
     return false;
 }
 
+function shouldSquareBeHighlightedAsLegalMove(x: number, y: number): boolean {
+    if (legalMovesHighlightedSquares.value == null) {
+        return false;
+    }
+    for (let position of legalMovesHighlightedSquares.value) {
+        if (position != null && position[0] == x && position[1] == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function getSquareColor(col: number, row: number) : string {
     if (boardPositionModulo(row, col) == 1) {
         // Dark square
-        return shouldSquareBeHighlighted(col, row) ? 'bg-dark-square-highlight' : 'bg-dark-square';
+        if (shouldSquareBeHighlightedAsLegalMove(col, row)) {
+            return 'bg-dark-square-legal-highlight';
+        }
+        else if (shouldSquareBeHighlighted(col, row)) {
+            return 'bg-dark-square-highlight';
+        }
+        return 'bg-dark-square';
     }
     else {
         // Light square
-        return shouldSquareBeHighlighted(col, row) ? 'bg-light-square-highlight' : 'bg-light-square';
+        if (shouldSquareBeHighlightedAsLegalMove(col, row)) {
+            return 'bg-light-square-legal-highlight';
+        }
+        else if (shouldSquareBeHighlighted(col, row)) {
+            return 'bg-light-square-highlight';
+        }
+        return 'bg-light-square';
     }
 }
 
