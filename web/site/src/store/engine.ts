@@ -11,6 +11,9 @@ function getPiece(currentBoardPieces: any, x: number, y: number) {
   return currentBoardPieces.find((piece: any) => piece.x == x && piece.y == y) ?? 12;
 }
 
+let lastCrashFenString = null;
+let currentFenCrashCount = 0;
+
 export const useChessEngineStore = defineStore('chess_engine', {
   state: () => ({
     gamePaused: false,
@@ -119,6 +122,22 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "get_current_player_color") {
             this.currentPlayerColor = data;
             this.startSearchIfNecessary();
+          }
+          else if (messageType == "engine_crash") {
+            console.log("Web Assembly seems to have crashed, reinitiating...");
+            // Reset the board state if we are stuck in a never-ending crash loop
+            if (this.currentBoardFenString == lastCrashFenString) {
+                currentFenCrashCount += 1;
+            }
+            else {
+                currentFenCrashCount = 1;
+                lastCrashFenString = this.currentBoardFenString;
+            }
+            if (currentFenCrashCount >= 3) {
+              console.log("Engine crashed 3 times in a row with this position, resetting to starting position...");
+              this.currentBoardFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+              localStorage.setItem("current_board_fen", this.currentBoardFenString);
+            }
           }
       }.bind(this);
     },

@@ -1,7 +1,7 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useChessEngineStore } from '../store/engine';
 
 const boardElement : any = ref(null);
@@ -84,6 +84,11 @@ function getMousePosAsBoardPos(mouseX: number, mouseY: number) {
 }
 
 function calculateTranslationBasedOnPosition(x : number, y: number) {
+    //if (movingPiece.value?.getAttribute("data-x") == x && movingPiece.value?.getAttribute("data-y") == y) {
+        // We already have a moving piece, need to handle this
+        //selectedPiecePos.value = [x, y];
+        //return movingPiece.value.style.transform;
+    //}
     let xPos = 0.125 * x * boardElement.value?.clientWidth;
     let yPos = 0.125 * y * boardElement.value?.clientHeight; 
     return `translate(${xPos}px, ${yPos}px)`
@@ -121,7 +126,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         dragStopX = e.x;
         dragStopY = e.y;
     }
-    if (movingPiece.value != null) {
+    if (movingPiece.value != null && selectedPiecePos.value != null) {
         movingPiece.value.style.zIndex = 1;
         [x, y] = selectedPiecePos.value;
         let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
@@ -142,6 +147,7 @@ function makeHumanMove(from_x: number, from_y: number, to_x: number, to_y: numbe
         return;
     }
     makeMove(from_x, from_y, to_x, to_y, promotion);
+    selectedPiecePos.value = null;
     movingPiece.value.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
 }
 
@@ -149,7 +155,6 @@ function makeMove(from_x: number, from_y: number, to_x: number, to_y: number, pr
     // Validate that it is this players turn and that the player is human
     chessEngine.makeMove([from_x, from_y], [to_x, to_y], promotion);
     moveSoundEffect.play();
-    selectedPiecePos.value = null;
     previousMoveFromPos.value = [from_x, from_y];
     previousMoveToPos.value = [to_x, to_y];
 }
@@ -158,7 +163,7 @@ function makeMove(from_x: number, from_y: number, to_x: number, to_y: number, pr
 
 function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion: number) {
     let piece = allPieces.value.find((piece: any) => piece.getAttribute("data-x") == from_x && piece.getAttribute("data-y") == from_y);
-    selectedPiecePos.value = [from_x, from_y];
+    //selectedPiecePos.value = [from_x, from_y];
     animatePieceToPosition(piece, to_x, to_y, from_x, from_y);
     setTimeout(() => {
         piece.style.transition = "";
@@ -227,9 +232,9 @@ onMounted(() => {
                 {{ (row - 1) * 8 + col - 1 }}
             </div>
         </div>
-        <div class="absolute w-full" :key="chessEngine.boardStateCounter" v-if="chessEngine.boardStateCounter != 0">
+        <div class="absolute w-full" v-if="chessEngine.boardStateCounter != 0">
             <img 
-                v-for="{x, y, piece} in boardPieces" :key="y * 8 + x + 'b'"
+                v-for="{x, y, piece} in boardPieces" :key="y * 8 + x + 'p' + piece"
                 ref="allPieces"
                 :data-x="x"
                 :data-y="y"

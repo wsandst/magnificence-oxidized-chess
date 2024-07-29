@@ -10,6 +10,7 @@ use engine_core::core::{Color, Move, Piece, STARTING_POS_FEN};
 use engine_core::core::bitboard::*;
 use serde::{Serialize, Deserialize};
 use gloo_timers::future::TimeoutFuture;
+extern crate console_error_panic_hook;
 
 #[wasm_bindgen]
 pub struct ChessEngine {
@@ -68,6 +69,7 @@ impl ChessEngine {
 
     /// Create a new chess engine wrapper
     pub fn new() -> ChessEngine {
+        console_error_panic_hook::set_once();
         let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
         ChessEngine { 
             board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),

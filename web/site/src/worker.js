@@ -18,9 +18,22 @@ async function initWorker() {
     await init();
     let engine = ChessEngine.new();
 
+    self.onerror = async function(event) {
+        await resetWasm();
+    };
+
+    async function resetWasm() {
+        // WASM function panicked - we need to reinit the web assembly
+        await init();
+        engine = ChessEngine.new();
+        self.postMessage(["engine_crash"]);
+        self.postMessage("initiated");
+        lock.disable();
+    }
+
     // Set callback to handle messages passed to the worker.
     self.onmessage = async (e) => {
-        // console.log('Message received from main thread: ', e.data);
+        //console.log('Message received from main thread: ', e.data);
         let functionName = e.data[0];
         let args = e.data.slice(1);
         let result = null;
@@ -37,15 +50,21 @@ async function initWorker() {
 
         // Run function in chess engine
         var startTime = performance.now();
-        if (functionName in engine) {
-            result = await engine[functionName](...args);
+        try {
+            if (functionName in engine) {
+                result = await engine[functionName](...args);
+            }
+            else if (functionName in ChessEngine) {
+                result = await ChessEngine[functionName](...args);
+            }   
+            else {
+                console.log(`Worker received WASM function '${functionName}', which does not appear to exist.`)
+            }
         }
-        else if (functionName in ChessEngine) {
-            result = await ChessEngine[functionName](...args);
-        }   
-        else {
-            console.log(`Worker received WASM function '${functionName}', which does not appear to exist.`)
+        catch {
+            await resetWasm();
         }
+
         self.shouldAbort = false;
         var endTime = performance.now()
 
