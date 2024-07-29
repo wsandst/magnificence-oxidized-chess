@@ -207,7 +207,7 @@ function shouldSquareBeHighlighted(x: number, y: number): boolean {
 }
 
 function getSquareColor(col: number, row: number) : string {
-    if (boardPositionModulo(row, col) == 0) {
+    if (boardPositionModulo(row, col) == 1) {
         // Dark square
         return shouldSquareBeHighlighted(col, row) ? 'bg-dark-square-highlight' : 'bg-dark-square';
     }

@@ -23,11 +23,24 @@ Install with: `cargo install rsw`
 **Building a production version**:  
 `cd ./web/site && ./BUILD.sh`. The generated site will be available under `./web/site/dist`.
 
-## Todo web
+## Todo
+
+### Web  
 - [ ] Improve sidebar
-- [ ] Implement time controls
-- [ ] Implement game win condition
-- [ ] Implement local storage of current board
-- [ ] Implement undo move.
+- [ ] Implement game win condition (win popup)
 - [ ] Implement display of valid moves. Mark previous moved squares. Only allow valid moves. 
-- [ ] Show lost material under PlayerInfo.
+- [ ] Implement command dropdown (perft, set fen)
+- [ ] Implement new game dialog
+
+### UCI
+- [ ] Implement go/search properly
+- [ ] Test in a UCI GUI interface
+
+## Ideas
+* Using Stockfish NNUE for eval
+* Compile using PGO (https://en.wikipedia.org/wiki/Profile-guided_optimization, https://github.com/dede1751/carp?tab=readme-ov-file)
+
+
+### Possible future web functionality
+- [ ] Time controls
+- [ ] New game dialog
