@@ -6,6 +6,9 @@ use crate::core::*;
 
 impl Board {
     fn extract_king_moves(&self, moves : &mut Vec<Move>, king_index: usize, same_color_occupancy: u64) {
+        if king_index == 64 { // No king
+            return;
+        }
         let mut move_mask = KING_MOVE_MASKS[king_index] & !(same_color_occupancy);
         while move_mask > 0 {
             let move_index = move_mask.trailing_zeros() as usize;

@@ -61,6 +61,10 @@ mod tests {
         moves.clear();
         // Check that all knight moves are generated correctly in an open position
         let mut board = Board::empty(Rc::clone(&runtime_constants));
+        board.generate_white_knight_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_black_knight_moves(&mut moves, white_occupancy, black_occupancy);
+        assert_eq!(moves.len(), 0);
+
         board.set_piece_pos(3, 3, &Piece::WhiteKnight);
         board.generate_white_knight_moves(&mut moves, white_occupancy, black_occupancy);
         assert_moves_eq_algebraic(&moves, &vec!["d5c7", "d5b6","d5b4", "d5c3", "d5e3", "d5f4", "d5f6", "d5e7"]);
