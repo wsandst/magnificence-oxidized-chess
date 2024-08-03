@@ -27,8 +27,8 @@ Install with: `cargo install rsw`
 
 ### Web  
 - [ ] Improve sidebar
-- [ ] Implement game win condition (win popup)
-- [ ] Implement display of valid moves. Mark previous moved squares. Only allow valid moves. 
+- [ ] Improve win condition popup
+- [ ] Prohibit moves which are not valid moves
 - [ ] Add proper board square numbering
 
 ### UCI

@@ -22,7 +22,7 @@ impl Board {
     }
 
     /// Generate valid moves for white
-    fn generate_moves_white(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
+    pub fn generate_moves_white(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         self.generate_white_pawn_moves(moves, white_occupancy, black_occupancy);
         self.generate_white_knight_moves(moves, white_occupancy, black_occupancy);
         self.generate_white_king_moves(moves, white_occupancy, black_occupancy);
@@ -30,7 +30,7 @@ impl Board {
     }
 
     /// Generate valid moves for black
-    fn generate_moves_black(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
+    pub fn generate_moves_black(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         self.generate_black_pawn_moves(moves, white_occupancy, black_occupancy);
         self.generate_black_knight_moves(moves, white_occupancy, black_occupancy);
         self.generate_black_king_moves(moves, white_occupancy, black_occupancy);
