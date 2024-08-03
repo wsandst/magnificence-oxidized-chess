@@ -49,6 +49,31 @@ pub const ROWS: [u64; 8] = {
     masks
 };
 
+pub const KNIGHT_MOVE_MASKS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let dirs : [(isize, isize); 8] = [(1, 2), (2, 1), (-2, 1), (-1, 2), (1, -2), (2, -1), (-1, -2), (-2, -1)];
+    let mut i: usize = 0;
+    while i < 64 {
+        let mut mask = 0u64;
+        let x = i % 8;
+        let y = i / 8;
+        let mut dir_index = 0;
+        while dir_index < 8 {
+            let (dir_x, dir_y) = dirs[dir_index];
+            let new_x = x as isize + dir_x;
+            let new_y = y as isize + dir_y;
+            if new_x >= 0 && new_y >= 0 && new_x <= 7 && new_y <= 7 {
+                let index = new_x + (new_y)*8;
+                mask = mask | (1u64 << (index as usize));
+            }
+            dir_index += 1;
+        }
+        masks[i] = mask;
+        i += 1;
+    }
+    masks
+};
+
 const fn directional_shift(lhs: u64, rhs: i32) -> u64 {
     if rhs > 0 {
         return  lhs << rhs;
@@ -153,11 +178,6 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
     }
     return result;
 }
-
-
-
-
-
 
 //#[cfg(target_feature = "bmi2")]
 pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
