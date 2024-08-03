@@ -264,6 +264,38 @@ fn test_bit_twiddling() {
     assert_eq!(num, 0b101010101001);
 }
 
+
+pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
+    let mut moves = reserved_moves.pop().unwrap();
+    moves.clear();
+    board.get_moves(&mut moves);
+    if depth == 1 {
+        let move_count = moves.len();
+        reserved_moves.push(moves);
+        return move_count;
+    }
+    let mut total_move_count = 0;
+    for mv in moves.iter() {
+        let old_board = board.clone();
+        board.make_move(&mv);
+        total_move_count += validation_perft(depth - 1, board, reserved_moves);
+        board.unmake_move(&mv);
+        assert!(old_board == *board, "Move: {}\n\n, Before make/unmake: {}\nZoobrist: {}\n\nAfter make/unmake: {}\nZoobrist: {}", 
+                mv, old_board, old_board.get_hashkey(), board.to_string(), board.get_hashkey());
+        board.validate();
+    }
+    reserved_moves.push(moves);
+    return total_move_count;
+}
+
+#[test]
+fn board_validation_with_perft() {
+    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let mut board = Board::new(Rc::clone(&constant_state));
+    let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+    validation_perft(4, &mut board, &mut reserved_moves);
+}
+
 #[test]
 fn debug_test() {
     let constant_state = Rc::new(BitboardRuntimeConstants::create());

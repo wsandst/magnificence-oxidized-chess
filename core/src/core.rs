@@ -2,6 +2,8 @@ pub mod bitboard;
 #[cfg(test)]
 mod tests;
 
+use std::fmt;
+
 use bitboard::Board;
 use strum_macros::EnumIter;
 use num;
@@ -173,5 +175,12 @@ impl Move {
         let mut mv = Move::from_pos(board, from_x, from_y, to_x, to_y);
         mv.promotion = promotion;
         return mv;
+    }
+}
+
+impl fmt::Display for Move {
+    /// Return a string representation of the board. Used for debugging.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_algebraic())
     }
 }

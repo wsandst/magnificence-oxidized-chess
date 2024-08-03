@@ -229,6 +229,10 @@ impl Board {
         return self.current_player;
     }
 
+    pub fn get_hashkey(&self) -> u64 {
+        return self.hash_key;
+    }
+
     pub fn switch_current_player(&mut self) {
         self.current_player = self.current_player.next_player();
     }
