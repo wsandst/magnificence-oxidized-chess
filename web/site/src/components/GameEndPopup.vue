@@ -34,7 +34,7 @@ function newGame() {
       <div className="fixed inset-0 bg-gray-500 bg-opacity-50">
      </div>
       <div className="flex justify-center h-screen items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-        <div className="relative rounded w-[min(100%,400px)] text-theme-700  shadow-md shadow-theme-900/10 dark:shadow-theme-900/20 bg-container/95">
+        <div className="relative rounded w-[min(90%,400px)] text-theme-700  shadow-md shadow-theme-900/10 dark:shadow-theme-900/20 bg-container/95">
           <div className="flex-col w-fullrounded-md p-0 block font-medium ">
             <div class="flex items-center justify-center p-6 border-t border-solid rounded-b border-primary-darker">
               <div v-if="gameStatus == 'white_won'">

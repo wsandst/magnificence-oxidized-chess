@@ -196,7 +196,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
       this.startSearchIfNecessary();
       this.clearBoardSelectionsCallback();
     },
-    isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null) {
+    isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null, moving_piece = null) {
       // Make sure it is this players turn
       if (this.currentPlayerColor == "white" && this.whitePlayer.type != "human") {
         return false;
@@ -205,14 +205,16 @@ export const useChessEngineStore = defineStore('chess_engine', {
         return false;
       }
       // The current player can only move its own pieces
-      const piece = this.getPiece(from[0], from[1]).piece;
-      if (this.currentPlayerColor == "white" && piece >= 6) {
+      const piece = this.getPiece(from[0], from[1]);
+      if (this.currentPlayerColor == "white" && piece.piece >= 6) {
         return false;
       }
-      else if (this.currentPlayerColor == "black" && piece < 6) {
+      else if (this.currentPlayerColor == "black" && piece.piece < 6) {
         return false;
-      } true
-      return true;
+      }
+
+      // Check that the move is among the pieces legal moves
+      return piece.legal_moves.find((move: any) => move.to_x == to[0] && move.to_y == to[1]);
     },  
     perft(depth: number) {
       console.log("Perft: ", depth);

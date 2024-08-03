@@ -142,7 +142,7 @@ function pieceDragStop(e: any, x: number, y: number) {
 }
 
 function makeHumanMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion : number|null = null) {
-        // Validate the legality of the move
+    // Validate the legality of the move
     if (!chessEngine.isMoveLegal([from_x, from_y], [to_x, to_y], promotion)) {
         movingPiece.value.style.transform = calculateTranslationBasedOnPosition(from_x, from_y);
         return;
