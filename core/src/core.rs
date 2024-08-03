@@ -184,3 +184,11 @@ impl fmt::Display for Move {
         f.write_str(&self.to_algebraic())
     }
 }
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter)]
+pub enum GameStatus {
+    InProgress,
+    WhiteWon,
+    BlackWon,
+    Stalemate
+}

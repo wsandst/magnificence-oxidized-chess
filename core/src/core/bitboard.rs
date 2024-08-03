@@ -236,4 +236,16 @@ impl Board {
     pub fn switch_current_player(&mut self) {
         self.current_player = self.current_player.next_player();
     }
+
+    pub fn get_game_status(&self) -> GameStatus {
+        let mut legal_moves = Vec::new();
+        self.get_moves(&mut legal_moves);
+        if legal_moves.len() == 0 {
+            return match self.get_current_player() {
+                Color::Black => GameStatus::WhiteWon,
+                Color::White => GameStatus::BlackWon
+            }
+        }
+        return GameStatus::InProgress;
+    }
 }
