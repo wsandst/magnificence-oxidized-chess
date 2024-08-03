@@ -245,6 +245,10 @@ function getSquareColor(col: number, row: number) : string {
     }
 }
 
+function posToAlgebraicPos(rows: number, cols: number) {
+    return String.fromCharCode(cols - 1 + 'a'.charCodeAt(0)) + (9 - rows).toString();
+}
+
 onMounted(() => {
     new ResizeObserver(boardResized).observe(boardElement.value);
 })
@@ -257,7 +261,7 @@ onMounted(() => {
             <div class="w-[12.5%] h-full text-sm"
                 :class="[getSquareColor(col - 1, row - 1)]"
                 v-for="col in 8" :key="row * 8 + col">
-                {{ (row - 1) * 8 + col - 1 }}
+                {{ (row - 1) * 8 + col - 1 }} {{ posToAlgebraicPos(row, col) }}
             </div>
         </div>
         <div class="absolute w-full" v-if="chessEngine.boardStateCounter != 0">

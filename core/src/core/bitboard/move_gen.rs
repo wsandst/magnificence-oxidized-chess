@@ -5,6 +5,7 @@ use std::arch::x86_64::{_pdep_u64, _pext_u64};
 mod pawns;
 mod castling;
 mod knights;
+mod kings;
 
 use crate::core::*;
 use super::Board;
@@ -27,6 +28,7 @@ impl Board {
     fn generate_moves_white(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         self.generate_white_pawn_moves(moves, white_occupancy, black_occupancy);
         self.generate_white_knight_moves(moves, white_occupancy, black_occupancy);
+        self.generate_white_king_moves(moves, white_occupancy, black_occupancy);
         self.generate_white_castling_moves(moves, white_occupancy, black_occupancy);
     }
 
@@ -34,6 +36,7 @@ impl Board {
     fn generate_moves_black(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
         self.generate_black_pawn_moves(moves, white_occupancy, black_occupancy);
         self.generate_black_knight_moves(moves, white_occupancy, black_occupancy);
+        self.generate_black_king_moves(moves, white_occupancy, black_occupancy);
         self.generate_black_castling_moves(moves, white_occupancy, black_occupancy);
     }
 
