@@ -8,13 +8,14 @@ use std::rc::Rc;
 use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
+use lazy_static::lazy_static;
 use strum::IntoEnumIterator;
 use bitboard::constants::*;
 
 
 #[test]
 fn test_set_piece() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::empty(Rc::clone(&constant_state));
 
     // Ensure that there are no out of bounds problems with edges
@@ -60,7 +61,7 @@ fn assert_board_equal_to_array_board(board: &Board, array_board: &[Piece; 64]) {
 #[test]
 fn test_fen() {
     // Starting position
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let board1 = Board::from_fen(STARTING_POS_FEN, Rc::clone(&constant_state));
     let expected_pieces1 = [
         Piece::BlackRook, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackQueen, Piece::BlackKing, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook,
@@ -106,7 +107,7 @@ fn test_fen() {
 
 #[test]
 fn test_algebraic_notation() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let board = Board::from_fen(STARTING_POS_FEN, Rc::clone(&constant_state));
     assert_eq!("a2a3", Move::to_algebraic(&Move::from_algebraic(&board, "a2a3")));
     assert_eq!("d4d5", Move::to_algebraic(&Move::from_algebraic(&board, "d4d5")));
@@ -118,7 +119,7 @@ fn test_algebraic_notation() {
 
 #[test]
 fn test_make_unmake_moves() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", Rc::clone(&constant_state));
 
     assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::BlackPawn);
@@ -146,7 +147,7 @@ fn test_make_unmake_moves() {
 
 #[test]
 fn test_make_unmake_moves_special() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     // Castling
     let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
     // Black left side
@@ -306,4 +307,11 @@ pub fn assert_moves_eq_algebraic(lhs: &Vec<Move>, rhs: &Vec<&str>) {
     }
     assert!(missing_moves.len() == 0 && extra_moves.len() == 0, 
         "Move generation did not return the expected moves.\nMissing moves: {:?}\nExtra moves: {:?}", missing_moves, extra_moves);
+}
+
+lazy_static! {
+    /// This is an example for using doc comment attributes
+    pub static ref BOARD_CONSTANT_STATE: BitboardRuntimeConstants = {
+        BitboardRuntimeConstants::create()
+    };
 }

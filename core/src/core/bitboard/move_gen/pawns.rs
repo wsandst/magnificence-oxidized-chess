@@ -105,13 +105,14 @@ impl Board {
 
 #[cfg(test)]
 mod tests {
+    use crate::core::tests::BOARD_CONSTANT_STATE;
     use tests::assert_moves_eq_algebraic;
 
     use super::bitboard::*;
 
     #[test]
     fn test_pawn_move_gen() {
-        let constant_state = Rc::from(BitboardRuntimeConstants::create());
+        let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
         let board = Board::new(Rc::clone(&constant_state));
         let (white_occupancy, black_occupancy) = board.get_occupancy();
         let mut moves = Vec::new();

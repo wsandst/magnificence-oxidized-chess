@@ -1,12 +1,9 @@
 #![allow(long_running_const_eval)]
 
-use std::{cmp::max, collections::btree_map::Keys, default, io::empty};
 
 use lazy_static::lazy_static;
-use num::integer::Roots;
 use rand::{seq::index, Rng};
 use super::super::*;
-use once_cell::sync::Lazy;
 
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
@@ -183,6 +180,7 @@ pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
     }
     magic
 };
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
     pub bishop_magic_table: Vec<Vec<u64>>,
