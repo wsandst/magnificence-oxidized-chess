@@ -24,12 +24,14 @@ export const useChessEngineStore = defineStore('chess_engine', {
     searchMetadata: null,
     logHistory: [],
     engineSearching: false,
+    gameStatus: null,
 
     // Callbacks
     makeBoardEngineMoveCallback: null,
     clearBoardSelectionsCallback: null,
     showCommandDialogCallback: null,
-    commandResponseCallback: null
+    commandResponseCallback: null,
+    showGameEndPopupCallback: null
   }),
   actions: {
     setAvailableEngines(engines : any) {
@@ -87,10 +89,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
             if (savedBoardFen) {
               worker.postMessage(["set_board_fen", savedBoardFen]);
             }
-            worker.postMessage(["get_pieces"]);
             worker.postMessage(["get_allowed_engines"]);
-            worker.postMessage(["get_board_fen"]);
-            worker.postMessage(["get_current_player_color"]);
+            this.syncBoardState();
           }
           else if (messageType == "get_pieces") {
             this.currentBoardPieces = data;
@@ -102,6 +102,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "get_board_fen") {
             this.currentBoardFenString = data;
             localStorage.setItem("current_board_fen", data);
+          }
+          else if (messageType == "get_game_status") {
+            this.setGameStatus(data);
           }
           else if (messageType == "search") {
             console.log("Search complete: ", data);
@@ -148,6 +151,19 @@ export const useChessEngineStore = defineStore('chess_engine', {
           }
       }.bind(this);
     },
+    newGame() {
+      this.currentBoardFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      this.clearBoardSelectionsCallback();
+      localStorage.setItem("current_board_fen", this.currentBoardFenString);
+      worker.postMessage(["set_board_fen", this.currentBoardFenString]);
+      this.syncBoardState();
+    },
+    syncBoardState() {
+      worker.postMessage(["get_game_status"]);
+      worker.postMessage(["get_pieces"]);
+      worker.postMessage(["get_board_fen"]);
+      worker.postMessage(["get_current_player_color"]);
+    },
     makeMove(from: [number, number], to: [number, number], promotion : any|null = null) {
       if (promotion == null) {
         // Always promote pawns to queen for now
@@ -161,6 +177,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
       }
 
       worker.postMessage(["make_move", from[0], from[1], to[0], to[1], promotion]);
+      worker.postMessage(["get_game_status"]);
       worker.postMessage(["get_pieces"]);
       worker.postMessage(["get_board_fen"]);
       this.progressTurn();
@@ -179,7 +196,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
       this.startSearchIfNecessary();
       this.clearBoardSelectionsCallback();
     },
-    isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null) {
+    isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null, moving_piece = null) {
       // Make sure it is this players turn
       if (this.currentPlayerColor == "white" && this.whitePlayer.type != "human") {
         return false;
@@ -188,14 +205,16 @@ export const useChessEngineStore = defineStore('chess_engine', {
         return false;
       }
       // The current player can only move its own pieces
-      const piece = this.getPiece(from[0], from[1]).piece;
-      if (this.currentPlayerColor == "white" && piece >= 6) {
+      const piece = this.getPiece(from[0], from[1]);
+      if (this.currentPlayerColor == "white" && piece.piece >= 6) {
         return false;
       }
-      else if (this.currentPlayerColor == "black" && piece < 6) {
+      else if (this.currentPlayerColor == "black" && piece.piece < 6) {
         return false;
-      } true
-      return true;
+      }
+
+      // Check that the move is among the pieces legal moves
+      return piece.legal_moves.find((move: any) => move.to_x == to[0] && move.to_y == to[1]);
     },  
     perft(depth: number) {
       console.log("Perft: ", depth);
@@ -203,6 +222,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
     },
     setBoardFen(fen: string) {
       this.currentBoardFenString = fen;
+      this.gameStatus = "running";
       this.clearBoardSelectionsCallback();
       localStorage.setItem("current_board_fen", this.currentBoardFenString);
       worker.postMessage(["set_board_fen", this.currentBoardFenString]);
@@ -229,9 +249,18 @@ export const useChessEngineStore = defineStore('chess_engine', {
       this.gamePaused = false;
       this.startSearchIfNecessary();
     },
+    setGameStatus(status: "white_won" | "black_won" | "stalemate" | "running") {
+      this.gameStatus = status;
+      if (status != "running") {
+        worker.postMessage(["abort"]);
+        this.engineSearching = false;
+        this.showGameEndPopupCallback(status);
+      }
+    },
     startSearchIfNecessary() {
-      if (this.currentPlayerColor == "white" && this.whitePlayer.type == "engine" ||
-            this.currentPlayerColor == "black" && this.blackPlayer.type == "engine"
+      if (this.gameStatus == "running" &&
+          (this.currentPlayerColor == "white" && this.whitePlayer.type == "engine" ||
+            this.currentPlayerColor == "black" && this.blackPlayer.type == "engine")
       ) {
         this.engineSearching = true;
         worker.postMessage(["search"]);

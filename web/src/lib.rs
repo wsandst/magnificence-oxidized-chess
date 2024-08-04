@@ -6,7 +6,7 @@ use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
 use wasm_bindgen::prelude::*;
-use engine_core::core::{Color, Move, Piece, STARTING_POS_FEN};
+use engine_core::core::{Color, GameStatus, Move, Piece, STARTING_POS_FEN};
 use engine_core::core::bitboard::*;
 use serde::{Serialize, Deserialize};
 use gloo_timers::future::TimeoutFuture;
@@ -174,6 +174,15 @@ impl ChessEngine {
         match self.board.get_current_player() {
             Color::Black => "black".to_string(),
             Color::White => "white".to_string()
+        }
+    }
+
+    pub fn get_game_status(&self) -> String {
+        match self.board.get_game_status() {
+            GameStatus::InProgress => "running".to_string(),
+            GameStatus::WhiteWon => "white_won".to_string(),
+            GameStatus::BlackWon => "black_won".to_string(),
+            GameStatus::Stalemate => "stalemate".to_string()
         }
     }
 

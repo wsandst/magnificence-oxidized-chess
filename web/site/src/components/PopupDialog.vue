@@ -63,7 +63,7 @@ function hideCommandDialog() {
       <div className="fixed inset-0 bg-gray-500 bg-opacity-50">
      </div>
       <div className="flex justify-center h-screen items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-        <div className="relative rounded w-[min(100%,400px)] text-theme-700  shadow-md shadow-theme-900/10 dark:shadow-theme-900/20 bg-container/95">
+        <div className="relative rounded w-[min(90%,400px)] text-theme-700  shadow-md shadow-theme-900/10 dark:shadow-theme-900/20 bg-container/95">
           <div className="flex-col w-fullrounded-md p-0 block font-medium ">
             <div className="flex items-center justify-between p-5 pr-7 pl-7 border-b border-solid rounded-t border-primary-darker">
               <h3 className="text-3xl font=semibold">{{ currentCommand?.name }}</h3>

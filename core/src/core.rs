@@ -2,6 +2,8 @@ pub mod bitboard;
 #[cfg(test)]
 mod tests;
 
+use std::fmt;
+
 use bitboard::Board;
 use strum_macros::EnumIter;
 use num;
@@ -174,4 +176,19 @@ impl Move {
         mv.promotion = promotion;
         return mv;
     }
+}
+
+impl fmt::Display for Move {
+    /// Return a string representation of the board. Used for debugging.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_algebraic())
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, EnumIter)]
+pub enum GameStatus {
+    InProgress,
+    WhiteWon,
+    BlackWon,
+    Stalemate
 }

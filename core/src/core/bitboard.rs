@@ -82,10 +82,10 @@ impl Board {
             }
             // Check if this move performs en passant and zero the taken square
             else if piece_to_move == Piece::WhitePawn && (self.ep + 16 - 1) == mv.to {
-                self.mailboard[self.ep as usize + 24 - 1] = Piece::Empty;
+                self.set_piece((self.ep as usize + 24 - 1) as u8, Piece::Empty);
             }
             else if piece_to_move == Piece::BlackPawn && (self.ep + 40 - 1) == mv.to {
-                self.mailboard[self.ep as usize + 32 - 1] = Piece::Empty;
+                self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::Empty);
             }
         }
         else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
@@ -95,7 +95,7 @@ impl Board {
                 self.set_piece(2, Piece::BlackKing);
                 self.set_piece(3, Piece::BlackRook);
                 self.set_piece(4, Piece::Empty);
-                Self::unset_bit_u8(&mut self.castling, 3);
+                self.set_castling((self.castling) & (!1u8).rotate_left(3 as u32));
                 return;
             }
             // Black king side castling
@@ -104,7 +104,7 @@ impl Board {
                 self.set_piece(5, Piece::BlackRook);
                 self.set_piece(6, Piece::BlackKing);
                 self.set_piece(7, Piece::Empty);
-                Self::unset_bit_u8(&mut self.castling, 2);
+                self.set_castling((self.castling) & (!1u8).rotate_left(2 as u32));
                 return;
             }
             // White king side castling
@@ -113,7 +113,7 @@ impl Board {
                 self.set_piece(61, Piece::WhiteRook);
                 self.set_piece(62, Piece::WhiteKing);
                 self.set_piece(63, Piece::Empty);
-                Self::unset_bit_u8(&mut self.castling, 1);
+                self.set_castling((self.castling) & (!1u8).rotate_left(1 as u32));
                 return;
             }
             // White queen side castling
@@ -122,7 +122,7 @@ impl Board {
                 self.set_piece(58, Piece::WhiteKing);
                 self.set_piece(59, Piece::WhiteRook);
                 self.set_piece(60, Piece::Empty);
-                Self::unset_bit_u8(&mut self.castling, 0);
+                self.set_castling((self.castling) & (!1u8).rotate_left(0 as u32));
                 return;
             }
         }
@@ -156,7 +156,7 @@ impl Board {
                 self.set_piece(2, Piece::Empty);
                 self.set_piece(3, Piece::Empty);
                 self.set_piece(4, Piece::BlackKing);
-                Self::set_bit_u8(&mut self.castling, 3);
+                self.set_castling((self.castling) | (1u8 << 3));
                 return;
             }
             // Black right side castling
@@ -165,7 +165,7 @@ impl Board {
                 self.set_piece(5, Piece::Empty);
                 self.set_piece(6, Piece::Empty);
                 self.set_piece(7, Piece::BlackRook);
-                Self::set_bit_u8(&mut self.castling, 2);
+                self.set_castling((self.castling) | (1u8 << 2));
                 return;
             }
             // White left side castling
@@ -174,7 +174,7 @@ impl Board {
                 self.set_piece(61, Piece::Empty);
                 self.set_piece(62, Piece::Empty);
                 self.set_piece(63, Piece::WhiteRook);
-                Self::set_bit_u8(&mut self.castling, 1);
+                self.set_castling((self.castling) | (1u8 << 1));
                 return;
             }
             // White right side castling
@@ -183,16 +183,16 @@ impl Board {
                 self.set_piece(58, Piece::Empty);
                 self.set_piece(59, Piece::Empty);
                 self.set_piece(60, Piece::WhiteKing);
-                Self::set_bit_u8(&mut self.castling, 0);
+                self.set_castling((self.castling) | (1u8 << 0));
                 return;
             }
         }
         else if moved_piece == Piece::WhitePawn && self.ep > 0 {
             // Restore removed pawn from en passant
-            self.mailboard[self.ep as usize + 24 - 1] = Piece::BlackPawn;
+            self.set_piece((self.ep as usize + 24 - 1) as u8, Piece::BlackPawn);
         }
         else if moved_piece == Piece::BlackPawn && self.ep > 0 {
-            self.mailboard[self.ep as usize + 32 - 1] = Piece::WhitePawn;
+            self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::WhitePawn);
         }
 
         self.set_piece(mv.to, mv.captured);
@@ -229,7 +229,45 @@ impl Board {
         return self.current_player;
     }
 
+    pub fn get_hashkey(&self) -> u64 {
+        return self.hash_key;
+    }
+
     pub fn switch_current_player(&mut self) {
         self.current_player = self.current_player.next_player();
+    }
+
+    pub fn get_game_status(&self) -> GameStatus {
+        let mut legal_moves = Vec::new();
+        self.get_moves(&mut legal_moves);
+        let no_legal_moves = legal_moves.len() == 0;
+        if !no_legal_moves {
+            return GameStatus::InProgress;
+        }
+
+        // Check if king is in check
+        let (white_occupancy, black_occupancy) = self.get_occupancy();
+        let in_check = match self.get_current_player() {
+            Color::Black => {
+                self.generate_moves_white(&mut legal_moves, white_occupancy, black_occupancy);
+                legal_moves.iter().any(|mv| mv.captured == Piece::BlackKing)
+            },
+            Color::White => {
+                self.generate_moves_black(&mut legal_moves, white_occupancy, black_occupancy);
+                legal_moves.iter().any(|mv| mv.captured == Piece::WhiteKing)
+            }
+        };
+
+        if no_legal_moves && !in_check {
+            return GameStatus::Stalemate
+        }
+        else if no_legal_moves && in_check {
+            return match self.get_current_player() {
+                Color::Black => GameStatus::WhiteWon,
+                Color::White => GameStatus::BlackWon
+            }
+        }
+
+        return GameStatus::InProgress;
     }
 }

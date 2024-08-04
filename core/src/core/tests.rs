@@ -9,13 +9,14 @@ use std::time::Instant;
 use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
+use lazy_static::lazy_static;
 use strum::IntoEnumIterator;
 use bitboard::constants::*;
 
 
 #[test]
 fn test_set_piece() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::empty(Rc::clone(&constant_state));
 
     // Ensure that there are no out of bounds problems with edges
@@ -61,7 +62,7 @@ fn assert_board_equal_to_array_board(board: &Board, array_board: &[Piece; 64]) {
 #[test]
 fn test_fen() {
     // Starting position
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let board1 = Board::from_fen(STARTING_POS_FEN, Rc::clone(&constant_state));
     let expected_pieces1 = [
         Piece::BlackRook, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackQueen, Piece::BlackKing, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook,
@@ -107,7 +108,7 @@ fn test_fen() {
 
 #[test]
 fn test_algebraic_notation() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let board = Board::from_fen(STARTING_POS_FEN, Rc::clone(&constant_state));
     assert_eq!("a2a3", Move::to_algebraic(&Move::from_algebraic(&board, "a2a3")));
     assert_eq!("d4d5", Move::to_algebraic(&Move::from_algebraic(&board, "d4d5")));
@@ -119,7 +120,7 @@ fn test_algebraic_notation() {
 
 #[test]
 fn test_make_unmake_moves() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", Rc::clone(&constant_state));
 
     assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::BlackPawn);
@@ -147,7 +148,7 @@ fn test_make_unmake_moves() {
 
 #[test]
 fn test_make_unmake_moves_special() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     // Castling
     let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
     // Black left side
@@ -264,6 +265,38 @@ fn test_bit_twiddling() {
     assert_eq!(num, 0b101010101001);
 }
 
+
+pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
+    let mut moves = reserved_moves.pop().unwrap();
+    moves.clear();
+    board.get_moves(&mut moves);
+    if depth == 1 {
+        let move_count = moves.len();
+        reserved_moves.push(moves);
+        return move_count;
+    }
+    let mut total_move_count = 0;
+    for mv in moves.iter() {
+        let old_board = board.clone();
+        board.make_move(&mv);
+        total_move_count += validation_perft(depth - 1, board, reserved_moves);
+        board.unmake_move(&mv);
+        assert!(old_board == *board, "Move: {}\n\n, Before make/unmake: {}\nZoobrist: {}\n\nAfter make/unmake: {}\nZoobrist: {}", 
+                mv, old_board, old_board.get_hashkey(), board.to_string(), board.get_hashkey());
+        board.validate();
+    }
+    reserved_moves.push(moves);
+    return total_move_count;
+}
+
+#[test]
+fn board_validation_with_perft() {
+    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let mut board = Board::new(Rc::clone(&constant_state));
+    let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+    validation_perft(4, &mut board, &mut reserved_moves);
+}
+
 #[test]
 fn debug_test() {
     let constant_state = Rc::new(BitboardRuntimeConstants::create());
@@ -284,10 +317,9 @@ fn debug_test_harald() {
     let elapsed_time = now.elapsed();
     println!("Running slow_function() took {} ms.", elapsed_time.as_millis());
     
-    assert!(1==0);
     let position = 7;
     let mut occupancy = 1u64 << 37;
-    occupancy |= 1u64 << 26;
+    occupancy |= 1u64 << 26 | 1<<39;
     occupancy |= 1u64 << 3 | 1 << 11 | 1 << 18;
     Board::print_bits(state.rook_magic(position, occupancy));
 }
@@ -316,4 +348,11 @@ pub fn assert_moves_eq_algebraic(lhs: &Vec<Move>, rhs: &Vec<&str>) {
     }
     assert!(missing_moves.len() == 0 && extra_moves.len() == 0, 
         "Move generation did not return the expected moves.\nMissing moves: {:?}\nExtra moves: {:?}", missing_moves, extra_moves);
+}
+
+lazy_static! {
+    /// This is an example for using doc comment attributes
+    pub static ref BOARD_CONSTANT_STATE: BitboardRuntimeConstants = {
+        BitboardRuntimeConstants::create()
+    };
 }

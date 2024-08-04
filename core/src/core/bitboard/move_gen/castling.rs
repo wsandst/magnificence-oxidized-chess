@@ -63,7 +63,7 @@ impl Board {
 
 #[cfg(test)]
 mod tests {
-    use move_gen::castling::*;
+    use crate::core::tests::BOARD_CONSTANT_STATE;
     use crate::core::tests::assert_moves_eq_algebraic;
 
     use super::bitboard::*;
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn test_castling_move_gen() {
         let mut moves = Vec::new();
-        let runtime_constants = Rc::from(BitboardRuntimeConstants::create());
+        let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         // Check that the castling moves are not generated if blocked in the starting position
         let board = Board::new(Rc::clone(&runtime_constants));
         let (white_occupancy, black_occupancy) = board.get_occupancy();

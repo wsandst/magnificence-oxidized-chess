@@ -1,9 +1,8 @@
 #![allow(long_running_const_eval)]
 
-use std::{io::{self, Write}, iter::zip};
 
-
-use rand::Rng;
+use lazy_static::lazy_static;
+use rand::{seq::index, Rng};
 use super::super::*;
 
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
@@ -51,6 +50,56 @@ pub const ROWS: [u64; 8] = {
         while offset < 8 {
             mask |= mask << offset;
             offset <<= 1;
+        }
+        masks[i] = mask;
+        i += 1;
+    }
+    masks
+};
+
+pub const KNIGHT_MOVE_MASKS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let dirs : [(isize, isize); 8] = [(1, 2), (2, 1), (-2, 1), (-1, 2), (1, -2), (2, -1), (-1, -2), (-2, -1)];
+    let mut i: usize = 0;
+    while i < 64 {
+        let mut mask = 0u64;
+        let x = i % 8;
+        let y = i / 8;
+        let mut dir_index = 0;
+        while dir_index < 8 {
+            let (dir_x, dir_y) = dirs[dir_index];
+            let new_x = x as isize + dir_x;
+            let new_y = y as isize + dir_y;
+            if new_x >= 0 && new_y >= 0 && new_x <= 7 && new_y <= 7 {
+                let index = new_x + (new_y)*8;
+                mask = mask | (1u64 << (index as usize));
+            }
+            dir_index += 1;
+        }
+        masks[i] = mask;
+        i += 1;
+    }
+    masks
+};
+
+pub const KING_MOVE_MASKS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let dirs : [(isize, isize); 8] = [(1, 1), (1, 0), (1, -1), (0, 1), (0, -1), (-1, 1), (-1, 0), (-1, -1)];
+    let mut i: usize = 0;
+    while i < 64 {
+        let mut mask = 0u64;
+        let x = i % 8;
+        let y = i / 8;
+        let mut dir_index = 0;
+        while dir_index < 8 {
+            let (dir_x, dir_y) = dirs[dir_index];
+            let new_x = x as isize + dir_x;
+            let new_y = y as isize + dir_y;
+            if new_x >= 0 && new_y >= 0 && new_x <= 7 && new_y <= 7 {
+                let index = new_x + (new_y)*8;
+                mask = mask | (1u64 << (index as usize));
+            }
+            dir_index += 1;
         }
         masks[i] = mask;
         i += 1;
@@ -250,7 +299,7 @@ impl BitboardRuntimeConstants{
             observed.resize(1<<target_bits, 0);
 
             let mut success = true;
-            for (variation, value) in zip(variations, expected) {
+            for (variation, value) in std::iter::zip(variations, expected) {
                 let key = ((magic.wrapping_mul(*variation)) >> (64 - target_bits)) as usize;
                 if observed[key] == 0 {
                     observed[key] = *value;
@@ -301,7 +350,7 @@ impl BitboardRuntimeConstants{
             for _ in 0..(max_key+1) {
                 lookup_tables[i].push(0);
             }
-            for (key, value) in zip(keys, expected) {
+            for (key, value) in std::iter::zip(keys, expected) {
                 assert!(lookup_tables[i][key] == 0 || lookup_tables[i][key] == value);
                 lookup_tables[i][key] = value;
             }
