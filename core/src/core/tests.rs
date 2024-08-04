@@ -4,6 +4,7 @@ use super::Move;
 
 
 use std::rc::Rc;
+use std::time::Instant;
 
 use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
@@ -274,7 +275,16 @@ fn debug_test() {
 
 #[test]
 fn debug_test_harald() {
+    println!("Debug Test!");
+    let now = Instant::now();
+
+    // Calling a slow function, it may take a while
     let state = BitboardRuntimeConstants::create();
+
+    let elapsed_time = now.elapsed();
+    println!("Running slow_function() took {} ms.", elapsed_time.as_millis());
+    
+    assert!(1==0);
     let position = 7;
     let mut occupancy = 1u64 << 37;
     occupancy |= 1u64 << 26;

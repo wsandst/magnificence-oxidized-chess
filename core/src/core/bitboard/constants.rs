@@ -1,16 +1,22 @@
 #![allow(long_running_const_eval)]
 
-use std::{cmp::max, collections::btree_map::Keys, default, io::empty};
+use std::{io::{self, Write}, iter::zip};
 
-use lazy_static::lazy_static;
-use num::integer::Roots;
-use rand::{seq::index, Rng};
+
+use rand::Rng;
 use super::super::*;
-use once_cell::sync::Lazy;
 
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
 pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
+#[cfg(any(test,debug_assertions))]
+const NUMBER_OF_MAGIC_TABLE_TRIES: usize = 10;
+#[cfg(not(any(test,debug_assertions)))]
+const NUMBER_OF_MAGIC_TABLE_TRIES: usize = 100000;
+#[cfg(any(test,debug_assertions))]
+const MINIMUM_QUALITY: u32 = 5;
+#[cfg(not(any(test,debug_assertions)))]
+const MINIMUM_QUALITY: u32 = 1;
 
 const fn p_rng(state: u128) -> (u128, u64) {
     let state = state.wrapping_mul(0xaadec8c3186345282b4e141f3a1232d5);
@@ -161,105 +167,174 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
 
 
 
-
-//#[cfg(target_feature = "bmi2")]
-pub const PEXT_ROOK_MAGIC: [[u64;4096];64] = {
-    let mut magic = [[0u64; 4096]; 64];
-    let mut i = 0;
-    while i < 64 {
-        let mut bits = [0usize; 12];
-        let mut keys = [0u64; 4096];
-
-        let mut tmp = ROOK_MASKS[i];
-        let mut max_index = 0;
-        while tmp > 0 {
-            bits[max_index] = tmp.trailing_zeros() as usize;
-            tmp &= tmp - 1;
-            max_index += 1;
-        }
-
-        //magic[i] = generate_pext_rook_table(1u64 << i,ROOK_MASKS[i], 0, max_index, 0, &bits, keys);
-        i += 1;
-    }
-    magic
-};
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
-    pub bishop_magic_table: Vec<Vec<u64>>,
-    pub rook_magic_table: Vec<Vec<u64>>,
+    bishop_magic_pext_table: Vec<Vec<u64>>,
+    bishop_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
+    rook_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
+    rook_magic_pext_table: Vec<Vec<u64>>,
     pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
 }
 
 impl BitboardRuntimeConstants{
     pub fn create() -> BitboardRuntimeConstants {
         BitboardRuntimeConstants {
-            bishop_magic_table: Self::generate_bishop_magic(),
-            rook_magic_table: Self::generate_rook_magic(),
+            bishop_magic_pext_table: Self::generate_bishop_tables(),
+            bishop_magic_magic_table: Self::generate_bishop_magic_numbers(),
+            rook_magic_magic_table: Self::generate_rook_magic_numbers(),
+            rook_magic_pext_table: Self::generate_rook_tables(),
             zoobrist_keys: Self::create_zoobrist_keys()
         }
     }
 
-    fn generate_pext_bishop_table(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
-        if  bits.len() > 0 {
-            let top_bit = bits.pop().unwrap();
-            BitboardRuntimeConstants::generate_pext_bishop_table(position, occupancy, bits, keys);
-            BitboardRuntimeConstants::generate_pext_bishop_table(position, occupancy ^ (1u64 << top_bit), bits, keys);
-            bits.push(top_bit);
-        } else { 
-            let mask = BISHOP_MASKS[position as usize];
+    /// Creates all possible variations of the bits set in full
+    fn generate_all_occupancies(full: u64) -> Vec<u64> {
+        fn help(full: u64, curr: u64, result: &mut Vec<u64>) {
+            if full > 0 {
+                //remove last bit
+                let next_full = full & (full - 1);
+                //Last bit of full as 1
+                let lowest_bit = full ^ next_full;
+                help(next_full, curr, result);
+                //Toggle lowest bit
+                help(next_full, curr ^ lowest_bit, result);
+            } else {
+                result.push(curr);
+            }
+        }
+    
+        let mut result = Vec::new();
+        help(full, 0, &mut result);
+        return result;
+    }
+
+    /// Generates a valid pext table for the square ```position```(\[1, 64\]). ```mask``` is the 
+    /// pext mask for given position. ```move_gen``` is a function to give valid moves 
+    /// for specific position and occupancy. First argument is position and bit encoded. 
+    /// Second argument is occupancy where any bit from ```mask``` can be set.
+    fn generate_pext_table(position: usize, mask: u64, keys: &mut Vec<u64>, move_gen: fn(u64, u64) -> u64) {
+        let occupancies = BitboardRuntimeConstants::generate_all_occupancies(mask);
+        for occupancy in occupancies { 
             let i: usize = pext_const(occupancy, mask) as usize;
             while i >= keys.len() {
                 keys.push(0);
             }
-            keys[i] = generate_bishop_moves_slow(1u64 << position, occupancy);
+            keys[i] = move_gen(1u64 << position, occupancy);
         }
     }
 
-    fn generate_pext_rook_table(position: u8, occupancy: u64, bits: &mut Vec<usize>, keys: &mut Vec<u64>) {
-        if  bits.len() > 0 {
-            let top_bit = bits.pop().unwrap();
-            BitboardRuntimeConstants::generate_pext_rook_table(position, occupancy, bits, keys);
-            BitboardRuntimeConstants::generate_pext_rook_table(position, occupancy ^ (1u64 << top_bit), bits, keys);
-            bits.push(top_bit);
-        } else { 
-            let mask = ROOK_MASKS[position as usize];
-            let i: usize = pext_const(occupancy, mask) as usize;
-            while i >= keys.len() {
-                keys.push(0);
+    fn generate_pext_bishop_table(position: usize, keys: &mut Vec<u64>) {
+        BitboardRuntimeConstants::generate_pext_table(
+            position, 
+            BISHOP_MASKS[position], 
+            keys, 
+            generate_bishop_moves_slow
+        );
+    }
+
+    fn generate_pext_rook_table(position: usize, keys: &mut Vec<u64>) {
+        BitboardRuntimeConstants::generate_pext_table(
+            position, 
+            ROOK_MASKS[position], 
+            keys, 
+            generate_rook_moves_slow
+        );
+    }
+
+    fn generate_magic_number<T: Rng>(variations: &Vec<u64>, expected: &Vec<u64>, optimal_size: u32, rng: &mut T) -> (u64, u8) {
+        let mut best = 1;
+        let mut val = 64;
+
+        fn test_magic(magic: u64, target_bits: u32, variations: &Vec<u64>, expected: &Vec<u64>, observed: &mut Vec<u64>) -> bool {
+            observed.resize(0, 0);
+            observed.resize(1<<target_bits, 0);
+
+            let mut success = true;
+            for (variation, value) in zip(variations, expected) {
+                let key = ((magic.wrapping_mul(*variation)) >> (64 - target_bits)) as usize;
+                if observed[key] == 0 {
+                    observed[key] = *value;
+                } else if observed[key] != *value {
+                    success = false;
+                    break;
+                }
             }
-            keys[i] = generate_rook_moves_slow(1u64 << position, occupancy);
+            success
         }
+
+        let mut target_bits = optimal_size + MINIMUM_QUALITY; 
+        let mut observed = Vec::new();
+        while val == 64 {
+            for _ in 0..NUMBER_OF_MAGIC_TABLE_TRIES {
+                let magic = rng.next_u64() & rng.next_u64() & rng.next_u64();
+                while target_bits >= optimal_size && test_magic(magic, target_bits, &variations, &expected, &mut observed) {
+                    best = magic;
+                    val = target_bits;
+                    target_bits = target_bits - 1;
+                }
+                if val == optimal_size {
+                    break;
+                }
+            }
+        }
+        (best, val as u8)
     }
 
-    fn generate_bishop_magic() -> Vec<Vec<u64>> {
+    fn generate_magic_numbers(masks: &[u64; 64], move_gen: fn(u64, u64) -> u64) -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
+        let mut rng = rand_pcg::Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+        let mut num_bits = [64u8; 64];
+        let mut magics = [1u64; 64];
+        let mut lookup_tables : [Vec<u64>; 64] = core::array::from_fn(|_| Vec::new());
+        for i in 0..64 {
+            let mask = masks[i];
+            let variations = BitboardRuntimeConstants::generate_all_occupancies(mask);
+            let expected: Vec<u64> = variations.iter().map(
+                |x| move_gen(1u64 << i, *x)).collect();
+            let (magic, bits) = BitboardRuntimeConstants::generate_magic_number(&variations, &expected, mask.count_ones(), &mut rng);
+            magics[i] = magic;
+            num_bits[i] = bits;
+            let keys: Vec<usize> = variations.iter().map(
+                |x| (magic.wrapping_mul(*x) >> (64 - bits)) as usize
+            ).collect();
+            let max_key = *(keys.iter().max().unwrap());
+            lookup_tables[i] = Vec::with_capacity(max_key + 1);
+            for _ in 0..(max_key+1) {
+                lookup_tables[i].push(0);
+            }
+            for (key, value) in zip(keys, expected) {
+                assert!(lookup_tables[i][key] == 0 || lookup_tables[i][key] == value);
+                lookup_tables[i][key] = value;
+            }
+        }
+        return (num_bits, magics, lookup_tables);
+    }
+
+    fn generate_bishop_magic_numbers() -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
+        return BitboardRuntimeConstants::generate_magic_numbers(&BISHOP_MASKS, generate_bishop_moves_slow);
+    }
+
+    
+    fn generate_rook_magic_numbers() -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
+        return BitboardRuntimeConstants::generate_magic_numbers(&ROOK_MASKS, generate_rook_moves_slow);
+    }
+
+    fn generate_bishop_tables() -> Vec<Vec<u64>> {
         let mut magic = Vec::with_capacity(64);
         for i in 0..64 {
-            let mut bits = Vec::<usize>::new();
             let mut keys = Vec::<u64>::with_capacity(1usize << BISHOP_MASKS[i].count_ones());
     
-            let mut tmp = BISHOP_MASKS[i];
-            while tmp > 0 {
-                bits.push(tmp.trailing_zeros() as usize);
-                tmp &= tmp - 1;
-            }
-            BitboardRuntimeConstants::generate_pext_bishop_table(i as u8, 0, &mut bits, &mut keys);
+            BitboardRuntimeConstants::generate_pext_bishop_table(i, &mut keys);
             magic.push(keys);
         }
         magic
     }
 
-    fn generate_rook_magic() -> Vec<Vec<u64>> {
+    fn generate_rook_tables() -> Vec<Vec<u64>> {
         let mut magic = Vec::with_capacity(64);
         for i in 0..64 {
-            let mut bits = Vec::<usize>::new();
             let mut keys = Vec::<u64>::with_capacity(1usize << ROOK_MASKS[i].count_ones());
     
-            let mut tmp = ROOK_MASKS[i];
-            while tmp > 0 {
-                bits.push(tmp.trailing_zeros() as usize);
-                tmp &= tmp - 1;
-            }
-            BitboardRuntimeConstants::generate_pext_rook_table(i as u8, 0, &mut bits, &mut keys);
+            BitboardRuntimeConstants::generate_pext_rook_table(i, &mut keys);
             magic.push(keys);
         }
         magic
@@ -277,31 +352,41 @@ impl BitboardRuntimeConstants{
         return keys;
     }
 
+    /// Access valid bishop moves (ignoring king safety and piece color) using 
+    /// given occupancy. ```position``` is given as a index of square.
     pub fn bishop_magic(&self, position: usize, occupancy: u64) -> u64 {
-        let mask = BISHOP_MASKS[position as usize];
-        let key;
+        let mask = BISHOP_MASKS[position];
         #[cfg(target_feature = "bmi2")]
         unsafe {
-            key = _pext_u64(occupancy, mask);
+            let key = _pext_u64(occupancy, mask);
+            return self.bishop_magic_pext_table[position as usize][key as usize];
         }
         #[cfg(not(target_feature = "bmi2"))] 
         {
-            key = pext_const(occupancy, mask);
+            let bits = self.bishop_magic_magic_table.0[position];
+            let magic = self.bishop_magic_magic_table.1[position];
+            let table = &self.bishop_magic_magic_table.2[position];
+            let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
+            return table[key];
         }
-        return self.bishop_magic_table[position as usize][key as usize];
     }
 
+    /// Access valid rook moves (ignoring king safety and piece color) using 
+    /// given occupancy. ```position``` is given as a index of square.
     pub fn rook_magic(&self, position: usize, occupancy: u64) -> u64 {
-        let mask = ROOK_MASKS[position as usize];
-        let key;
+        let mask = ROOK_MASKS[position];
         #[cfg(target_feature = "bmi2")]
         unsafe {
-            key = _pext_u64(occupancy, mask);
+            let key = _pext_u64(occupancy, mask);
+            return self.rook_magic_pext_table[position as usize][key as usize];
         }
         #[cfg(not(target_feature = "bmi2"))] 
         {
-            key = pext_const(occupancy, mask);
+            let bits = self.rook_magic_magic_table.0[position];
+            let magic = self.rook_magic_magic_table.1[position];
+            let table = &self.rook_magic_magic_table.2[position];
+            let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
+            return table[key];
         }
-        return self.rook_magic_table[position][key as usize];
     }
 }
