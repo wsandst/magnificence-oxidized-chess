@@ -18,43 +18,10 @@ chessEngine.clearBoardSelectionsCallback = clearSelections;
 
 var moveSoundEffect = new Audio('./sounds/move.mp3');
 
-const startingPosition = [
-    {"x": 0, "y": 0, "piece": 9, "legal_moves": []},
-    {"x": 1, "y": 0, "piece": 8, "legal_moves": []},
-    {"x": 2, "y": 0, "piece": 7, "legal_moves": []},
-    {"x": 3, "y": 0, "piece": 10, "legal_moves": []},
-    {"x": 4, "y": 0, "piece": 11, "legal_moves": []},
-    {"x": 5, "y": 0, "piece": 7, "legal_moves": []},
-    {"x": 6, "y": 0, "piece": 8, "legal_moves": []},
-    {"x": 7, "y": 0, "piece": 9, "legal_moves": []},
-    {"x": 0, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 1, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 2, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 3, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 4, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 5, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 6, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 7, "y": 1, "piece": 6, "legal_moves": []},
-    {"x": 0, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 1, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 2, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 3, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 4, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 5, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 6, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 7, "y": 6, "piece": 0, "legal_moves": []},
-    {"x": 0, "y": 7, "piece": 3, "legal_moves": []},
-    {"x": 1, "y": 7, "piece": 2, "legal_moves": []},
-    {"x": 2, "y": 7, "piece": 1, "legal_moves": []},
-    {"x": 3, "y": 7, "piece": 4, "legal_moves": []},
-    {"x": 4, "y": 7, "piece": 5, "legal_moves": []},
-    {"x": 5, "y": 7, "piece": 1, "legal_moves": []},
-    {"x": 6, "y": 7, "piece": 2, "legal_moves": []},
-    {"x": 7, "y": 7, "piece": 3, "legal_moves": []}
-]
+
 
 const boardPieces = computed(() => {
-    return chessEngine.currentBoardPieces ?? startingPosition;
+    return chessEngine.currentBoardPieces;
 })
 
 function boardPositionModulo(row : number, col: number) : number {
@@ -251,6 +218,7 @@ function posToAlgebraicPos(rows: number, cols: number) {
 
 onMounted(() => {
     new ResizeObserver(boardResized).observe(boardElement.value);
+    chessEngine.currentBoardPieces = chessEngine.convertFenToBoardPieces(localStorage.getItem("current_board_fen"));
 })
 
 </script>

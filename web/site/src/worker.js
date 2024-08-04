@@ -16,7 +16,10 @@ const lock = new AsyncLock();
 
 async function initWorker() {
     await init();
+    var startTime = performance.now()
     let engine = ChessEngine.new();
+    var endTime = performance.now()
+    self.postMessage(["log", `Engine initialization took ${endTime - startTime} ms`]);
 
     self.onerror = async function(event) {
         await resetWasm();

@@ -10,6 +10,21 @@ let worker = new Worker(new URL('../worker.js', import.meta.url), {
 let lastCrashFenString = null;
 let currentFenCrashCount = 0;
 
+const charToPieceMap = {
+  'P': 0,
+  'B': 1,
+  'N': 2,
+  'R': 3,
+  'Q': 4,
+  'K': 5,
+  'p': 6,
+  'b': 7,
+  'n': 8,
+  'r': 9,
+  'q': 10,
+  'k': 11,
+}
+
 export const useChessEngineStore = defineStore('chess_engine', {
   state: () => ({
     gamePaused: false,
@@ -95,6 +110,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
           else if (messageType == "get_pieces") {
             this.currentBoardPieces = data;
             this.boardStateCounter += 1;
+          }
+          else if (messageType == "log") {
+            this.logHistory.push(data);
           }
           else if (messageType == "get_allowed_engines") {
             this.setAvailableEngines(data);
@@ -265,6 +283,31 @@ export const useChessEngineStore = defineStore('chess_engine', {
         this.engineSearching = true;
         worker.postMessage(["search"]);
       }
+    },
+    convertFenToBoardPieces(fen: string) {
+      let pieces = []
+      const fenPieces = fen.split(" ")[0];
+      let rows = fenPieces.split("/");
+      let y = 0;
+      for (const row of rows) {
+        let x = 0;
+        for (const c of row) {
+          if (c >= '0' && c <= '9') {
+              // Digit means empty spaces
+              x += parseInt(c);
+          }
+          else {
+              // Map the character to the correct piece
+              pieces.push({"x": x, "y": y, "piece": charToPieceMap[c], "legal_moves": []});
+              x += 1;
+          }
+          if (x >= 8) {
+              break;
+          }
+        }
+        y = y + 1;
+      }
+      return pieces;
     }
   }
 });

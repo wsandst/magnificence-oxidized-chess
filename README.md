@@ -28,7 +28,6 @@ Install with: `cargo install rsw`
 ### Web  
 - [ ] Improve sidebar
 - [ ] Improve win condition popup
-- [ ] Prohibit moves which are not valid moves
 - [ ] Add proper board square numbering
 
 ### UCI
