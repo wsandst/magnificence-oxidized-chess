@@ -40,7 +40,8 @@ struct GoState {
 struct UCIState {
     board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
-    engine: StandardAlphaBetaEngine
+    engine: StandardAlphaBetaEngine,
+    move_history: Vec<Move>
 }
 
 #[derive(Debug, PartialEq)]
@@ -63,6 +64,7 @@ enum CommandType {
     Divide(usize),
     PerftTests,
     Move(String),
+    Undo,
     DisplayBoard,
     EvaluateBoard,
     LegalMoves,
@@ -86,7 +88,8 @@ pub fn start_uci_protocol() {
     let mut state = UCIState {
         board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
         board_constant_state,
-        engine: StandardAlphaBetaEngine::new()
+        engine: StandardAlphaBetaEngine::new(),
+        move_history: Vec::new()
     };
 
     loop {
@@ -105,7 +108,8 @@ pub fn run_single_uci_command(command_line: &str) {
     let mut state = UCIState {
         board: Board::new(Rc::clone(&board_constant_state)),
         board_constant_state,
-        engine: StandardAlphaBetaEngine::new()
+        engine: StandardAlphaBetaEngine::new(),
+        move_history: Vec::new()
     };
 
     let command = parse_command(command_line);
@@ -132,8 +136,20 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         CommandType::PositionMoves(moves) => {
             state.board = commands::board_from_moves(&state.board, moves);
         }
-        CommandType::Move(mv) => {
-            state.board.make_move(&Move::from_algebraic(&state.board, mv));
+        CommandType::Move(mv_algebraic) => {
+            let mv = Move::from_algebraic(&state.board, mv_algebraic);
+            state.board.make_move(&mv);
+            state.move_history.push(mv);
+        },
+        CommandType::Undo => {
+            let possible_mv = state.move_history.pop();
+            if let Some(mv) = possible_mv {
+                state.board.unmake_move(&mv);
+                println!("Move {} was undone", mv);
+            }
+            else {
+                println!("No moves have been made, cannot undo.");
+            }
         }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
@@ -226,7 +242,7 @@ fn parse_command(line: &str) -> CommandType {
                 CommandType::Error("Please specify a divide perft depth".to_string())
             }
         }
-        "move" | "makemove" | "mv" => {
+        "move" | "makemove" | "mv" | "make" => {
             if words.len() > 1 {
                 CommandType::Move(words[1].to_string())
             }
@@ -252,7 +268,8 @@ fn parse_command(line: &str) -> CommandType {
             }
         }
         "moves" | "getmoves" | "legalmoves" | "mvs" => CommandType::LegalMoves,
-        "perfttests" => CommandType::PerftTests,
+        "undo" | "unmake" => CommandType::Undo,
+        "perfttests" | "perftest" | "testperft" => CommandType::PerftTests,
         _ => CommandType::Unknown,
     };
     return command;
