@@ -17,11 +17,6 @@ const MINIMUM_QUALITY: u32 = 5;
 #[cfg(not(any(test,debug_assertions)))]
 const MINIMUM_QUALITY: u32 = 1;
 
-const fn p_rng(state: u128) -> (u128, u64) {
-    let state = state.wrapping_mul(0xaadec8c3186345282b4e141f3a1232d5);
-    let val = state >> 64;
-    return (state, val as u64);
-}
 
 /// Bit-filled columns, used for masking columns.
 pub const COLUMNS: [u64; 8] = {
@@ -52,6 +47,30 @@ pub const ROWS: [u64; 8] = {
             offset <<= 1;
         }
         masks[i] = mask;
+        i += 1;
+    }
+    masks
+};
+
+pub const LEFT_RIGHT_DIAGONALS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let mut i = 0;
+    while i < 64 {
+        masks[i] = 1u64 << i;
+        masks[i] |= help_bit_step(9, 1u64 << i, 0);
+        masks[i] |= help_bit_step(-9, 1u64 << i, 0);
+        i += 1;
+    }
+    masks
+};
+
+pub const RIGHT_LEFT_DIAGONALS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let mut i = 0;
+    while i < 64 {
+        masks[i] = 1u64 << i;
+        masks[i] |= help_bit_step(7, 1u64 << i, 0);
+        masks[i] |= help_bit_step(-7, 1u64 << i, 0);
         i += 1;
     }
     masks

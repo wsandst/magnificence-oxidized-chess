@@ -308,20 +308,8 @@ fn debug_test() {
 
 #[test]
 fn debug_test_harald() {
-    println!("Debug Test!");
-    let now = Instant::now();
-
-    // Calling a slow function, it may take a while
-    let state = BitboardRuntimeConstants::create();
-
-    let elapsed_time = now.elapsed();
-    println!("Running slow_function() took {} ms.", elapsed_time.as_millis());
-    
-    let position = 7;
-    let mut occupancy = 1u64 << 37;
-    occupancy |= 1u64 << 26 | 1<<39;
-    occupancy |= 1u64 << 3 | 1 << 11 | 1 << 18;
-    Board::print_bits(state.rook_magic(position, occupancy));
+    Board::print_bits(RIGHT_LEFT_DIAGONALS[12]);
+    assert!(1==0);
 }
 
 
