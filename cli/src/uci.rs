@@ -186,7 +186,7 @@ fn parse_command(line: &str) -> CommandType {
         "ucinewgame" => CommandType::UCINewGame,
         "isready" => CommandType::IsReady,
         "help" | "h" => CommandType::Help,
-        "display" | "d" | "board" => CommandType::DisplayBoard,
+        "display" | "d" | "board" | "show" => CommandType::DisplayBoard,
         "eval" | "evaluate" | "score" => CommandType::EvaluateBoard,
         "position" | "pos" | "setboard" | "p" => { 
             parse_uci_position_cmd(&words[1..])
