@@ -3,6 +3,9 @@
 use rand::Rng;
 use super::super::*;
 
+pub const WHITE: bool = true;
+pub const BLACK: bool = false;
+
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
 pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;

@@ -9,6 +9,8 @@ mod kings;
 mod bishops;
 mod rooks;
 
+use bitboard::constants::*;
+
 use crate::core::*;
 use super::Board;
 
@@ -33,6 +35,46 @@ impl MovegenState {
 
 
 impl Board {
+
+    pub fn threatened_squares<const COLOR: bool>(&self) -> u64 {
+        let offset: usize = match COLOR {
+            WHITE => 0,
+            BLACK => 6
+        };
+        let pawns = self.piece_sets[0 + offset];
+        let queen = self.piece_sets[4 + offset];
+        let mut bishops = self.piece_sets[1 + offset] | queen;
+        let mut knights = self.piece_sets[2 + offset]; 
+        let mut rooks = self.piece_sets[3 + offset] | queen;
+        let king = self.piece_sets[5 + offset];
+        let mut result = match COLOR {
+            WHITE => ((pawns >> 7) & !COLUMNS[0]) | ((pawns >> 9) & !COLUMNS[7]),
+            BLACK => ((pawns << 7) & !COLUMNS[7]) | ((pawns << 9) & !COLUMNS[0])
+        };
+        let occupancy = !self.piece_sets[Piece::Empty.to_u8() as usize];
+        while bishops > 0 {
+            let pos: usize = bishops.trailing_zeros() as usize;
+            result |= self.runtime_constants.bishop_magic(pos, occupancy);
+            bishops &= bishops - 1;
+        }
+        while knights > 0 {
+            let pos: usize = knights.trailing_zeros() as usize;
+            result |= KNIGHT_MOVE_MASKS[pos];
+            knights &= knights - 1;
+        }
+        while rooks > 0 {
+            let pos: usize = rooks.trailing_zeros() as usize;
+            result |= self.runtime_constants.rook_magic(pos, occupancy);
+            rooks &= rooks - 1;
+        }
+        if king > 0 {
+            let pos: usize = king.trailing_zeros() as usize;
+            result |= KING_MOVE_MASKS[pos];
+        }
+        return result;
+    }
+
+    
 
     /// Get all valid moves for this position. Pushes the moves to the mutable vector `moves` which is passed in.
     pub fn get_moves(&self, moves: &mut Vec<Move>)  {
