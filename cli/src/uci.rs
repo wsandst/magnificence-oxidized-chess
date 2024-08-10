@@ -301,7 +301,7 @@ fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
             }
             "fen" if words.len() > 1 => { 
                 // Check if _ is a valid fen string
-                CommandType::Position(words[2..].join(" ").to_string()) 
+                CommandType::Position(words[1..].join(" ").to_string()) 
             }
             _ => {
                 CommandType::Position(words[0..].join(" ").to_string()) 
