@@ -61,6 +61,8 @@ enum CommandType {
     // Non-UCI commands
     Perft(usize),
     Divide(usize),
+    PerftTests,
+    Move(String),
     DisplayBoard,
     EvaluateBoard,
     LegalMoves,
@@ -130,6 +132,9 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         CommandType::PositionMoves(moves) => {
             state.board = commands::board_from_moves(&state.board, moves);
         }
+        CommandType::Move(mv) => {
+            state.board.make_move(&Move::from_algebraic(&state.board, mv));
+        }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
         },
@@ -142,8 +147,12 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         CommandType::LegalMoves => {
             let mut move_vector = Vec::new();
             state.board.get_moves(&mut move_vector);
-            let moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
+            let mut moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
+            moves.sort();
             println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
+        }
+        CommandType::PerftTests => {
+            todo!();
         }
         _ => {}
     }
@@ -204,7 +213,7 @@ fn parse_command(line: &str) -> CommandType {
         "ucinewgame" => CommandType::UCINewGame,
         "isready" => CommandType::IsReady,
         "help" | "h" => CommandType::Help,
-        "display" | "d" | "board" | "show" => CommandType::DisplayBoard,
+        "display" | "disp" | "d" | "board" | "show" => CommandType::DisplayBoard,
         "eval" | "evaluate" | "score" => CommandType::EvaluateBoard,
         "divide" | "div" => {
             if words.len() > 1 {
@@ -215,6 +224,14 @@ fn parse_command(line: &str) -> CommandType {
             }
             else {
                 CommandType::Error("Please specify a divide perft depth".to_string())
+            }
+        }
+        "move" | "makemove" | "mv" => {
+            if words.len() > 1 {
+                CommandType::Move(words[1].to_string())
+            }
+            else {
+                CommandType::Error("Please a move in algebraic form".to_string())
             }
         }
         "position" | "pos" | "setboard" | "p" => { 
@@ -234,7 +251,8 @@ fn parse_command(line: &str) -> CommandType {
                 CommandType::Error("Please specify a perft depth".to_string())
             }
         }
-        "moves" | "legalmoves" => CommandType::LegalMoves,
+        "moves" | "getmoves" | "legalmoves" | "mvs" => CommandType::LegalMoves,
+        "perfttests" => CommandType::PerftTests,
         _ => CommandType::Unknown,
     };
     return command;
