@@ -154,7 +154,7 @@ mod tests {
         ]);   
 
 
-        let board = Board::from_fen("8/8/1p6/p1p5/8/P1P5/1P6/8 b - - 0 1", Rc::clone(&constant_state));
+        let board = Board::from_fen("K7/8/1p6/p1p5/8/P1P5/1P6/k7 b - - 0 1", Rc::clone(&constant_state));
         let movegen_state = MovegenState::new(&board);
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, &movegen_state);
@@ -163,7 +163,7 @@ mod tests {
         ]);
 
         // En passant
-        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 w - b6", Rc::clone(&constant_state));
+        let board = Board::from_fen("K7/8/8/1pP5/5Pp1/8/8/k7 w - b6", Rc::clone(&constant_state));
         let movegen_state = MovegenState::new(&board);
         moves.clear();
         board.generate_white_pawn_moves(&mut moves, &movegen_state);
@@ -171,7 +171,7 @@ mod tests {
             "c5c6", "c5b6", "f4f5",
         ]);
 
-        let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 b - f3", Rc::clone(&constant_state));
+        let board = Board::from_fen("K7/8/8/1pP5/5Pp1/8/8/k7 b - f3", Rc::clone(&constant_state));
         let movegen_state = MovegenState::new(&board);
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, &movegen_state);
