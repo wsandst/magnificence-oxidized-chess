@@ -37,7 +37,7 @@ impl Board {
     }
 
     /// Calculates the hash key from scratch. Used for debugging.
-    pub(super) fn calculate_hash(&self) -> u64 {
+    pub(in crate::core) fn calculate_hash(&self) -> u64 {
         let mut result = 0;
         for i in 0..64 {
             let index = i + (self.mailboard[i].to_u8() as usize) * 64;

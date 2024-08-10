@@ -2,7 +2,10 @@ use crate::core::Move;
 use super::core::bitboard::*;
 
 pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
-    let mut moves = reserved_moves.pop().unwrap();
+    let mut moves = match reserved_moves.pop() {
+        None => Vec::new(),
+        Some(vec) => vec
+    };
     moves.clear();
     board.get_moves(&mut moves);
     if depth == 1 {

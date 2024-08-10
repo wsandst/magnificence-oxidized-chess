@@ -4,6 +4,7 @@ use super::Move;
 use std::rc::Rc;
 use std::time::Instant;
 
+use crate::commands::perft;
 use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
@@ -293,6 +294,8 @@ fn board_validation_with_perft() {
     let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
     validation_perft(4, &mut board, &mut reserved_moves);
 }
+
+
 
 #[test]
 fn debug_test() {
