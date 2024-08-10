@@ -233,23 +233,35 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
+    #[cfg(target_feature = "bmi2")]
     bishop_magic_pext_table: Vec<Vec<u64>>,
-    bishop_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
-    rook_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
+    #[cfg(target_feature = "bmi2")]
     rook_magic_pext_table: Vec<Vec<u64>>,
+
+    #[cfg(not(target_feature = "bmi2"))]
+    bishop_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
+    #[cfg(not(target_feature = "bmi2"))]
+    rook_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
+
     pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
 }
 
 impl BitboardRuntimeConstants{
     pub fn create() -> BitboardRuntimeConstants {
         let constants = BitboardRuntimeConstants {
+            #[cfg(target_feature = "bmi2")]
             bishop_magic_pext_table: Self::generate_bishop_tables(),
-            bishop_magic_magic_table: Self::generate_bishop_magic_numbers(),
-            rook_magic_magic_table: Self::generate_rook_magic_numbers(),
+            #[cfg(target_feature = "bmi2")]
             rook_magic_pext_table: Self::generate_rook_tables(),
+            #[cfg(not(target_feature = "bmi2"))]
+            bishop_magic_magic_table: Self::generate_bishop_magic_numbers(),
+            #[cfg(not(target_feature = "bmi2"))]
+            rook_magic_magic_table: Self::generate_rook_magic_numbers(),
             zoobrist_keys: Self::create_zoobrist_keys()
         };
+        #[cfg(not(target_feature = "bmi2"))]
         println!("Magic magic table size: {} KiB (optimal = {})", (constants.get_magic_bitboard_size() * 8) / 1024, constants.is_magic_optimal());
+        #[cfg(target_feature = "bmi2")]
         println!("Pext magic table size: {} KiB", (constants.get_pext_bitboard_size() * 8) / 1024);
         return constants;
     }
@@ -279,6 +291,7 @@ impl BitboardRuntimeConstants{
     /// pext mask for given position. ```move_gen``` is a function to give valid moves 
     /// for specific position and occupancy. First argument is position and bit encoded. 
     /// Second argument is occupancy where any bit from ```mask``` can be set.
+    #[cfg(target_feature = "bmi2")]
     fn generate_pext_table(position: usize, mask: u64, keys: &mut Vec<u64>, move_gen: fn(u64, u64) -> u64) {
         let occupancies = BitboardRuntimeConstants::generate_all_occupancies(mask);
         for occupancy in occupancies { 
@@ -290,6 +303,7 @@ impl BitboardRuntimeConstants{
         }
     }
 
+    #[cfg(target_feature = "bmi2")]
     fn generate_pext_bishop_table(position: usize, keys: &mut Vec<u64>) {
         BitboardRuntimeConstants::generate_pext_table(
             position, 
@@ -299,6 +313,7 @@ impl BitboardRuntimeConstants{
         );
     }
 
+    #[cfg(target_feature = "bmi2")]
     fn generate_pext_rook_table(position: usize, keys: &mut Vec<u64>) {
         BitboardRuntimeConstants::generate_pext_table(
             position, 
@@ -308,20 +323,22 @@ impl BitboardRuntimeConstants{
         );
     }
 
+    #[cfg(not(target_feature = "bmi2"))]
     fn generate_magic_number<T: Rng>(variations: &Vec<u64>, expected: &Vec<u64>, optimal_size: u32, rng: &mut T) -> (u64, u8) {
         let mut best = 1;
         let mut bits_used = 64;
 
         fn test_magic(magic: u64, target_bits: u32, variations: &Vec<u64>, expected: &Vec<u64>, observed: &mut Vec<u64>) -> bool {
-            observed.resize(0, 0);
+            observed.clear();
             observed.resize(1<<target_bits, 0);
 
             let mut success = true;
             for (variation, value) in std::iter::zip(variations, expected) {
                 let key = ((magic.wrapping_mul(*variation)) >> (64 - target_bits)) as usize;
-                if observed[key] == 0 {
+                let found = observed[key];
+                if found == 0 {
                     observed[key] = *value;
-                } else if observed[key] != *value {
+                } else if found != *value {
                     success = false;
                     break;
                 }
@@ -347,6 +364,7 @@ impl BitboardRuntimeConstants{
         (best, bits_used as u8)
     }
 
+    #[cfg(not(target_feature = "bmi2"))]
     fn generate_magic_numbers(masks: &[u64; 64], move_gen: fn(u64, u64) -> u64) -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
         let mut rng = rand_pcg::Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
         let mut num_bits = [64u8; 64];
@@ -376,15 +394,17 @@ impl BitboardRuntimeConstants{
         return (num_bits, magics, lookup_tables);
     }
 
+    #[cfg(not(target_feature = "bmi2"))]
     fn generate_bishop_magic_numbers() -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
         return BitboardRuntimeConstants::generate_magic_numbers(&BISHOP_MASKS, generate_bishop_moves_slow);
     }
 
-    
+    #[cfg(not(target_feature = "bmi2"))]
     fn generate_rook_magic_numbers() -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
         return BitboardRuntimeConstants::generate_magic_numbers(&ROOK_MASKS, generate_rook_moves_slow);
     }
 
+    #[cfg(target_feature = "bmi2")]
     fn generate_bishop_tables() -> Vec<Vec<u64>> {
         let mut magic = Vec::with_capacity(64);
         for i in 0..64 {
@@ -396,6 +416,7 @@ impl BitboardRuntimeConstants{
         magic
     }
 
+    #[cfg(target_feature = "bmi2")]
     fn generate_rook_tables() -> Vec<Vec<u64>> {
         let mut magic = Vec::with_capacity(64);
         for i in 0..64 {
@@ -422,52 +443,59 @@ impl BitboardRuntimeConstants{
     /// Access valid bishop moves (ignoring king safety and piece color) using 
     /// given occupancy. ```position``` is given as a index of square.
     pub fn bishop_magic(&self, position: usize, occupancy: u64) -> u64 {
-        let mask = BISHOP_MASKS[position];
-        #[cfg(target_feature = "bmi2")]
         unsafe {
-            let key = _pext_u64(occupancy, mask);
-            return self.bishop_magic_pext_table[position as usize][key as usize];
-        }
-        #[cfg(not(target_feature = "bmi2"))] 
-        {
-            let bits = self.bishop_magic_magic_table.0[position];
-            let magic = self.bishop_magic_magic_table.1[position];
-            let table = &self.bishop_magic_magic_table.2[position];
-            let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
-            return table[key];
+            let mask = *(BISHOP_MASKS.get_unchecked(position));
+            #[cfg(target_feature = "bmi2")]
+            unsafe {
+                let key = _pext_u64(occupancy, mask);
+                return *(self.bishop_magic_pext_table.get_unchecked(position as usize).get_unchecked(key as usize));
+            }
+            #[cfg(not(target_feature = "bmi2"))] 
+            {
+                let bits = self.bishop_magic_magic_table.0.get_unchecked(position);
+                let magic = self.bishop_magic_magic_table.1.get_unchecked(position);
+                let table = self.bishop_magic_magic_table.2.get_unchecked(position);
+                let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
+                return *(table.get_unchecked(key));
+            }
         }
     }
 
     /// Access valid rook moves (ignoring king safety and piece color) using 
     /// given occupancy. ```position``` is given as a index of square.
     pub fn rook_magic(&self, position: usize, occupancy: u64) -> u64 {
-        let mask = ROOK_MASKS[position];
-        #[cfg(target_feature = "bmi2")]
         unsafe {
-            let key = _pext_u64(occupancy, mask);
-            return self.rook_magic_pext_table[position as usize][key as usize];
-        }
-        #[cfg(not(target_feature = "bmi2"))] 
-        {
-            let bits = self.rook_magic_magic_table.0[position];
-            let magic = self.rook_magic_magic_table.1[position];
-            let table = &self.rook_magic_magic_table.2[position];
-            let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
-            return table[key];
+            let mask = *ROOK_MASKS.get_unchecked(position);
+            #[cfg(target_feature = "bmi2")]
+            unsafe {
+                let key = _pext_u64(occupancy, mask);
+                return *(self.rook_magic_pext_table.get_unchecked(position as usize).get_unchecked(key as usize));
+            }
+            #[cfg(not(target_feature = "bmi2"))] 
+            {
+                let bits = self.rook_magic_magic_table.0.get_unchecked(position);
+                let magic = self.rook_magic_magic_table.1.get_unchecked(position);
+                let table = self.rook_magic_magic_table.2.get_unchecked(position);
+                let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
+                return *(table.get_unchecked(key));
+            }
         }
     }
 
     /// Returns the size of the magic tables in entries
+    #[cfg(not(target_feature = "bmi2"))]
     fn get_magic_bitboard_size(&self) -> usize {
         return self.rook_magic_magic_table.2.iter().fold(0, |l,r| l + r.len()) +
             self.bishop_magic_magic_table.2.iter().fold(0, |l,r| l + r.len());
     }
 
+    #[cfg(target_feature = "bmi2")]
     fn get_pext_bitboard_size(&self) -> usize {
         return self.rook_magic_pext_table.iter().fold(0, |l,r| l + r.len()) +
             self.bishop_magic_pext_table.iter().fold(0, |l,r| l + r.len());
     }
 
+    #[cfg(not(target_feature = "bmi2"))]
     fn is_magic_optimal(&self) -> bool {
         for (i, bits) in self.rook_magic_magic_table.0.iter().enumerate() {
             let optimal: u8 = ROOK_MASKS[i].count_ones() as u8;
