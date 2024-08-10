@@ -49,6 +49,30 @@ pub const ROWS: [u64; 8] = {
     masks
 };
 
+pub const LEFT_RIGHT_DIAGONALS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let mut i = 0;
+    while i < 64 {
+        masks[i] = 1u64 << i;
+        masks[i] |= help_bit_step(9, 1u64 << i, 0);
+        masks[i] |= help_bit_step(-9, 1u64 << i, 0);
+        i += 1;
+    }
+    masks
+};
+
+pub const RIGHT_LEFT_DIAGONALS: [u64; 64] = {
+    let mut masks = [0u64; 64];
+    let mut i = 0;
+    while i < 64 {
+        masks[i] = 1u64 << i;
+        masks[i] |= help_bit_step(7, 1u64 << i, 0);
+        masks[i] |= help_bit_step(-7, 1u64 << i, 0);
+        i += 1;
+    }
+    masks
+};
+
 pub const KNIGHT_MOVE_MASKS: [u64; 64] = {
     let mut masks = [0u64; 64];
     let dirs : [(isize, isize); 8] = [(1, 2), (2, 1), (-2, 1), (-1, 2), (1, -2), (2, -1), (-1, -2), (-2, -1)];
@@ -203,10 +227,6 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
     }
     return result;
 }
-
-
-
-
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
