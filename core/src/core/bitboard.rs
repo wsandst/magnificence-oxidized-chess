@@ -5,6 +5,7 @@ pub mod constants;
 mod helpers;
 mod move_gen;
 use constants::*;
+use move_gen::MovegenState;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
@@ -237,29 +238,20 @@ impl Board {
 
     pub fn get_game_status(&mut self) -> GameStatus {
         let mut legal_moves = Vec::new();
-        self.get_moves(&mut legal_moves);
+        let mut state = MovegenState::new(&self);
+        match self.current_player {
+            Color::White => self.generate_moves_white(&mut legal_moves, &mut state),
+            Color::Black => self.generate_moves_black(&mut legal_moves, &mut state)
+        }
         let no_legal_moves = legal_moves.len() == 0;
         if !no_legal_moves {
             return GameStatus::InProgress;
         }
 
-        // Check if king is in check
-        self.switch_current_player();
-        self.get_moves(&mut legal_moves);
-        let in_check = match self.get_current_player() {
-            Color::Black => {
-                legal_moves.iter().any(|mv| mv.captured == Piece::BlackKing)
-            },
-            Color::White => {
-                legal_moves.iter().any(|mv| mv.captured == Piece::WhiteKing)
-            }
-        };
-        self.switch_current_player();
-
-        if no_legal_moves && !in_check {
+        if no_legal_moves && !state.in_check() {
             return GameStatus::Stalemate
         }
-        else if no_legal_moves && in_check {
+        else if no_legal_moves && state.in_check() {
             return match self.get_current_player() {
                 Color::Black => GameStatus::WhiteWon,
                 Color::White => GameStatus::BlackWon
