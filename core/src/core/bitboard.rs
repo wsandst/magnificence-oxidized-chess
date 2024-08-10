@@ -79,10 +79,10 @@ impl Board {
                 ep = (mv.from % 8) + 1;
             }
             // Check if this move performs en passant and zero the taken square
-            else if piece_to_move == Piece::WhitePawn && (self.ep + 16 - 1) == mv.to {
+            else if piece_to_move == Piece::WhitePawn && self.ep > 0 && (self.ep + 16 - 1) == mv.to {
                 self.set_piece((self.ep as usize + 24 - 1) as u8, Piece::Empty);
             }
-            else if piece_to_move == Piece::BlackPawn && (self.ep + 40 - 1) == mv.to {
+            else if piece_to_move == Piece::BlackPawn && self.ep > 0 && (self.ep + 40 - 1) == mv.to {
                 self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::Empty);
             }
         }
@@ -185,11 +185,11 @@ impl Board {
                 return;
             }
         }
-        else if moved_piece == Piece::WhitePawn && self.ep > 0 {
+        else if moved_piece == Piece::WhitePawn && self.ep > 0 && ((mv.from - mv.to) % 8 != 0) && mv.captured == Piece::Empty {
             // Restore removed pawn from en passant
             self.set_piece((self.ep as usize + 24 - 1) as u8, Piece::BlackPawn);
         }
-        else if moved_piece == Piece::BlackPawn && self.ep > 0 {
+        else if moved_piece == Piece::BlackPawn && self.ep > 0 && ((mv.to - mv.from) % 8 != 0) && mv.captured == Piece::Empty {
             self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::WhitePawn);
         }
 
