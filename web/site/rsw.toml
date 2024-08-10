@@ -9,3 +9,8 @@ name = "web"
 root = "../../"
 link = true
 out-dir = "site/wasm"
+
+[[crates]]
+name = "core"
+root = "../../"
+target = "no-modules"

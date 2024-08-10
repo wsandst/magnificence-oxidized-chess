@@ -7,6 +7,7 @@ mod castling;
 mod knights;
 mod kings;
 mod bishops;
+mod rooks;
 
 use crate::core::*;
 use super::Board;
@@ -46,7 +47,8 @@ impl Board {
     pub(in crate::core) fn generate_moves_white(&self, moves : &mut Vec<Move>, state: &mut MovegenState) {
         self.generate_white_pawn_moves(moves, state);
         self.generate_white_knight_moves(moves, state);
-        self.generate_white_bishop_moves(moves, state);
+        self.generate_white_bishop_like_moves(moves, state);
+        self.generate_white_rook_like_moves(moves, state);
         self.generate_white_king_moves(moves, state);
         self.generate_white_castling_moves(moves, state);
     }
@@ -55,7 +57,8 @@ impl Board {
     pub(in crate::core) fn generate_moves_black(&self, moves : &mut Vec<Move>, state: &mut MovegenState) {
         self.generate_black_pawn_moves(moves, state);
         self.generate_black_knight_moves(moves, state);
-        self.generate_black_bishop_moves(moves, state);
+        self.generate_black_bishop_like_moves(moves, state);
+        self.generate_black_rook_like_moves(moves, state);
         self.generate_black_king_moves(moves, state);
         self.generate_black_castling_moves(moves, state);
     }
