@@ -5,8 +5,6 @@ pub mod constants;
 mod helpers;
 mod move_gen;
 use constants::*;
-use move_gen::*;
-use helpers::*;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
@@ -237,7 +235,7 @@ impl Board {
         self.current_player = self.current_player.next_player();
     }
 
-    pub fn get_game_status(&self) -> GameStatus {
+    pub fn get_game_status(&mut self) -> GameStatus {
         let mut legal_moves = Vec::new();
         self.get_moves(&mut legal_moves);
         let no_legal_moves = legal_moves.len() == 0;
@@ -246,17 +244,17 @@ impl Board {
         }
 
         // Check if king is in check
-        let (white_occupancy, black_occupancy) = self.get_occupancy();
+        self.switch_current_player();
+        self.get_moves(&mut legal_moves);
         let in_check = match self.get_current_player() {
             Color::Black => {
-                self.generate_moves_white(&mut legal_moves, white_occupancy, black_occupancy);
                 legal_moves.iter().any(|mv| mv.captured == Piece::BlackKing)
             },
             Color::White => {
-                self.generate_moves_black(&mut legal_moves, white_occupancy, black_occupancy);
                 legal_moves.iter().any(|mv| mv.captured == Piece::WhiteKing)
             }
         };
+        self.switch_current_player();
 
         if no_legal_moves && !in_check {
             return GameStatus::Stalemate

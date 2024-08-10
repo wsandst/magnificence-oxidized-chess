@@ -1,5 +1,4 @@
 use bitboard::BitboardRuntimeConstants;
-use num::cast;
 
 use crate::core::*;
 use std::{fmt, rc::Rc};

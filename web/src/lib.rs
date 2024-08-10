@@ -177,7 +177,7 @@ impl ChessEngine {
         }
     }
 
-    pub fn get_game_status(&self) -> String {
+    pub fn get_game_status(&mut self) -> String {
         match self.board.get_game_status() {
             GameStatus::InProgress => "running".to_string(),
             GameStatus::WhiteWon => "white_won".to_string(),
