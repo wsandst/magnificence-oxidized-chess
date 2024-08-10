@@ -1,10 +1,9 @@
-use super::Board;
+use super::{Board, MovegenState};
 use super::bitboard::constants::*;
 use crate::core::*;
 
 const PROMOTION_PIECES_WHITE : [Piece; 4] = [Piece::WhiteQueen, Piece::WhiteRook, Piece::WhiteBishop, Piece::WhiteKnight];
 const PROMOTION_PIECES_BLACK : [Piece; 4] = [Piece::BlackQueen, Piece::BlackRook, Piece::BlackBishop, Piece::BlackKnight];
-
 
 impl Board {
     fn extract_pawn_loop<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool, const PROMOTION: bool>(&self, mut move_mask: u64, moves : &mut Vec<Move>) {
@@ -48,22 +47,21 @@ impl Board {
         self.extract_pawn_loop::<FROM_OFFSET, CAPTURES, WHITE, false>(move_mask & (!promotion_mask), moves);
     }
 
-    pub fn generate_white_pawn_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
-        let full_occupancy = white_occupancy | black_occupancy;
+    pub(in crate::core) fn generate_white_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let white_pawn_occupancy = self.piece_sets[Piece::WhitePawn.to_u8() as usize];
 
         // Move forward
-        let forward_move_mask = (white_pawn_occupancy >> 8) & !(full_occupancy);
+        let forward_move_mask = (white_pawn_occupancy >> 8) & !(state.occupancy);
         self.extract_pawn_moves::<8, false, true>(forward_move_mask, moves);
 
         // Second rank double move
-        let double_move_mask = ((forward_move_mask & ROWS[5]) >> 8) & !(full_occupancy);
+        let double_move_mask = ((forward_move_mask & ROWS[5]) >> 8) & !(state.occupancy);
         self.extract_pawn_loop::<16, false, true, false>(double_move_mask, moves);
 
         // Add EP square to occupancy as a virtual piece
         let black_occupancy_with_ep = match self.ep {
-            0 => black_occupancy,
-            _ => black_occupancy | (1 << (self.ep + 16 - 1)) 
+            0 => state.black_occupancy,
+            _ => state.black_occupancy | (1 << (self.ep + 16 - 1)) 
         };
         
         // Captures left
@@ -75,22 +73,21 @@ impl Board {
         self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
     }
 
-    pub fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, white_occupancy: u64, black_occupancy: u64) {
-        let full_occupancy = white_occupancy | black_occupancy;
+    pub(in crate::core) fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let black_pawn_occupancy = self.piece_sets[Piece::BlackPawn.to_u8() as usize];
 
         // Move forward
-        let forward_move_mask = (black_pawn_occupancy << 8) & !(full_occupancy);
+        let forward_move_mask = (black_pawn_occupancy << 8) & !(state.occupancy);
         self.extract_pawn_moves::<-8, false, false>(forward_move_mask, moves);
 
         // Second rank double move
-        let double_move_mask = ((forward_move_mask & ROWS[2]) << 8) & !(full_occupancy);
+        let double_move_mask = ((forward_move_mask & ROWS[2]) << 8) & !(state.occupancy);
         self.extract_pawn_loop::<-16, false, false, false>(double_move_mask, moves);
         
         // Add EP square to occupancy as a virtual piece
         let white_occupancy_with_ep = match self.ep {
-            0 => white_occupancy,
-            _ => white_occupancy | (1 << (40 + self.ep - 1)) 
+            0 => state.white_occupancy,
+            _ => state.white_occupancy | (1 << (40 + self.ep - 1)) 
         };
 
         // Captures left
@@ -106,6 +103,7 @@ impl Board {
 #[cfg(test)]
 mod tests {
     use crate::core::tests::BOARD_CONSTANT_STATE;
+    use move_gen::MovegenState;
     use tests::assert_moves_eq_algebraic;
 
     use super::bitboard::*;
@@ -114,21 +112,21 @@ mod tests {
     fn test_pawn_move_gen() {
         let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
         let board = Board::new(Rc::clone(&constant_state));
-        let (white_occupancy, black_occupancy) = board.get_occupancy();
         let mut moves = Vec::new();
-        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        let movegen_state = MovegenState::new(&board);
+        board.generate_white_pawn_moves(&mut moves, &movegen_state);
 
         assert_moves_eq_algebraic(&moves, &vec!["a2a3","b2b3","c2c3","d2d3","e2e3","f2f3","g2g3","h2h3",
                                                "a2a4","b2b4","c2c4","d2d4","e2e4","f2f4","g2g4","h2h4"]);
         moves.clear();
-        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_black_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec!["a7a6","b7b6","c7c6","d7d6","e7e6","f7f6","g7g6","h7h6",
                                                "a7a5","b7b5","c7c5","d7d5","e7e5","f7f5","g7g5","h7h5"]);
 
         let board = Board::from_fen("r1bqkbnr/1P2pppp/5P2/2p3P1/1p5P/p7/PPPP2p1/RNBQKB1R", Rc::clone(&constant_state));
-        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        let movegen_state = MovegenState::new(&board);
         moves.clear();
-        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_white_pawn_moves(&mut moves, &movegen_state);
 
         assert_moves_eq_algebraic(&moves, &vec![
             "b2b3","c2c3","d2d3","g5g6","h4h5",
@@ -137,7 +135,7 @@ mod tests {
             "b7a8Q", "b7b8Q", "b7c8Q", "b7a8R", "b7b8R", "b7c8R", "b7a8B", "b7b8B", "b7c8B", "b7a8N", "b7b8N", "b7c8N"
         ]);
         moves.clear();
-        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_black_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![
             "h7h6","g7g6","e7e6","c5c4","b4b3",
             "h7h5", "e7e5",
@@ -147,26 +145,26 @@ mod tests {
 
 
         let board = Board::from_fen("8/8/1p6/p1p5/8/P1P5/1P6/8 b - - 0 1", Rc::clone(&constant_state));
-        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        let movegen_state = MovegenState::new(&board);
         moves.clear();
-        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_black_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![
             "a5a4", "b6b5", "c5c4",
         ]);
 
         // En passant
         let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 w - b6", Rc::clone(&constant_state));
-        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        let movegen_state = MovegenState::new(&board);
         moves.clear();
-        board.generate_white_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_white_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![
             "c5c6", "c5b6", "f4f5",
         ]);
 
         let board = Board::from_fen("8/8/8/1pP5/5Pp1/8/8/8 b - f3", Rc::clone(&constant_state));
-        let (white_occupancy, black_occupancy) = board.get_occupancy();
+        let movegen_state = MovegenState::new(&board);
         moves.clear();
-        board.generate_black_pawn_moves(&mut moves, white_occupancy, black_occupancy);
+        board.generate_black_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![
             "g4g3", "g4f3", "b5b4",
         ]);

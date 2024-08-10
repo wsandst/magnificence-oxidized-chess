@@ -1,8 +1,6 @@
 #![cfg(test)]
 
 use super::Move;
-
-
 use std::rc::Rc;
 use std::time::Instant;
 
@@ -11,7 +9,6 @@ use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
 use lazy_static::lazy_static;
 use strum::IntoEnumIterator;
-use bitboard::constants::*;
 
 
 #[test]
@@ -308,8 +305,8 @@ fn debug_test() {
 
 #[test]
 fn debug_test_harald() {
-    Board::print_bits(RIGHT_LEFT_DIAGONALS[12]);
-    assert!(1==0);
+    //Board::print_bits(RIGHT_LEFT_DIAGONALS[12]);
+    //assert!(1==0);
 }
 
 

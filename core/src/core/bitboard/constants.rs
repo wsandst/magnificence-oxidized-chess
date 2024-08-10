@@ -1,8 +1,6 @@
 #![allow(long_running_const_eval)]
 
-
-use lazy_static::lazy_static;
-use rand::{seq::index, Rng};
+use rand::Rng;
 use super::super::*;
 
 pub const WHITE: bool = true;
@@ -14,12 +12,11 @@ pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
 #[cfg(any(test,debug_assertions))]
 const NUMBER_OF_MAGIC_TABLE_TRIES: usize = 10;
 #[cfg(not(any(test,debug_assertions)))]
-const NUMBER_OF_MAGIC_TABLE_TRIES: usize = 100000;
+const NUMBER_OF_MAGIC_TABLE_TRIES: usize = 1000000;
 #[cfg(any(test,debug_assertions))]
 const MINIMUM_QUALITY: u32 = 5;
 #[cfg(not(any(test,debug_assertions)))]
 const MINIMUM_QUALITY: u32 = 1;
-
 
 /// Bit-filled columns, used for masking columns.
 pub const COLUMNS: [u64; 8] = {
@@ -234,10 +231,6 @@ pub const fn pext_const(x: u64, mask: u64) -> u64 {
     return result;
 }
 
-
-
-
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BitboardRuntimeConstants {
     bishop_magic_pext_table: Vec<Vec<u64>>,
@@ -249,25 +242,28 @@ pub struct BitboardRuntimeConstants {
 
 impl BitboardRuntimeConstants{
     pub fn create() -> BitboardRuntimeConstants {
-        BitboardRuntimeConstants {
+        let constants = BitboardRuntimeConstants {
             bishop_magic_pext_table: Self::generate_bishop_tables(),
             bishop_magic_magic_table: Self::generate_bishop_magic_numbers(),
             rook_magic_magic_table: Self::generate_rook_magic_numbers(),
             rook_magic_pext_table: Self::generate_rook_tables(),
             zoobrist_keys: Self::create_zoobrist_keys()
-        }
+        };
+        println!("Magic magic table size: {} KiB (optimal = {})", (constants.get_magic_bitboard_size() * 8) / 1024, constants.is_magic_optimal());
+        println!("Pext magic table size: {} KiB", (constants.get_pext_bitboard_size() * 8) / 1024);
+        return constants;
     }
 
     /// Creates all possible variations of the bits set in full
     fn generate_all_occupancies(full: u64) -> Vec<u64> {
         fn help(full: u64, curr: u64, result: &mut Vec<u64>) {
             if full > 0 {
-                //remove last bit
+                // Remove last bit
                 let next_full = full & (full - 1);
-                //Last bit of full as 1
+                // Last bit of full as 1
                 let lowest_bit = full ^ next_full;
                 help(next_full, curr, result);
-                //Toggle lowest bit
+                // Toggle lowest bit
                 help(next_full, curr ^ lowest_bit, result);
             } else {
                 result.push(curr);
@@ -314,7 +310,7 @@ impl BitboardRuntimeConstants{
 
     fn generate_magic_number<T: Rng>(variations: &Vec<u64>, expected: &Vec<u64>, optimal_size: u32, rng: &mut T) -> (u64, u8) {
         let mut best = 1;
-        let mut val = 64;
+        let mut bits_used = 64;
 
         fn test_magic(magic: u64, target_bits: u32, variations: &Vec<u64>, expected: &Vec<u64>, observed: &mut Vec<u64>) -> bool {
             observed.resize(0, 0);
@@ -335,20 +331,20 @@ impl BitboardRuntimeConstants{
 
         let mut target_bits = optimal_size + MINIMUM_QUALITY; 
         let mut observed = Vec::new();
-        while val == 64 {
+        while bits_used == 64 {
             for _ in 0..NUMBER_OF_MAGIC_TABLE_TRIES {
                 let magic = rng.next_u64() & rng.next_u64() & rng.next_u64();
                 while target_bits >= optimal_size && test_magic(magic, target_bits, &variations, &expected, &mut observed) {
                     best = magic;
-                    val = target_bits;
+                    bits_used = target_bits;
                     target_bits = target_bits - 1;
                 }
-                if val == optimal_size {
+                if bits_used == optimal_size {
                     break;
                 }
             }
         }
-        (best, val as u8)
+        (best, bits_used as u8)
     }
 
     fn generate_magic_numbers(masks: &[u64; 64], move_gen: fn(u64, u64) -> u64) -> ([u8; 64], [u64; 64], [Vec<u64>; 64]) {
@@ -459,5 +455,32 @@ impl BitboardRuntimeConstants{
             let key = ((magic.wrapping_mul(occupancy & mask)) >> (64 - bits)) as usize;
             return table[key];
         }
+    }
+
+    /// Returns the size of the magic tables in entries
+    fn get_magic_bitboard_size(&self) -> usize {
+        return self.rook_magic_magic_table.2.iter().fold(0, |l,r| l + r.len()) +
+            self.bishop_magic_magic_table.2.iter().fold(0, |l,r| l + r.len());
+    }
+
+    fn get_pext_bitboard_size(&self) -> usize {
+        return self.rook_magic_pext_table.iter().fold(0, |l,r| l + r.len()) +
+            self.bishop_magic_pext_table.iter().fold(0, |l,r| l + r.len());
+    }
+
+    fn is_magic_optimal(&self) -> bool {
+        for (i, bits) in self.rook_magic_magic_table.0.iter().enumerate() {
+            let optimal: u8 = ROOK_MASKS[i].count_ones() as u8;
+            if *bits != optimal {
+                return false;
+            }
+        }
+        for (i, bits) in self.bishop_magic_magic_table.0.iter().enumerate() {
+            let optimal: u8 = BISHOP_MASKS[i].count_ones() as u8;
+            if *bits != optimal {
+                return false;
+            }
+        }
+        return true;
     }
 }

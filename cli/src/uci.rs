@@ -180,7 +180,7 @@ fn parse_command(line: &str) -> CommandType {
     let words = split.collect::<Vec<&str>>();
 
     let command = match words[0] {
-        "quit" | "exit" | "q" => CommandType::Quit,
+        "quit" | "exit" | "q" | "quit()" | "exit()" => CommandType::Quit,
         "stop" => CommandType::Stop,
         "uci" => CommandType::UCI,
         "ucinewgame" => CommandType::UCINewGame,
