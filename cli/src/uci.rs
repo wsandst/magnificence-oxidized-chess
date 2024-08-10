@@ -11,6 +11,7 @@ use engine_core::engine::{Engine, SearchMetadata};
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use std::process::Command;
 use std::rc::Rc;
 use std::time::SystemTime;
 
@@ -53,11 +54,13 @@ enum CommandType {
     SetOption(String, String),
     UCINewGame,
     Position(String),
+    PositionMoves(Vec<String>),
     Go(GoState),
     Stop,
     Quit,
     // Non-UCI commands
     Perft(usize),
+    Divide(usize),
     DisplayBoard,
     EvaluateBoard,
     LegalMoves,
@@ -124,11 +127,17 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         CommandType::Position(fen) => {
             state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
         }
+        CommandType::PositionMoves(moves) => {
+            state.board = commands::board_from_moves(&state.board, moves);
+        }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
         },
         CommandType::Go(go_state) => {
             println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false)))
+        }
+        CommandType::Divide(depth) => {
+            divide(depth, state);
         }
         CommandType::LegalMoves => {
             let mut move_vector = Vec::new();
@@ -146,8 +155,17 @@ fn handle_search_metadata(metadata: SearchMetadata) {
 
 fn perft(depth: &usize, state: &mut UCIState) {
     println!("Performing perft of depth {}", depth);
-    let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+    let mut reserved_moves : Vec<Vec<Move>> = Vec::new();
     let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board, &mut reserved_moves));
+    let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
+    println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
+    println!("Result: {}", perft_count);
+}
+
+fn divide(depth: &usize, state: &mut UCIState) {
+    println!("Performing perft of depth {}", depth);
+    let mut reserved_moves : Vec<Vec<Move>> = Vec::new();
+    let (perft_count, duration) = timeit(|| commands::divide(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
     println!("Result: {}", perft_count);
@@ -188,6 +206,17 @@ fn parse_command(line: &str) -> CommandType {
         "help" | "h" => CommandType::Help,
         "display" | "d" | "board" | "show" => CommandType::DisplayBoard,
         "eval" | "evaluate" | "score" => CommandType::EvaluateBoard,
+        "divide" | "div" => {
+            if words.len() > 1 {
+                match words[1].parse::<usize>() {
+                    Ok(n) => CommandType::Divide(n),
+                    Err(_) => CommandType::Error("Invalid divide perft depth".to_string())
+                }
+            }
+            else {
+                CommandType::Error("Please specify a divide perft depth".to_string())
+            }
+        }
         "position" | "pos" | "setboard" | "p" => { 
             parse_uci_position_cmd(&words[1..])
         }
@@ -250,9 +279,7 @@ fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
                 CommandType::Position(STARTING_POS_FEN.to_string()) 
             }
             "moves" | "m" if words.len() > 1 => { 
-                // This one is more complicated, need to have a working board for this
-                CommandType::Error("TODO: Feature not implemented yet".to_string())
-                //CommandType::PositionMoves(words[2..]) 
+                CommandType::PositionMoves(words[1..].iter().map(|word| word.to_string()).collect::<Vec<String>>().to_vec())
             }
             "fen" if words.len() > 1 => { 
                 // Check if _ is a valid fen string
