@@ -96,7 +96,7 @@ impl MovegenState {
             let pos: usize = bishops.trailing_zeros() as usize;
             let bishop_moves = board.runtime_constants.bishop_magic(pos, occupancy);
             if bishop_moves & own_king > 0 {
-                self.legal_targets |= (1 << pos) | (bishop_moves & king_bishop_moves);
+                self.legal_targets |= (1 << pos) | (board.runtime_constants.bishop_magic(pos, self.occupancy) & king_bishop_moves);
                 self.checks += 1;
             }
             self.threatened_squares |= bishop_moves;
@@ -106,7 +106,7 @@ impl MovegenState {
             let pos: usize = rooks.trailing_zeros() as usize;
             let rook_moves = board.runtime_constants.rook_magic(pos, occupancy);
             if rook_moves & own_king > 0 {
-                self.legal_targets |= (1 << pos) | (rook_moves & king_rook_moves);
+                self.legal_targets |= (1 << pos) | (board.runtime_constants.rook_magic(pos, self.occupancy) & king_rook_moves);
                 self.checks += 1;
             }
             self.threatened_squares |= rook_moves;
