@@ -3,24 +3,25 @@ use super::bitboard::constants::*;
 use crate::core::*;
 
 impl Board {
-    fn extract_knight_moves(&self, moves : &mut Vec<Move>, knight_occupancy: u64, same_color_occupancy: u64) {
-        let mut occupancy_mask = knight_occupancy;
+    fn extract_knight_moves(&self, moves : &mut Vec<Move>, knight_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
+        let mut occupancy_mask = knight_occupancy & !(state.bishop_pins | state.rook_pins);
+        let legal_squares = !same_color_occupancy & state.legal_targets;
         while occupancy_mask > 0 {
             let knight_index = occupancy_mask.trailing_zeros() as usize;
             occupancy_mask &= occupancy_mask - 1;
-            let move_mask = KNIGHT_MOVE_MASKS[knight_index] & !(same_color_occupancy);
+            let move_mask = KNIGHT_MOVE_MASKS[knight_index] & legal_squares;
             self.extract_moves_from_mask(moves, move_mask, knight_index as u8);
         }
     }
 
     pub(in crate::core) fn generate_white_knight_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let white_knight_occupancy = self.piece_sets[Piece::WhiteKnight.to_u8() as usize];
-        self.extract_knight_moves(moves, white_knight_occupancy, state.white_occupancy);
+        self.extract_knight_moves(moves, white_knight_occupancy, state.white_occupancy, state);
     }
 
     pub(in crate::core) fn generate_black_knight_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let black_knight_occupancy = self.piece_sets[Piece::BlackKnight.to_u8() as usize];
-        self.extract_knight_moves(moves, black_knight_occupancy, state.black_occupancy);
+        self.extract_knight_moves(moves, black_knight_occupancy, state.black_occupancy, state);
     }
 }
 

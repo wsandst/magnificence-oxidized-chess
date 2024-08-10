@@ -2,15 +2,23 @@ use super::{Board, MovegenState};
 use crate::core::*;
 
 impl Board {
-    fn extract_rook_moves(&self, moves : &mut Vec<Move>, rook_like_occupancy: u64, same_color_occupancy: u64, occupancy: u64) {
-        let mut occupancy_mask = rook_like_occupancy;
-        while occupancy_mask > 0 {
-            let rook_index = occupancy_mask.trailing_zeros() as usize;
-            occupancy_mask &= occupancy_mask - 1;
-            let target_mask = self.runtime_constants.rook_magic(rook_index, occupancy) & !(same_color_occupancy);
+    fn extract_rook_moves(&self, moves : &mut Vec<Move>, rook_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
+        let moveable_rooks = rook_like_occupancy & !state.bishop_pins;
+        let mut unpinned_rooks = moveable_rooks & (!state.rook_pins);
+        let legal_squares = !same_color_occupancy & state.legal_targets;
+        while unpinned_rooks > 0 {
+            let rook_index = unpinned_rooks.trailing_zeros() as usize;
+            unpinned_rooks &= unpinned_rooks - 1;
+            let target_mask = self.runtime_constants.rook_magic(rook_index, state.occupancy) & legal_squares;
 
-            // Do king safety/pinned pieces here
+            self.extract_moves_from_mask(moves, target_mask, rook_index as u8);
+        }  
 
+        let mut pinned_rooks = moveable_rooks & state.rook_pins;
+        while pinned_rooks > 0 {
+            let rook_index = pinned_rooks.trailing_zeros() as usize;
+            pinned_rooks &= pinned_rooks - 1;
+            let target_mask = self.runtime_constants.rook_magic(rook_index, state.occupancy) & legal_squares & state.rook_pins;
             self.extract_moves_from_mask(moves, target_mask, rook_index as u8);
         }  
     }
@@ -18,13 +26,13 @@ impl Board {
     /// Generate moves for white rooks + queen diagonals
     pub(in crate::core) fn generate_white_rook_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let rook_like_occupancy = self.piece_sets[Piece::WhiteRook.to_u8() as usize] | self.piece_sets[Piece::WhiteQueen.to_u8() as usize];
-        self.extract_rook_moves(moves, rook_like_occupancy, state.white_occupancy, state.occupancy);
+        self.extract_rook_moves(moves, rook_like_occupancy, state.white_occupancy, state);
     }
 
     /// Generate moves for black rooks + queen diagonals
     pub(in crate::core) fn generate_black_rook_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let rook_like_occupancy = self.piece_sets[Piece::BlackRook.to_u8() as usize] |  self.piece_sets[Piece::BlackQueen.to_u8() as usize];
-        self.extract_rook_moves(moves, rook_like_occupancy, state.black_occupancy, state.occupancy);
+        self.extract_rook_moves(moves, rook_like_occupancy, state.black_occupancy, state);
     }
 }
 

@@ -2,15 +2,23 @@ use super::{Board, MovegenState};
 use crate::core::*;
 
 impl Board {
-    fn extract_bishop_moves(&self, moves : &mut Vec<Move>, bishop_like_occupancy: u64, same_color_occupancy: u64, occupancy: u64) {
-        let mut occupancy_mask = bishop_like_occupancy;
-        while occupancy_mask > 0 {
-            let bishop_index = occupancy_mask.trailing_zeros() as usize;
-            occupancy_mask &= occupancy_mask - 1;
-            let target_mask = self.runtime_constants.bishop_magic(bishop_index, occupancy) & !(same_color_occupancy);
+    fn extract_bishop_moves(&self, moves : &mut Vec<Move>, bishop_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
+        let moveable_bishops = bishop_like_occupancy & !state.rook_pins;
+        let mut unpinned_bishops = moveable_bishops & (!state.bishop_pins);
+        let legal_squares = !same_color_occupancy & state.legal_targets;
+        while unpinned_bishops > 0 {
+            let bishop_index = unpinned_bishops.trailing_zeros() as usize;
+            unpinned_bishops &= unpinned_bishops - 1;
+            let target_mask = self.runtime_constants.bishop_magic(bishop_index, state.occupancy) & legal_squares;
 
-            // Do king safety/pinned pieces here
+            self.extract_moves_from_mask(moves, target_mask, bishop_index as u8);
+        }  
 
+        let mut pinned_bishops = moveable_bishops & state.bishop_pins;
+        while pinned_bishops > 0 {
+            let bishop_index = pinned_bishops.trailing_zeros() as usize;
+            pinned_bishops &= pinned_bishops - 1;
+            let target_mask = self.runtime_constants.bishop_magic(bishop_index, state.occupancy) & legal_squares & state.bishop_pins;
             self.extract_moves_from_mask(moves, target_mask, bishop_index as u8);
         }  
     }
@@ -18,13 +26,13 @@ impl Board {
     /// Generate moves for white bishops + queen diagonals
     pub(in crate::core) fn generate_white_bishop_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let bishop_like_occupancy = self.piece_sets[Piece::WhiteBishop.to_u8() as usize] | self.piece_sets[Piece::WhiteQueen.to_u8() as usize];
-        self.extract_bishop_moves(moves, bishop_like_occupancy, state.white_occupancy, state.occupancy);
+        self.extract_bishop_moves(moves, bishop_like_occupancy, state.white_occupancy, state);
     }
 
     /// Generate moves for black bishops + queen diagonals
     pub(in crate::core) fn generate_black_bishop_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let bishop_like_occupancy = self.piece_sets[Piece::BlackBishop.to_u8() as usize] |  self.piece_sets[Piece::BlackQueen.to_u8() as usize];
-        self.extract_bishop_moves(moves, bishop_like_occupancy, state.black_occupancy, state.occupancy);
+        self.extract_bishop_moves(moves, bishop_like_occupancy, state.black_occupancy, state);
     }
 }
 
