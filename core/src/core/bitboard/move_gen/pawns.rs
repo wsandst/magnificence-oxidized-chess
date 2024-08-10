@@ -52,24 +52,24 @@ impl Board {
 
         // Move forward
         let forward_move_mask = (white_pawn_occupancy >> 8) & !(state.occupancy);
-        self.extract_pawn_moves::<8, false, true>(forward_move_mask, moves);
+        self.extract_pawn_moves::<8, false, true>(forward_move_mask & state.legal_targets, moves);
 
         // Second rank double move
         let double_move_mask = ((forward_move_mask & ROWS[5]) >> 8) & !(state.occupancy);
-        self.extract_pawn_loop::<16, false, true, false>(double_move_mask, moves);
+        self.extract_pawn_loop::<16, false, true, false>(double_move_mask & state.legal_targets, moves);
 
         // Add EP square to occupancy as a virtual piece
-        let black_occupancy_with_ep = match self.ep {
+        let legal_captures_with_ep = match self.ep {
             0 => state.black_occupancy,
             _ => state.black_occupancy | (1 << (self.ep + 16 - 1)) 
-        };
+        } & state.legal_targets;
         
         // Captures left
-        let left_captures_mask = (white_pawn_occupancy >> 9) & !(COLUMNS[7]) & black_occupancy_with_ep;
+        let left_captures_mask = (white_pawn_occupancy >> 9) & !(COLUMNS[7]) & legal_captures_with_ep;
         self.extract_pawn_moves::<9, true, true>(left_captures_mask, moves);
 
         // Captures right
-        let right_captures_mask = (white_pawn_occupancy >> 7) & !(COLUMNS[0]) & black_occupancy_with_ep;
+        let right_captures_mask = (white_pawn_occupancy >> 7) & !(COLUMNS[0]) & legal_captures_with_ep;
         self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
     }
 

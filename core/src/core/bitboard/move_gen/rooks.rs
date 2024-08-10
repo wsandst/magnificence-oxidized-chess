@@ -2,12 +2,13 @@ use super::{Board, MovegenState};
 use crate::core::*;
 
 impl Board {
-    fn extract_rook_moves(&self, moves : &mut Vec<Move>, rook_like_occupancy: u64, same_color_occupancy: u64, occupancy: u64) {
+    fn extract_rook_moves(&self, moves : &mut Vec<Move>, rook_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
         let mut occupancy_mask = rook_like_occupancy;
+        let legal_squares = !same_color_occupancy & state.legal_targets;
         while occupancy_mask > 0 {
             let rook_index = occupancy_mask.trailing_zeros() as usize;
             occupancy_mask &= occupancy_mask - 1;
-            let target_mask = self.runtime_constants.rook_magic(rook_index, occupancy) & !(same_color_occupancy);
+            let target_mask = self.runtime_constants.rook_magic(rook_index, state.occupancy) & legal_squares;
 
             // Do king safety/pinned pieces here
 
@@ -18,13 +19,13 @@ impl Board {
     /// Generate moves for white rooks + queen diagonals
     pub(in crate::core) fn generate_white_rook_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let rook_like_occupancy = self.piece_sets[Piece::WhiteRook.to_u8() as usize] | self.piece_sets[Piece::WhiteQueen.to_u8() as usize];
-        self.extract_rook_moves(moves, rook_like_occupancy, state.white_occupancy, state.occupancy);
+        self.extract_rook_moves(moves, rook_like_occupancy, state.white_occupancy, state);
     }
 
     /// Generate moves for black rooks + queen diagonals
     pub(in crate::core) fn generate_black_rook_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let rook_like_occupancy = self.piece_sets[Piece::BlackRook.to_u8() as usize] |  self.piece_sets[Piece::BlackQueen.to_u8() as usize];
-        self.extract_rook_moves(moves, rook_like_occupancy, state.black_occupancy, state.occupancy);
+        self.extract_rook_moves(moves, rook_like_occupancy, state.black_occupancy, state);
     }
 }
 

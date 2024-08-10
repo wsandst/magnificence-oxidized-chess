@@ -127,6 +127,13 @@ impl Color {
             Color::Black => 'b'
         };
     }
+
+    pub const fn to_bool(&self) -> bool {
+        return match *self {
+            Color::White => true,
+            Color::Black => false
+        }
+    }
 }
 
 pub fn pos_to_algebraic_pos(x: u8, y: u8) -> String {
