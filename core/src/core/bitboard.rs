@@ -79,10 +79,10 @@ impl Board {
                 ep = (mv.from % 8) + 1;
             }
             // Check if this move performs en passant and zero the taken square
-            else if piece_to_move == Piece::WhitePawn && (self.ep + 16 - 1) == mv.to {
+            else if piece_to_move == Piece::WhitePawn && self.ep > 0 && (self.ep + 16 - 1) == mv.to {
                 self.set_piece((self.ep as usize + 24 - 1) as u8, Piece::Empty);
             }
-            else if piece_to_move == Piece::BlackPawn && (self.ep + 40 - 1) == mv.to {
+            else if piece_to_move == Piece::BlackPawn && self.ep > 0 && (self.ep + 40 - 1) == mv.to {
                 self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::Empty);
             }
         }

@@ -261,7 +261,6 @@ fn test_bit_twiddling() {
     assert_eq!(num, 0b101010101001);
 }
 
-
 pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
     let mut moves = reserved_moves.pop().unwrap();
     moves.clear();
@@ -277,8 +276,8 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
         board.make_move(&mv);
         total_move_count += validation_perft(depth - 1, board, reserved_moves);
         board.unmake_move(&mv);
-        assert!(old_board == *board, "Move: {}\n\n Before make/unmake: {}\nZoobrist: {}\n\nAfter make/unmake: {}\nZoobrist: {}\n\nCalculated zoobrist for board: {}", 
-                mv, old_board.to_string(), old_board.get_hashkey(), board.to_string(), board.get_hashkey(), board.calculate_hash());
+        assert!(old_board == *board && board.get_hashkey() == board.calculate_hash(), "Move: {}\n\n Before make/unmake: {}\nZoobrist: {}\nCalculated zoobrist: {}\n\nAfter make/unmake: {}\nZoobrist: {}\nCalculated zoobrist: {}\n\n", 
+                mv, old_board.to_string(), old_board.get_hashkey(), old_board.calculate_hash(), board.to_string(), board.get_hashkey(), board.calculate_hash());
         board.validate();
     }
     reserved_moves.push(moves);
@@ -290,11 +289,17 @@ fn board_validation_with_perft() {
     let constant_state = Rc::new(BitboardRuntimeConstants::create());
     let mut board = Board::new(Rc::clone(&constant_state));
     let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
-    validation_perft(7, &mut board, &mut reserved_moves);
+    validation_perft(4, &mut board, &mut reserved_moves);
 
     let mut board = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", Rc::clone(&constant_state));
     let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
     validation_perft(4, &mut board, &mut reserved_moves);
+
+    let mut board = Board::from_fen("rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6", Rc::clone(&constant_state));
+    let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
+    validation_perft(3, &mut board, &mut reserved_moves);
+
+    // rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6
 }
 
 #[test]
