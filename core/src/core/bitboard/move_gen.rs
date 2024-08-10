@@ -50,7 +50,7 @@ impl MovegenState {
         return state;
     }
 
-    pub fn calculate_threatened_squares<const COLOR: bool>(&mut self, board: &Board) {
+    fn calculate_threatened_squares<const COLOR: bool>(&mut self, board: &Board) {
         let offset: usize = match COLOR {
             WHITE => 0,
             BLACK => 6
@@ -58,6 +58,10 @@ impl MovegenState {
         let own_king = match COLOR {
             WHITE => board.piece_sets[Piece::BlackKing.to_u8() as usize],
             BLACK => board.piece_sets[Piece::WhiteKing.to_u8() as usize]
+        };
+        let own_occupancy = match COLOR {
+            WHITE => self.black_occupancy,
+            BLACK => self.white_occupancy
         };
         if own_king == 0 {
             self.legal_targets = !0;
@@ -73,6 +77,9 @@ impl MovegenState {
         let mut knights = board.piece_sets[2 + offset]; 
         let mut rooks = board.piece_sets[3 + offset] | queen;
         let king = board.piece_sets[5 + offset];
+
+        self.calculate_pinned_masks(board, king_pos, own_occupancy, bishops, rooks, king_bishop_moves, king_rook_moves);
+
         self.threatened_squares = match COLOR {
             WHITE => ((pawns >> 7) & !COLUMNS[0]) | ((pawns >> 9) & !COLUMNS[7]),
             BLACK => ((pawns << 7) & !COLUMNS[7]) | ((pawns << 9) & !COLUMNS[0])
@@ -121,6 +128,27 @@ impl MovegenState {
         }
         if self.checks == 0 {
             self.legal_targets = !0;
+        }
+    }
+
+    /// Calculate legal pinned move masks
+    fn calculate_pinned_masks(&mut self, board: &Board, king_pos: usize, own_occupancy: u64, bishops: u64, rooks: u64, king_bishop_moves: u64, king_rook_moves: u64) {
+        let occupancy = self.occupancy & !((king_bishop_moves | king_rook_moves) & own_occupancy);
+
+        let pinned_king_bishop_moves = board.runtime_constants.bishop_magic(king_pos, occupancy);
+        let mut pinning_bishops = pinned_king_bishop_moves & bishops;
+        while pinning_bishops > 0 {
+            let pos: usize = pinning_bishops.trailing_zeros() as usize;
+            self.bishop_pins |= board.runtime_constants.bishop_magic(pos, occupancy) & pinned_king_bishop_moves | (1 << pos);
+            pinning_bishops &= pinning_bishops - 1;
+        }
+
+        let pinned_king_rook_moves = board.runtime_constants.rook_magic(king_pos, occupancy);
+        let mut pinning_rooks = pinned_king_rook_moves & rooks;
+        while pinning_rooks > 0 {
+            let pos: usize = pinning_rooks.trailing_zeros() as usize;
+            self.rook_pins |= board.runtime_constants.rook_magic(pos, occupancy) & pinned_king_rook_moves | (1 << pos);
+            pinning_rooks &= pinning_rooks - 1;
         }
     }
 }

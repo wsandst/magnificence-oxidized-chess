@@ -50,8 +50,13 @@ impl Board {
     pub(in crate::core) fn generate_white_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let white_pawn_occupancy = self.piece_sets[Piece::WhitePawn.to_u8() as usize];
 
+        let king_pos = self.piece_sets[Piece::WhiteKing.to_u8() as usize].trailing_zeros();
+        let rook_pins_horizontal = state.rook_pins & ROWS[(king_pos >> 3) as usize];
+        let bishop_pins_left_diagonal = state.bishop_pins & RIGHT_LEFT_DIAGONALS[king_pos as usize];
+        let bishop_pins_right_diagonal = state.bishop_pins & LEFT_RIGHT_DIAGONALS[king_pos as usize];
+
         // Move forward
-        let forward_move_mask = (white_pawn_occupancy >> 8) & !(state.occupancy);
+        let forward_move_mask = ((white_pawn_occupancy & !state.bishop_pins & !rook_pins_horizontal) >> 8) & !(state.occupancy);
         self.extract_pawn_moves::<8, false, true>(forward_move_mask & state.legal_targets, moves);
 
         // Second rank double move
@@ -65,19 +70,24 @@ impl Board {
         } & state.legal_targets;
         
         // Captures left
-        let left_captures_mask = (white_pawn_occupancy >> 9) & !(COLUMNS[7]) & legal_captures_with_ep;
+        let left_captures_mask = ((white_pawn_occupancy & !state.rook_pins & !bishop_pins_left_diagonal) >> 9) & !(COLUMNS[7]) & legal_captures_with_ep;
         self.extract_pawn_moves::<9, true, true>(left_captures_mask, moves);
 
         // Captures right
-        let right_captures_mask = (white_pawn_occupancy >> 7) & !(COLUMNS[0]) & legal_captures_with_ep;
+        let right_captures_mask = ((white_pawn_occupancy & !state.rook_pins & !bishop_pins_right_diagonal) >> 7) & !(COLUMNS[0]) & legal_captures_with_ep;
         self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
     }
 
     pub(in crate::core) fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
         let black_pawn_occupancy = self.piece_sets[Piece::BlackPawn.to_u8() as usize];
 
+        let king_pos = self.piece_sets[Piece::BlackKing.to_u8() as usize].trailing_zeros();
+        let rook_pins_horizontal = state.rook_pins & ROWS[(king_pos >> 3) as usize];
+        let bishop_pins_left_diagonal = state.bishop_pins & RIGHT_LEFT_DIAGONALS[king_pos as usize];
+        let bishop_pins_right_diagonal = state.bishop_pins & LEFT_RIGHT_DIAGONALS[king_pos as usize];
+
         // Move forward
-        let forward_move_mask = (black_pawn_occupancy << 8) & !(state.occupancy);
+        let forward_move_mask = ((black_pawn_occupancy & !state.bishop_pins & !rook_pins_horizontal) << 8) & !(state.occupancy);
         self.extract_pawn_moves::<-8, false, false>(forward_move_mask, moves);
 
         // Second rank double move
@@ -91,11 +101,11 @@ impl Board {
         };
 
         // Captures left
-        let left_captures_mask = (black_pawn_occupancy << 9) & !(COLUMNS[0]) & white_occupancy_with_ep;
+        let left_captures_mask = ((black_pawn_occupancy & !state.rook_pins & !bishop_pins_left_diagonal) << 9) & !(COLUMNS[0]) & white_occupancy_with_ep;
         self.extract_pawn_moves::<-9, true, false>(left_captures_mask, moves);
 
         // Captures right
-        let right_captures_mask = (black_pawn_occupancy << 7) & !(COLUMNS[7]) & white_occupancy_with_ep;
+        let right_captures_mask = ((black_pawn_occupancy & !state.rook_pins & !bishop_pins_right_diagonal) << 7) & !(COLUMNS[7]) & white_occupancy_with_ep;
         self.extract_pawn_moves::<-7, true, false>(right_captures_mask, moves);
     }
 }

@@ -3,15 +3,22 @@ use crate::core::*;
 
 impl Board {
     fn extract_rook_moves(&self, moves : &mut Vec<Move>, rook_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
-        let mut occupancy_mask = rook_like_occupancy;
+        let moveable_rooks = rook_like_occupancy & !state.bishop_pins;
+        let mut unpinned_rooks = moveable_rooks & (!state.rook_pins);
         let legal_squares = !same_color_occupancy & state.legal_targets;
-        while occupancy_mask > 0 {
-            let rook_index = occupancy_mask.trailing_zeros() as usize;
-            occupancy_mask &= occupancy_mask - 1;
+        while unpinned_rooks > 0 {
+            let rook_index = unpinned_rooks.trailing_zeros() as usize;
+            unpinned_rooks &= unpinned_rooks - 1;
             let target_mask = self.runtime_constants.rook_magic(rook_index, state.occupancy) & legal_squares;
 
-            // Do king safety/pinned pieces here
+            self.extract_moves_from_mask(moves, target_mask, rook_index as u8);
+        }  
 
+        let mut pinned_rooks = moveable_rooks & state.rook_pins;
+        while pinned_rooks > 0 {
+            let rook_index = pinned_rooks.trailing_zeros() as usize;
+            pinned_rooks &= pinned_rooks - 1;
+            let target_mask = self.runtime_constants.rook_magic(rook_index, state.occupancy) & legal_squares & state.rook_pins;
             self.extract_moves_from_mask(moves, target_mask, rook_index as u8);
         }  
     }

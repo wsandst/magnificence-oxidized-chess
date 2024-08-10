@@ -3,15 +3,22 @@ use crate::core::*;
 
 impl Board {
     fn extract_bishop_moves(&self, moves : &mut Vec<Move>, bishop_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
-        let mut occupancy_mask = bishop_like_occupancy;
+        let moveable_bishops = bishop_like_occupancy & !state.rook_pins;
+        let mut unpinned_bishops = moveable_bishops & (!state.bishop_pins);
         let legal_squares = !same_color_occupancy & state.legal_targets;
-        while occupancy_mask > 0 {
-            let bishop_index = occupancy_mask.trailing_zeros() as usize;
-            occupancy_mask &= occupancy_mask - 1;
+        while unpinned_bishops > 0 {
+            let bishop_index = unpinned_bishops.trailing_zeros() as usize;
+            unpinned_bishops &= unpinned_bishops - 1;
             let target_mask = self.runtime_constants.bishop_magic(bishop_index, state.occupancy) & legal_squares;
 
-            // Do king safety/pinned pieces here
+            self.extract_moves_from_mask(moves, target_mask, bishop_index as u8);
+        }  
 
+        let mut pinned_bishops = moveable_bishops & state.bishop_pins;
+        while pinned_bishops > 0 {
+            let bishop_index = pinned_bishops.trailing_zeros() as usize;
+            pinned_bishops &= pinned_bishops - 1;
+            let target_mask = self.runtime_constants.bishop_magic(bishop_index, state.occupancy) & legal_squares & state.bishop_pins;
             self.extract_moves_from_mask(moves, target_mask, bishop_index as u8);
         }  
     }

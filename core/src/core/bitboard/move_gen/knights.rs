@@ -4,7 +4,7 @@ use crate::core::*;
 
 impl Board {
     fn extract_knight_moves(&self, moves : &mut Vec<Move>, knight_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
-        let mut occupancy_mask = knight_occupancy;
+        let mut occupancy_mask = knight_occupancy & !(state.bishop_pins | state.rook_pins);
         let legal_squares = !same_color_occupancy & state.legal_targets;
         while occupancy_mask > 0 {
             let knight_index = occupancy_mask.trailing_zeros() as usize;
