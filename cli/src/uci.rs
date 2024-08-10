@@ -61,6 +61,7 @@ enum CommandType {
     // Non-UCI commands
     Perft(usize),
     Divide(usize),
+    PerftTests,
     Move(String),
     DisplayBoard,
     EvaluateBoard,
@@ -149,6 +150,9 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             let mut moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
             moves.sort();
             println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
+        }
+        CommandType::PerftTests => {
+            todo!();
         }
         _ => {}
     }
@@ -248,6 +252,7 @@ fn parse_command(line: &str) -> CommandType {
             }
         }
         "moves" | "getmoves" | "legalmoves" | "mvs" => CommandType::LegalMoves,
+        "perfttests" => CommandType::PerftTests,
         _ => CommandType::Unknown,
     };
     return command;
