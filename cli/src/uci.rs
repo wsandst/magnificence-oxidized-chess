@@ -11,9 +11,10 @@ use engine_core::engine::{Engine, SearchMetadata};
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
-use std::process::Command;
 use std::rc::Rc;
 use std::time::SystemTime;
+use std::sync::atomic::AtomicBool;
+
 
 use engine_core::core::*;
 use engine_core::core::bitboard::*;
@@ -45,7 +46,8 @@ struct UCIState {
     board: Board,
     engine: StandardAlphaBetaEngine,
     move_history: Vec<Move>,
-    strict_uci_mode: bool
+    strict_uci_mode: bool,
+    search_running: AtomicBool
 }
 
 #[derive(Debug, PartialEq)]
@@ -94,7 +96,8 @@ pub fn start_uci_protocol() {
         board_constant_state,
         engine: StandardAlphaBetaEngine::new(),
         move_history: Vec::new(),
-        strict_uci_mode: false
+        strict_uci_mode: false,
+        search_running: false.into()
     };
 
     loop {
@@ -115,11 +118,18 @@ pub fn run_single_uci_command(command_line: &str) {
         board_constant_state,
         engine: StandardAlphaBetaEngine::new(),
         move_history: Vec::new(),
-        strict_uci_mode: false
+        strict_uci_mode: false,
+        search_running: false.into()
     };
 
     let command = parse_command(command_line);
     handle_command(&command, &mut state);
+}
+
+fn search(state: &mut UCIState, go_state: &GoState) {
+    let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false));
+    let mv = pv.first().unwrap();
+    println!("bestmove {}", mv);
 }
 
 fn handle_command(command : &CommandType, state: &mut UCIState) {
@@ -145,9 +155,7 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             
         }
         CommandType::Go(go_state) => {
-            let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false));
-            let mv = pv.first().unwrap();
-            println!("bestmove {}", mv);
+            search(state, go_state)
         },
         CommandType::Position(fen) => {
             state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
