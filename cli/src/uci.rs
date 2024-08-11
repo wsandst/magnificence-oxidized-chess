@@ -94,9 +94,6 @@ pub fn start_uci_protocol() {
     let mut rl = Editor::<()>::new();
     let _ = rl.load_history(".linehistory.txt");
 
-    println!("Magnificence Oxidized Chess Engine");
-    println!("Created by the Prog Boys\n");
-
     let (board_constant_state, duration) = timeit(|| BitboardRuntimeConstants::create());
     println!("Constant state initialization took {:.3} seconds", duration);
 

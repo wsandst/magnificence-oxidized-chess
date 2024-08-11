@@ -1,6 +1,30 @@
 mod uci;
 use clap::Arg;
 
+const USE_FANCY_SPLASH: bool = true;
+const FANCY_SPLASH: &str = 
+"-------------------------------------------------------------
+   
+                     .       |         .    .
+               .  *         -*-          *
+                    \\        |         /   .
+   .    .            .      /^\\     .              .    .
+      *    |\\   /\\    /\\  / / \\ \\  /\\    /\\   /|    *
+    .   .  |  \\ \\/ /\\ \\ / /     \\ \\ / /\\ \\/ /  | .     .
+            \\ | _ _\\/_ _ \\_\\_ _ /_/_ _\\/_ _ \\_/
+              \\  *  *  *   \\ \\/ /  *  *  *  /
+               ` ~ ~ ~ ~ ~  ~\\/~ ~ ~ ~ ~ ~ '
+  
+                    Magnificence Oxidized
+                       By the Prog Boys
+  
+-------------------------------------------------------------";
+const REGULAR_SPLASH: &str = 
+"----------------------------------
+Magnificence Oxidized Chess Engine
+    Created by the Prog Boys
+----------------------------------";
+
 fn main() {
     // Use clap to parse command line arguments
     let matches = clap::App::new("Magnificence Oxidized Chess Engine")
@@ -14,6 +38,12 @@ fn main() {
         .value_name("COMMAND")
         .takes_value(true)
         .max_values(30))
+    .arg(Arg::new("nosplash")
+        .help("Prevent the cli from showing a fancy splash at start.")
+        .short('q')
+        .long("nosplash")
+        .value_name("NOSPLASH")
+        .takes_value(false))
     .get_matches();
 
     if let Some(values) = matches.values_of("command") {
@@ -24,6 +54,14 @@ fn main() {
             uci::run_single_uci_command(&cmd.trim())
         }
     } else {
+        // Show splash screen
+        if USE_FANCY_SPLASH && !matches.values_of("nosplash").is_some() {
+            println!("{}\n", FANCY_SPLASH);
+        }
+        else {
+            println!("{}\n", REGULAR_SPLASH);
+        }
+
         // Start UCI protocol
         uci::start_uci_protocol();
     }
