@@ -152,7 +152,7 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
         }
         CommandType::PerftTests => {
-            todo!();
+            commands::perft_tests(Rc::clone(&state.board_constant_state));
         }
         _ => {}
     }

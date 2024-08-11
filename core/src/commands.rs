@@ -4,6 +4,9 @@ use crate::core::Move;
 use super::core::bitboard::*;
 
 pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
+    if depth <= 0 {
+        return 1;
+    }
     let mut moves = match reserved_moves.pop() {
         None => Vec::new(),
         Some(vec) => vec
@@ -26,9 +29,6 @@ pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>
 }
 
 pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
-    if depth == 1 {
-        return perft(1, board, reserved_moves);
-    }
     let mut moves = match reserved_moves.pop() {
         None => Vec::new(),
         Some(vec) => vec

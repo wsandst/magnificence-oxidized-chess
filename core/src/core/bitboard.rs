@@ -58,10 +58,25 @@ impl Board {
     }
 
     pub fn make_move(&mut self, mv: &Move) {
+        self.castling_history.push(self.castling);
         self.current_player = self.current_player.next_player();
         let piece_to_move = self.get_piece(mv.from);
         let mut ep = 0;
         self.ep_history.push(self.ep);
+        match mv.from {
+            0 => self.set_one_castling_right::<BLACK, true, false>(),
+            7 => self.set_one_castling_right::<BLACK, false, false>(),
+            56 => self.set_one_castling_right::<WHITE, true, false>(),
+            63 => self.set_one_castling_right::<WHITE, false, false>(),
+            _ => (),
+        }
+        match mv.to {
+            0 => self.set_one_castling_right::<BLACK, true, false>(),
+            7 => self.set_one_castling_right::<BLACK, false, false>(),
+            56 => self.set_one_castling_right::<WHITE, true, false>(),
+            63 => self.set_one_castling_right::<WHITE, false, false>(),
+            _ => (),
+        }
         if piece_to_move == Piece::WhitePawn || piece_to_move == Piece::BlackPawn {
             if mv.promotion != Piece::Empty {
                 // This piece is being promoted
@@ -87,41 +102,29 @@ impl Board {
             }
         }
         else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
-            // Black queen side castling
+            if piece_to_move == Piece::WhiteKing {
+                self.set_castling(self.castling & !(0b11))
+            } else {
+                self.set_castling(self.castling & !(0b1100));
+            }
             if mv.from == 4 && mv.to == 2 {
                 self.set_piece(0, Piece::Empty);
-                self.set_piece(2, Piece::BlackKing);
                 self.set_piece(3, Piece::BlackRook);
-                self.set_piece(4, Piece::Empty);
-                self.set_castling((self.castling) & (!1u8).rotate_left(3 as u32));
-                return;
             }
             // Black king side castling
             else if mv.from == 4 && mv.to == 6 {
-                self.set_piece(4, Piece::Empty);
                 self.set_piece(5, Piece::BlackRook);
-                self.set_piece(6, Piece::BlackKing);
                 self.set_piece(7, Piece::Empty);
-                self.set_castling((self.castling) & (!1u8).rotate_left(2 as u32));
-                return;
             }
             // White king side castling
             else if mv.from == 60 && mv.to == 62 {
-                self.set_piece(60, Piece::Empty);
                 self.set_piece(61, Piece::WhiteRook);
-                self.set_piece(62, Piece::WhiteKing);
                 self.set_piece(63, Piece::Empty);
-                self.set_castling((self.castling) & (!1u8).rotate_left(1 as u32));
-                return;
             }
             // White queen side castling
             else if mv.from == 60 && mv.to == 58 {
                 self.set_piece(56, Piece::Empty);
-                self.set_piece(58, Piece::WhiteKing);
                 self.set_piece(59, Piece::WhiteRook);
-                self.set_piece(60, Piece::Empty);
-                self.set_castling((self.castling) & (!1u8).rotate_left(0 as u32));
-                return;
             }
         }
         self.set_piece(mv.to, piece_to_move);
@@ -131,8 +134,11 @@ impl Board {
     }
 
     pub fn unmake_move(&mut self, mv: &Move) {
+        self.half_moves -= 1;
         let moved_piece = self.get_piece(mv.to);
         self.current_player = self.current_player.next_player();
+        let castling = self.castling_history.pop();
+        self.set_castling(castling.unwrap());
         self.ep = self.ep_history.pop().unwrap();
 
         if mv.promotion != Piece::Empty {
@@ -151,38 +157,22 @@ impl Board {
             // Black left side castling
             if mv.from == 4 && mv.to == 2 {
                 self.set_piece(0, Piece::BlackRook);
-                self.set_piece(2, Piece::Empty);
                 self.set_piece(3, Piece::Empty);
-                self.set_piece(4, Piece::BlackKing);
-                self.set_castling((self.castling) | (1u8 << 3));
-                return;
             }
             // Black right side castling
             else if mv.from == 4 && mv.to == 6 {
-                self.set_piece(4, Piece::BlackKing);
                 self.set_piece(5, Piece::Empty);
-                self.set_piece(6, Piece::Empty);
                 self.set_piece(7, Piece::BlackRook);
-                self.set_castling((self.castling) | (1u8 << 2));
-                return;
             }
             // White left side castling
             else if mv.from == 60 && mv.to == 62 {
-                self.set_piece(60, Piece::WhiteKing);
                 self.set_piece(61, Piece::Empty);
-                self.set_piece(62, Piece::Empty);
                 self.set_piece(63, Piece::WhiteRook);
-                self.set_castling((self.castling) | (1u8 << 1));
-                return;
             }
             // White right side castling
             else if mv.from == 60 && mv.to == 58 {
                 self.set_piece(56, Piece::WhiteRook);
-                self.set_piece(58, Piece::Empty);
                 self.set_piece(59, Piece::Empty);
-                self.set_piece(60, Piece::WhiteKing);
-                self.set_castling((self.castling) | (1u8 << 0));
-                return;
             }
         }
         else if moved_piece == Piece::WhitePawn && self.ep > 0 && ((mv.from - mv.to) % 8 != 0) && mv.captured == Piece::Empty {
@@ -195,7 +185,6 @@ impl Board {
 
         self.set_piece(mv.to, mv.captured);
         self.set_piece(mv.from, moved_piece);
-        self.half_moves -= 1;
     }
 
     pub fn set_piece_pos(&mut self, x: usize, y: usize, piece: &Piece) {

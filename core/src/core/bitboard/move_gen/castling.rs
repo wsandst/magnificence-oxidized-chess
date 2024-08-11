@@ -2,10 +2,10 @@ use super::{Board, MovegenState};
 use crate::core::*;
 use crate::core::bitboard::constants::*;
 
-/*const WHITE_QUEENSIDE_CASTLING_MASK: u64 = 0b11111 << 56;
-const WHITE_KINGSIDE_CASTLING_MASK: u64 = 0b1111 << 60;
-const BLACK_QUEENSIDE_CASTLING_MASK: u64 = 0b11111;
-const BLACK_KINGSIDE_CASTLING_MASK: u64 = 0b1111 << 4;*/
+const BLACK_QUEENSIDE_THREATENED_CASTLING_MASK: u64 = 0b1100;
+const BLACK_KINGSIDE_THREATENED_CASTLING_MASK: u64 = 0b1100000;
+const WHITE_QUEENSIDE_THREATENED_CASTLING_MASK: u64 = BLACK_QUEENSIDE_THREATENED_CASTLING_MASK << 56;
+const WHITE_KINGSIDE_THREATENED_CASTLING_MASK: u64 = BLACK_KINGSIDE_FREE_CASTLING_MASK << 56;
 
 const WHITE_QUEENSIDE_FREE_CASTLING_MASK: u64 = 0b01110 << 56;
 const WHITE_KINGSIDE_FREE_CASTLING_MASK: u64 = 0b0110 << 60;
@@ -24,20 +24,40 @@ impl Board {
             queenside_castling_king_pos, 
             kingside_castling_king_pos,
             queenside_mask,
+            queenside_threaten_mask,
             kingside_mask,
+            kingside_threaten_mask,
             king_square
-        ) = match COLOR {
-            WHITE => (1, 0, 58, 62, WHITE_QUEENSIDE_FREE_CASTLING_MASK, WHITE_KINGSIDE_FREE_CASTLING_MASK, WHITE_KING_SQUARE),
-            BLACK => (3, 2, 2, 6, BLACK_QUEENSIDE_FREE_CASTLING_MASK, BLACK_KINGSIDE_FREE_CASTLING_MASK, BLACK_KING_SQUARE)
-        };
+        );
+        if COLOR == WHITE {
+            queenside_castling_offset = 1;
+            kingside_castling_offset = 0;
+            queenside_castling_king_pos = 58;
+            kingside_castling_king_pos = 62;
+            queenside_mask = WHITE_QUEENSIDE_FREE_CASTLING_MASK;
+            queenside_threaten_mask = WHITE_QUEENSIDE_THREATENED_CASTLING_MASK;
+            kingside_mask = WHITE_KINGSIDE_FREE_CASTLING_MASK;
+            kingside_threaten_mask = WHITE_KINGSIDE_THREATENED_CASTLING_MASK;
+            king_square = WHITE_KING_SQUARE;
+        } else {
+            queenside_castling_offset = 3;
+            kingside_castling_offset = 2;
+            queenside_castling_king_pos = 2;
+            kingside_castling_king_pos = 6;
+            queenside_mask = BLACK_QUEENSIDE_FREE_CASTLING_MASK;
+            queenside_threaten_mask = BLACK_QUEENSIDE_THREATENED_CASTLING_MASK;
+            kingside_mask = BLACK_KINGSIDE_FREE_CASTLING_MASK;
+            kingside_threaten_mask = BLACK_KINGSIDE_THREATENED_CASTLING_MASK;
+            king_square = BLACK_KING_SQUARE;
+        }
 
         if state.checks > 0 {
             return;
         }
         let can_castle_queenside: u64 = ((self.castling >> queenside_castling_offset) & 1) as u64;
         let can_castle_kingside: u64 = ((self.castling >> kingside_castling_offset) & 1) as u64;
-        let queenside_squares_legal = (((state.occupancy | state.threatened_squares) & queenside_mask) == 0) as u64;
-        let kingside_squares_legal = (((state.occupancy | state.threatened_squares) & kingside_mask) == 0) as u64;
+        let queenside_squares_legal = (((state.occupancy & queenside_mask) | (state.threatened_squares & queenside_threaten_mask)) == 0) as u64;
+        let kingside_squares_legal = (((state.occupancy & kingside_mask) | (state.threatened_squares & kingside_threaten_mask)) == 0) as u64;
         let mut move_mask: u64 = ((queenside_squares_legal & can_castle_queenside) << queenside_castling_king_pos) | 
                                  ((kingside_squares_legal & can_castle_kingside) << kingside_castling_king_pos);
 

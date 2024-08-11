@@ -91,6 +91,21 @@ impl Board {
         )
     }
 
+
+    pub(super) fn set_one_castling_right<const COLOR: bool, const QUEENSIDE: bool, const ALLOWED: bool>(&mut self) {
+        let color_offset = match COLOR {
+            WHITE => 0,
+            BLACK => 2
+        };
+        let queenside = QUEENSIDE as u32;
+        let index = color_offset + queenside;
+        let new = match ALLOWED {
+            true => self.castling | 1u8 << index,
+            false => self.castling & (!1u8).rotate_left(index),
+        };
+        self.set_castling(new);
+    }
+
     pub fn get_ep(&self) -> u8 {
         return self.ep;
     }

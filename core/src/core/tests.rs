@@ -316,7 +316,7 @@ fn debug_test() {
 
 #[test]
 fn debug_test_harald() {
-    //Board::print_bits(RIGHT_LEFT_DIAGONALS[12]);
+    Board::print_bits(6917529027641081856);
     //assert!(1==0);
 }
 

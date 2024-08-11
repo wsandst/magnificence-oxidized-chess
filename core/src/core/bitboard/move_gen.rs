@@ -163,6 +163,10 @@ impl Board {
         }
     }
 
+    fn contains_move(moves: &Vec<Move>, looking_for: String) -> bool {
+        moves.iter().any(|mv| mv.to_algebraic() == looking_for)
+    }
+
     /// Generate valid moves for white
     pub(in crate::core) fn generate_moves_white(&self, moves : &mut Vec<Move>, state: &mut MovegenState) {
         if state.checks < 2 {
@@ -182,9 +186,9 @@ impl Board {
             self.generate_black_knight_moves(moves, state);
             self.generate_black_bishop_like_moves(moves, state);
             self.generate_black_rook_like_moves(moves, state);
-            self.generate_black_king_moves(moves, state);
+            self.generate_black_castling_moves(moves, state);
         }
-        self.generate_black_castling_moves(moves, state);
+        self.generate_black_king_moves(moves, state);
     }
 
     /// Helper function to extract moves from a move mask
