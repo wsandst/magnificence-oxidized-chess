@@ -19,6 +19,9 @@ use engine_core::core::*;
 use engine_core::core::bitboard::*;
 use engine_core::commands;
 
+const ENGINE_NAME: &str = "Magnificence Oxidized";
+const ENGINE_AUTHORS: &str = "William Sandstrom and Harald Bjurulf";
+
 #[derive(Debug, PartialEq)]
 struct GoState {
     // How deep is the engine allowed to search?
@@ -41,7 +44,8 @@ struct UCIState {
     board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
     engine: StandardAlphaBetaEngine,
-    move_history: Vec<Move>
+    move_history: Vec<Move>,
+    strict_uci_mode: bool
 }
 
 #[derive(Debug, PartialEq)]
@@ -89,11 +93,12 @@ pub fn start_uci_protocol() {
         board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
         board_constant_state,
         engine: StandardAlphaBetaEngine::new(),
-        move_history: Vec::new()
+        move_history: Vec::new(),
+        strict_uci_mode: false
     };
 
     loop {
-        let command = read_input(&mut rl);
+        let command = read_input(state.strict_uci_mode,&mut rl);
         handle_command(&command, &mut state);
 
         if command == CommandType::Quit {
@@ -109,7 +114,8 @@ pub fn run_single_uci_command(command_line: &str) {
         board: Board::new(Rc::clone(&board_constant_state)),
         board_constant_state,
         engine: StandardAlphaBetaEngine::new(),
-        move_history: Vec::new()
+        move_history: Vec::new(),
+        strict_uci_mode: false
     };
 
     let command = parse_command(command_line);
@@ -118,24 +124,40 @@ pub fn run_single_uci_command(command_line: &str) {
 
 fn handle_command(command : &CommandType, state: &mut UCIState) {
     match command {
-        CommandType::Quit => {
+        CommandType::Quit if !state.strict_uci_mode => {
             println!("Exiting...");
         }
         CommandType::Error(e) => {
             println!("Error: {}", e);
         }
-        CommandType::Unknown => {
+        CommandType::Unknown if !state.strict_uci_mode => {
             println!("Unknown command");
+        },
+        CommandType::IsReady if state.strict_uci_mode => {
+            println!("readyok");
+        },
+        CommandType::UCI => {
+            state.strict_uci_mode = true;
+            uci_start();
         }
-        CommandType::Perft(depth) => {
-            perft(depth, state);
+        CommandType::UCINewGame => {
+            // Maybe do something here?
+            
         }
+        CommandType::Go(go_state) => {
+            let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false));
+            let mv = pv.first().unwrap();
+            println!("bestmove {}", mv);
+        },
         CommandType::Position(fen) => {
             state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
-        }
+        },
+        CommandType::Perft(depth) => {
+            perft(depth, state);
+        },
         CommandType::PositionMoves(moves) => {
             state.board = commands::board_from_moves(&state.board, moves);
-        }
+        },
         CommandType::Move(mv_algebraic) => {
             let mv = Move::from_algebraic(&state.board, mv_algebraic);
             state.board.make_move(&mv);
@@ -154,9 +176,6 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
         },
-        CommandType::Go(go_state) => {
-            println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false)))
-        }
         CommandType::Divide(depth) => {
             divide(depth, state);
         }
@@ -175,7 +194,13 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
 }
 
 fn handle_search_metadata(metadata: SearchMetadata) {
-    println!("Go status: {:?}", metadata);
+    //println!("Go status: {:?}", metadata);
+}
+
+fn uci_start() {
+    println!("id name {}", ENGINE_NAME);
+    println!("id author {}", ENGINE_AUTHORS);
+    println!("uciok");
 }
 
 fn perft(depth: &usize, state: &mut UCIState) {
@@ -198,9 +223,13 @@ fn divide(depth: &usize, state: &mut UCIState) {
 
 // =============== Input parsing ===================
 
-fn read_input(rl : &mut Editor::<()>) -> CommandType {
+fn read_input(uci_strict_mode: bool, rl : &mut Editor::<()>) -> CommandType {
     // Read input using rustyline library
-    let readline = rl.readline(">> ");
+    let readline = if uci_strict_mode { 
+        rl.readline("")
+    } else {
+        rl.readline(">> ")
+    };
     let cmd = match readline {
         Ok(line) => {
             rl.add_history_entry(line.as_str());
