@@ -15,10 +15,9 @@ const legalMovesHighlightedSquares: any = ref([]);
 const chessEngine = useChessEngineStore();
 chessEngine.makeBoardEngineMoveCallback = makeEngineMove;
 chessEngine.clearBoardSelectionsCallback = clearSelections;
+chessEngine.setPlayersFromLocalStorage();
 
 var moveSoundEffect = new Audio('./sounds/move.mp3');
-
-
 
 const boardPieces = computed(() => {
     return chessEngine.currentBoardPieces;
