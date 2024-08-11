@@ -11,9 +11,12 @@ use engine_core::engine::{Engine, SearchMetadata};
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use std::sync::{Arc, Mutex};
+use std::{io, thread};
+use std::io::BufRead;
 use std::rc::Rc;
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::time::SystemTime;
-use std::sync::atomic::AtomicBool;
 
 
 use engine_core::core::*;
@@ -23,7 +26,7 @@ use engine_core::commands;
 const ENGINE_NAME: &str = "Magnificence Oxidized";
 const ENGINE_AUTHORS: &str = "William Sandstrom and Harald Bjurulf";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct GoState {
     // How deep is the engine allowed to search?
     depth: Option<usize>,
@@ -41,16 +44,23 @@ struct GoState {
     move_time: Option<usize>,
 }
 
-struct UCIState {
+struct WorkerState {
     board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
     engine: StandardAlphaBetaEngine,
     move_history: Vec<Move>,
-    strict_uci_mode: bool,
-    search_running: AtomicBool
+    strict_uci_mode: bool
 }
 
-#[derive(Debug, PartialEq)]
+struct SharedState {
+    strict_uci_mode: bool,
+    stop_search: bool,
+    should_quit: bool,
+    is_worker_busy: bool,
+    is_worker_complete: bool
+}
+
+#[derive(Debug, PartialEq, Clone)]
 #[allow(unused)]
 // UCI Command types sent from GUI to engine
 enum CommandType {
@@ -87,57 +97,114 @@ pub fn start_uci_protocol() {
     println!("Magnificence Oxidized Chess Engine");
     println!("Created by the Prog Boys\n");
 
-    let (board_constant_state, duration) = timeit(|| Rc::new(BitboardRuntimeConstants::create()));
+    let (board_constant_state, duration) = timeit(|| BitboardRuntimeConstants::create());
     println!("Constant state initialization took {:.3} seconds", duration);
 
     println!("Type 'help' for help");
-    let mut state = UCIState {
-        board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
-        board_constant_state,
-        engine: StandardAlphaBetaEngine::new(),
-        move_history: Vec::new(),
+
+    let shared_state = Arc::new(Mutex::new(SharedState {
         strict_uci_mode: false,
-        search_running: false.into()
-    };
+        stop_search: false,
+        should_quit: false,
+        is_worker_busy: false,
+        is_worker_complete: false
+    }));
+    let shared_state_worker = Arc::clone(&shared_state);
 
-    loop {
-        let command = read_input(state.strict_uci_mode,&mut rl);
-        handle_command(&command, &mut state);
 
-        if command == CommandType::Quit {
+    let (tx, rx) : (Sender<CommandType>, Receiver<CommandType>) = mpsc::channel();
+
+    // Spawn a worker thread performs various commands
+    let worker_thread = thread::spawn(move || {
+        // The worker thread listens for commands
+        let board_constant_state_rc = Rc::new(board_constant_state);
+        let mut worker_state = WorkerState {
+            board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state_rc)),
+            board_constant_state: board_constant_state_rc,
+            engine: StandardAlphaBetaEngine::new(),
+            move_history: Vec::new(),
+            strict_uci_mode: false,
+        };
+
+        while let Ok(command) = rx.recv() {
+            // Process the command
+            handle_command(&command, &mut worker_state, &shared_state_worker);
+            if shared_state_worker.lock().unwrap().should_quit {
+                break;
+            }
+        }
+    });
+
+    // Read input and pass it to the worker thread.
+    while !shared_state.lock().unwrap().should_quit {
+        let strict_uci_mode = shared_state.lock().unwrap().strict_uci_mode;
+        let line = match strict_uci_mode {
+            false => read_input_uci_off(&mut rl),
+            true => read_input_uci_on() 
+        };
+        let command = parse_command(&line);
+
+        let mut state = shared_state.lock().unwrap();
+        if tx.send(command.clone()).is_err() || command == CommandType::Quit {
             break;
         }
+
+        state.is_worker_complete = false;
+        if !state.strict_uci_mode {
+            drop(state);
+            while !shared_state.lock().unwrap().is_worker_complete {
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+        }
+        else {
+            drop(state);
+        }
+    }
+
+    // Wait for the worker thread to finish
+    if let Err(err) = worker_thread.join() {
+        println!("Worker thread encountered an error: {:?}", err);
     }
 }
 
 pub fn run_single_uci_command(command_line: &str) {
     let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
 
-    let mut state = UCIState {
+    let mut state = WorkerState {
         board: Board::new(Rc::clone(&board_constant_state)),
         board_constant_state,
         engine: StandardAlphaBetaEngine::new(),
         move_history: Vec::new(),
         strict_uci_mode: false,
-        search_running: false.into()
     };
 
+    let shared_state = Arc::new(Mutex::new(SharedState {
+        strict_uci_mode: false,
+        stop_search: false,
+        should_quit: false,
+        is_worker_busy: false,
+        is_worker_complete: true
+    }));
+
     let command = parse_command(command_line);
-    handle_command(&command, &mut state);
+    handle_command(&command, &mut state, &shared_state);
 }
 
-fn search(state: &mut UCIState, go_state: &GoState) {
+fn search(state: &mut WorkerState, go_state: &GoState) {
     let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false));
     let mv = pv.first().unwrap();
     println!("bestmove {}", mv);
 }
 
-fn handle_command(command : &CommandType, state: &mut UCIState) {
+fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state: &Arc<Mutex<SharedState>>) {
     match command {
-        CommandType::Quit if !state.strict_uci_mode => {
-            println!("Exiting...");
+        CommandType::Quit  => {
+            shared_state.lock().unwrap().should_quit = true;
+            if !state.strict_uci_mode {
+                println!("Exiting...");
+            }
         }
-        CommandType::Error(e) => {
+        CommandType::Error(e) if !state.strict_uci_mode => {
             println!("Error: {}", e);
         }
         CommandType::Unknown if !state.strict_uci_mode => {
@@ -148,6 +215,7 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
         },
         CommandType::UCI => {
             state.strict_uci_mode = true;
+            shared_state.lock().unwrap().strict_uci_mode = true;
             uci_start();
         }
         CommandType::UCINewGame => {
@@ -198,7 +266,8 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
             commands::perft_tests(Rc::clone(&state.board_constant_state));
         }
         _ => {}
-    }
+    };
+    shared_state.lock().unwrap().is_worker_complete = true;
 }
 
 fn handle_search_metadata(metadata: SearchMetadata) {
@@ -211,7 +280,7 @@ fn uci_start() {
     println!("uciok");
 }
 
-fn perft(depth: &usize, state: &mut UCIState) {
+fn perft(depth: &usize, state: &mut WorkerState) {
     println!("Performing perft of depth {}", depth);
     let mut reserved_moves : Vec<Vec<Move>> = Vec::new();
     let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board, &mut reserved_moves));
@@ -220,7 +289,7 @@ fn perft(depth: &usize, state: &mut UCIState) {
     println!("Result: {}", perft_count);
 }
 
-fn divide(depth: &usize, state: &mut UCIState) {
+fn divide(depth: &usize, state: &mut WorkerState) {
     println!("Performing perft of depth {}", depth);
     let mut reserved_moves : Vec<Vec<Move>> = Vec::new();
     let (perft_count, duration) = timeit(|| commands::divide(*depth, &mut state.board, &mut reserved_moves));
@@ -231,27 +300,29 @@ fn divide(depth: &usize, state: &mut UCIState) {
 
 // =============== Input parsing ===================
 
-fn read_input(uci_strict_mode: bool, rl : &mut Editor::<()>) -> CommandType {
+fn read_input_uci_off(rl : &mut Editor::<()>) -> String {
     // Read input using rustyline library
-    let readline = if uci_strict_mode { 
-        rl.readline("")
-    } else {
-        rl.readline(">> ")
-    };
-    let cmd = match readline {
+    let readline = rl.readline(">> ");
+    let line = match readline {
         Ok(line) => {
             rl.add_history_entry(line.as_str());
             line.as_str().to_string()
         },
         Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
-            return CommandType::Quit;
+            return "quit".to_string();
         },
         Err(err) => {
-            println!("Error: {:?}", err);
-            return CommandType::Quit;
+            eprintln!("Error: {:?}", err);
+            return "quit".to_string();
         }
     };
-    return parse_command(&cmd);
+    return line;
+}
+
+fn read_input_uci_on() -> String {
+    let stdin = io::stdin();
+    let line = stdin.lock().lines().next().unwrap().unwrap();
+    return line;
 }
 
 fn parse_command(line: &str) -> CommandType {
