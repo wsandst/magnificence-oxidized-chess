@@ -51,12 +51,17 @@ export const useChessEngineStore = defineStore('chess_engine', {
   actions: {
     setAvailableEngines(engines : any) {
       let human = {"name": "Human", "profile": "./images/human-profile.png", "type": "human"}
+      this.availablePlayers = [];
       this.availablePlayers.push(human);
       for (const engineName of engines) {
         this.availablePlayers.push({"name": engineName, "profile": "./images/robot-profile.png", "type": "engine"})
       }
-      this.setBlackPlayer(this.availablePlayers[1]);
-      this.setWhitePlayer(human);
+      if (!this.whitePlayer) {
+        this.setWhitePlayer(human);
+      }
+      if (!this.blackPlayer) {
+        this.setBlackPlayer(this.availablePlayers[1]);
+      }
     },
     setWhitePlayer(player: any) {
       this.whitePlayer = player;
@@ -68,6 +73,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
         worker.postMessage(["search"]);
         this.engineSearching = true;
       }
+      localStorage.setItem("white_player", JSON.stringify(this.whitePlayer));
     },
     setBlackPlayer(player: any) {
       this.blackPlayer = player;
@@ -79,6 +85,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
         worker.postMessage(["search"]);
         this.engineSearching = true;
       }
+      localStorage.setItem("black_player", JSON.stringify(this.blackPlayer));
     },
     progressTurn() {
       this.currentPlayerColor = this.currentPlayerColor == "white" ? "black" : "white";
@@ -103,7 +110,8 @@ export const useChessEngineStore = defineStore('chess_engine', {
             const savedBoardFen = localStorage.getItem("current_board_fen");
             if (savedBoardFen) {
               worker.postMessage(["set_board_fen", savedBoardFen]);
-            }
+            } 
+
             worker.postMessage(["get_allowed_engines"]);
             this.syncBoardState();
           }
@@ -246,6 +254,17 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["set_board_fen", this.currentBoardFenString]);
       worker.postMessage(["get_pieces"]);
       worker.postMessage(["get_board_fen"]);
+      worker.postMessage(["get_current_player_color"]);
+    },
+    setPlayersFromLocalStorage() {
+      const whitePlayer = localStorage.getItem("white_player");
+      const blackPlayer = localStorage.getItem("black_player");
+      if (whitePlayer) {
+        this.whitePlayer = JSON.parse(whitePlayer);
+      }
+      if (blackPlayer) {
+        this.blackPlayer = JSON.parse(blackPlayer);
+      }
     },
     resetGame() {
       worker.postMessage(["abort"]);

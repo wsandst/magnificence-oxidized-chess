@@ -11,13 +11,17 @@ use engine_core::engine::{Engine, SearchMetadata};
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
-use std::process::Command;
 use std::rc::Rc;
 use std::time::SystemTime;
+use std::sync::atomic::AtomicBool;
+
 
 use engine_core::core::*;
 use engine_core::core::bitboard::*;
 use engine_core::commands;
+
+const ENGINE_NAME: &str = "Magnificence Oxidized";
+const ENGINE_AUTHORS: &str = "William Sandstrom and Harald Bjurulf";
 
 #[derive(Debug, PartialEq)]
 struct GoState {
@@ -40,7 +44,10 @@ struct GoState {
 struct UCIState {
     board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
-    engine: StandardAlphaBetaEngine
+    engine: StandardAlphaBetaEngine,
+    move_history: Vec<Move>,
+    strict_uci_mode: bool,
+    search_running: AtomicBool
 }
 
 #[derive(Debug, PartialEq)]
@@ -63,6 +70,7 @@ enum CommandType {
     Divide(usize),
     PerftTests,
     Move(String),
+    Undo,
     DisplayBoard,
     EvaluateBoard,
     LegalMoves,
@@ -86,11 +94,14 @@ pub fn start_uci_protocol() {
     let mut state = UCIState {
         board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state)),
         board_constant_state,
-        engine: StandardAlphaBetaEngine::new()
+        engine: StandardAlphaBetaEngine::new(),
+        move_history: Vec::new(),
+        strict_uci_mode: false,
+        search_running: false.into()
     };
 
     loop {
-        let command = read_input(&mut rl);
+        let command = read_input(state.strict_uci_mode,&mut rl);
         handle_command(&command, &mut state);
 
         if command == CommandType::Quit {
@@ -105,42 +116,74 @@ pub fn run_single_uci_command(command_line: &str) {
     let mut state = UCIState {
         board: Board::new(Rc::clone(&board_constant_state)),
         board_constant_state,
-        engine: StandardAlphaBetaEngine::new()
+        engine: StandardAlphaBetaEngine::new(),
+        move_history: Vec::new(),
+        strict_uci_mode: false,
+        search_running: false.into()
     };
 
     let command = parse_command(command_line);
     handle_command(&command, &mut state);
 }
 
+fn search(state: &mut UCIState, go_state: &GoState) {
+    let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false));
+    let mv = pv.first().unwrap();
+    println!("bestmove {}", mv);
+}
+
 fn handle_command(command : &CommandType, state: &mut UCIState) {
     match command {
-        CommandType::Quit => {
+        CommandType::Quit if !state.strict_uci_mode => {
             println!("Exiting...");
         }
         CommandType::Error(e) => {
             println!("Error: {}", e);
         }
-        CommandType::Unknown => {
+        CommandType::Unknown if !state.strict_uci_mode => {
             println!("Unknown command");
+        },
+        CommandType::IsReady if state.strict_uci_mode => {
+            println!("readyok");
+        },
+        CommandType::UCI => {
+            state.strict_uci_mode = true;
+            uci_start();
         }
-        CommandType::Perft(depth) => {
-            perft(depth, state);
+        CommandType::UCINewGame => {
+            // Maybe do something here?
+            
         }
+        CommandType::Go(go_state) => {
+            search(state, go_state)
+        },
         CommandType::Position(fen) => {
             state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
-        }
+        },
+        CommandType::Perft(depth) => {
+            perft(depth, state);
+        },
         CommandType::PositionMoves(moves) => {
             state.board = commands::board_from_moves(&state.board, moves);
-        }
-        CommandType::Move(mv) => {
-            state.board.make_move(&Move::from_algebraic(&state.board, mv));
+        },
+        CommandType::Move(mv_algebraic) => {
+            let mv = Move::from_algebraic(&state.board, mv_algebraic);
+            state.board.make_move(&mv);
+            state.move_history.push(mv);
+        },
+        CommandType::Undo => {
+            let possible_mv = state.move_history.pop();
+            if let Some(mv) = possible_mv {
+                state.board.unmake_move(&mv);
+                println!("Move {} was undone", mv);
+            }
+            else {
+                println!("No moves have been made, cannot undo.");
+            }
         }
         CommandType::DisplayBoard => {
             println!("{}", state.board.to_string());
         },
-        CommandType::Go(go_state) => {
-            println!("{:?}", state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false)))
-        }
         CommandType::Divide(depth) => {
             divide(depth, state);
         }
@@ -159,7 +202,13 @@ fn handle_command(command : &CommandType, state: &mut UCIState) {
 }
 
 fn handle_search_metadata(metadata: SearchMetadata) {
-    println!("Go status: {:?}", metadata);
+    //println!("Go status: {:?}", metadata);
+}
+
+fn uci_start() {
+    println!("id name {}", ENGINE_NAME);
+    println!("id author {}", ENGINE_AUTHORS);
+    println!("uciok");
 }
 
 fn perft(depth: &usize, state: &mut UCIState) {
@@ -182,9 +231,13 @@ fn divide(depth: &usize, state: &mut UCIState) {
 
 // =============== Input parsing ===================
 
-fn read_input(rl : &mut Editor::<()>) -> CommandType {
+fn read_input(uci_strict_mode: bool, rl : &mut Editor::<()>) -> CommandType {
     // Read input using rustyline library
-    let readline = rl.readline(">> ");
+    let readline = if uci_strict_mode { 
+        rl.readline("")
+    } else {
+        rl.readline(">> ")
+    };
     let cmd = match readline {
         Ok(line) => {
             rl.add_history_entry(line.as_str());
@@ -226,7 +279,7 @@ fn parse_command(line: &str) -> CommandType {
                 CommandType::Error("Please specify a divide perft depth".to_string())
             }
         }
-        "move" | "makemove" | "mv" => {
+        "move" | "makemove" | "mv" | "make" => {
             if words.len() > 1 {
                 CommandType::Move(words[1].to_string())
             }
@@ -252,7 +305,8 @@ fn parse_command(line: &str) -> CommandType {
             }
         }
         "moves" | "getmoves" | "legalmoves" | "mvs" => CommandType::LegalMoves,
-        "perfttests" => CommandType::PerftTests,
+        "undo" | "unmake" => CommandType::Undo,
+        "perfttests" | "perftest" | "testperft" => CommandType::PerftTests,
         _ => CommandType::Unknown,
     };
     return command;
@@ -301,7 +355,7 @@ fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
             }
             "fen" if words.len() > 1 => { 
                 // Check if _ is a valid fen string
-                CommandType::Position(words[2..].join(" ").to_string()) 
+                CommandType::Position(words[1..].join(" ").to_string()) 
             }
             _ => {
                 CommandType::Position(words[0..].join(" ").to_string()) 

@@ -151,6 +151,10 @@ impl MovegenState {
             pinning_rooks &= pinning_rooks - 1;
         }
     }
+
+    pub fn in_check(&self) -> bool {
+        return self.checks > 0;
+    }
 }
 
 impl Board {
