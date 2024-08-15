@@ -25,13 +25,13 @@ impl Board {
 
     /// Generate moves for white rooks + queen diagonals
     pub(in crate::core) fn generate_white_rook_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let rook_like_occupancy = self.piece_sets[Piece::WhiteRook.to_u8() as usize] | self.piece_sets[Piece::WhiteQueen.to_u8() as usize];
+        let rook_like_occupancy = self.get_piece_set(Piece::WhiteRook) | self.get_piece_set(Piece::WhiteQueen);
         self.extract_rook_moves(moves, rook_like_occupancy, state.white_occupancy, state);
     }
 
     /// Generate moves for black rooks + queen diagonals
     pub(in crate::core) fn generate_black_rook_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let rook_like_occupancy = self.piece_sets[Piece::BlackRook.to_u8() as usize] |  self.piece_sets[Piece::BlackQueen.to_u8() as usize];
+        let rook_like_occupancy = self.get_piece_set(Piece::BlackRook) | self.get_piece_set(Piece::BlackQueen);
         self.extract_rook_moves(moves, rook_like_occupancy, state.black_occupancy, state);
     }
 }

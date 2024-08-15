@@ -193,7 +193,7 @@ impl Board {
     }
 
     pub fn set_piece(&mut self, pos: u8, piece: Piece) {
-        let old_piece: Piece = self.mailboard[pos as usize];
+        let old_piece: Piece = self.get_piece(pos);
         let piecenum = old_piece.to_u8() as usize;
         Board::unset_bit(&mut self.piece_sets[piecenum], pos);
         self.flip_zoobrist_piece(pos, old_piece);
@@ -202,7 +202,7 @@ impl Board {
         Board::set_bit(&mut self.piece_sets[piecenum], pos);
         self.flip_zoobrist_piece(pos, piece);
 
-        self.mailboard[pos as usize] = piece;
+        unsafe { *self.mailboard.get_unchecked_mut(pos as usize) = piece };
     }
 
     pub fn get_piece_pos(&self, x: usize, y: usize) -> Piece {
@@ -210,7 +210,7 @@ impl Board {
     }
 
     pub fn get_piece(&self, pos: u8) -> Piece {
-        return self.mailboard[pos as usize];
+        return unsafe { *self.mailboard.get_unchecked(pos as usize) };
     }
 
     pub fn get_current_player(&self) -> Color {

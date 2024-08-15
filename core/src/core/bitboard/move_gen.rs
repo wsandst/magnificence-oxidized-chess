@@ -56,8 +56,8 @@ impl MovegenState {
             BLACK => 6
         };
         let own_king = match COLOR {
-            WHITE => board.piece_sets[Piece::BlackKing.to_u8() as usize],
-            BLACK => board.piece_sets[Piece::WhiteKing.to_u8() as usize]
+            WHITE => board.get_piece_set(Piece::BlackKing),
+            BLACK => board.get_piece_set(Piece::WhiteKing)
         };
         let own_occupancy = match COLOR {
             WHITE => self.black_occupancy,
@@ -198,13 +198,13 @@ impl Board {
     /// Helper function to extract moves from a move mask
     pub(in crate::core) fn extract_moves_from_mask(&self, moves: &mut Vec<Move>, mut mask: u64, from_index: u8) {
         while mask > 0 {
-            let move_index = mask.trailing_zeros() as usize;
+            let move_index = mask.trailing_zeros() as u8;
             mask &= mask - 1;
             moves.push(Move {
-                from: from_index  as u8,
+                from: from_index as u8,
                 to: move_index as u8,
                 promotion: Piece::Empty,
-                captured: self.mailboard[move_index as usize]
+                captured: self.get_piece(move_index)
             });
         };
     }

@@ -12,12 +12,12 @@ impl Board {
     }
 
     pub(in crate::core) fn generate_white_king_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let white_king_index = self.piece_sets[Piece::WhiteKing.to_u8() as usize].trailing_zeros() as usize;
+        let white_king_index = self.get_piece_set(Piece::WhiteKing).trailing_zeros() as usize;
         self.extract_king_moves(moves, white_king_index, state.white_occupancy, state.threatened_squares);
     }
 
     pub(in crate::core) fn generate_black_king_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let black_king_index = self.piece_sets[Piece::BlackKing.to_u8() as usize].trailing_zeros() as usize;
+        let black_king_index = self.get_piece_set(Piece::BlackKing).trailing_zeros() as usize;
         self.extract_king_moves(moves, black_king_index, state.black_occupancy, state.threatened_squares);
     }
 }

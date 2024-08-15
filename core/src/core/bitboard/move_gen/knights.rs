@@ -15,12 +15,12 @@ impl Board {
     }
 
     pub(in crate::core) fn generate_white_knight_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let white_knight_occupancy = self.piece_sets[Piece::WhiteKnight.to_u8() as usize];
+        let white_knight_occupancy = self.get_piece_set(Piece::WhiteKnight);
         self.extract_knight_moves(moves, white_knight_occupancy, state.white_occupancy, state);
     }
 
     pub(in crate::core) fn generate_black_knight_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let black_knight_occupancy = self.piece_sets[Piece::BlackKnight.to_u8() as usize];
+        let black_knight_occupancy = self.get_piece_set(Piece::BlackKnight);
         self.extract_knight_moves(moves, black_knight_occupancy, state.black_occupancy, state);
     }
 }

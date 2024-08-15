@@ -91,6 +91,9 @@ impl Board {
         )
     }
 
+    pub (super) fn get_piece_set(&self, piece: Piece) -> u64 {
+        return unsafe { *self.piece_sets.get_unchecked(piece.to_u8() as usize) };
+    }
 
     pub(super) fn set_one_castling_right<const COLOR: bool, const QUEENSIDE: bool, const ALLOWED: bool>(&mut self) {
         let color_offset = match COLOR {

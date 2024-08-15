@@ -48,9 +48,9 @@ impl Board {
     }
 
     pub(in crate::core) fn generate_white_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let white_pawn_occupancy = self.piece_sets[Piece::WhitePawn.to_u8() as usize];
+        let white_pawn_occupancy = self.get_piece_set(Piece::WhitePawn);
 
-        let king_pos = self.piece_sets[Piece::WhiteKing.to_u8() as usize].trailing_zeros();
+        let king_pos = self.get_piece_set(Piece::WhiteKing).trailing_zeros();
         let rook_pins_horizontal = state.rook_pins & ROWS[(king_pos >> 3) as usize];
         let bishop_pins_left_diagonal = state.bishop_pins & RIGHT_LEFT_DIAGONALS[king_pos as usize];
         let bishop_pins_right_diagonal = state.bishop_pins & LEFT_RIGHT_DIAGONALS[king_pos as usize];
@@ -79,9 +79,9 @@ impl Board {
     }
 
     pub(in crate::core) fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
-        let black_pawn_occupancy = self.piece_sets[Piece::BlackPawn.to_u8() as usize];
+        let black_pawn_occupancy = self.get_piece_set(Piece::BlackPawn);
 
-        let king_pos = self.piece_sets[Piece::BlackKing.to_u8() as usize].trailing_zeros();
+        let king_pos =self.get_piece_set(Piece::BlackKing).trailing_zeros();
         let rook_pins_horizontal = state.rook_pins & ROWS[(king_pos >> 3) as usize];
         let bishop_pins_left_diagonal = state.bishop_pins & RIGHT_LEFT_DIAGONALS[king_pos as usize];
         let bishop_pins_right_diagonal = state.bishop_pins & LEFT_RIGHT_DIAGONALS[king_pos as usize];
