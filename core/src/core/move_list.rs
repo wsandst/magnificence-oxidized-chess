@@ -3,16 +3,26 @@ use super::Move;
 
 const MAX_MOVE_COUNT: usize = 210;
 
+
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
+pub enum SearchResult {
+    InProgress,
+    Stalemate,
+    Loss
+}
+
 /// MoveList which unsafely wraps a Vector, to avoid runtime checks.
 /// This is valid as we can garantuee no chess position has more than MAX_MOVE_COUNT=210 valid moves
 pub struct MoveList {
-    moves: Vec<Move>
+    moves: Vec<Move>,
+    result: SearchResult
 }
 
 impl MoveList {
     pub fn empty() -> MoveList {
         return MoveList {
-            moves: Vec::with_capacity(MAX_MOVE_COUNT)
+            moves: Vec::with_capacity(MAX_MOVE_COUNT),
+            result: SearchResult::InProgress
         }
     }
 
@@ -37,6 +47,7 @@ impl MoveList {
 
     pub fn clear(&mut self) {
         unsafe { self.moves.set_len(0); }
+        self.set_result(SearchResult::InProgress)
     }
 
     pub fn len(&self) -> usize {
@@ -49,5 +60,13 @@ impl MoveList {
 
     pub fn to_vec(&self) -> Vec<Move> {
         return self.moves.clone();
+    }
+
+    pub fn set_result(&mut self, result: SearchResult) {
+        self.result = result;
+    }
+
+    pub fn result(&self) -> SearchResult {
+        self.result
     }
 }
