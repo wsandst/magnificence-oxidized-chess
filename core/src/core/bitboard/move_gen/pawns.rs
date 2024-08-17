@@ -1,3 +1,5 @@
+use move_list::MoveList;
+
 use super::{Board, MovegenState};
 use super::bitboard::constants::*;
 use crate::core::*;
@@ -6,7 +8,7 @@ const PROMOTION_PIECES_WHITE : [Piece; 4] = [Piece::WhiteQueen, Piece::WhiteRook
 const PROMOTION_PIECES_BLACK : [Piece; 4] = [Piece::BlackQueen, Piece::BlackRook, Piece::BlackBishop, Piece::BlackKnight];
 
 impl Board {
-    fn extract_pawn_loop<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool, const PROMOTION: bool>(&self, mut move_mask: u64, moves : &mut Vec<Move>) {
+    fn extract_pawn_loop<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool, const PROMOTION: bool>(&self, mut move_mask: u64, moves : &mut MoveList) {
         while move_mask > 0 {
             let index = move_mask.trailing_zeros() as u8;
             move_mask &= move_mask - 1;
@@ -38,7 +40,7 @@ impl Board {
         }
     }
 
-    fn extract_pawn_moves<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool>(&self, move_mask: u64, moves : &mut Vec<Move>) {
+    fn extract_pawn_moves<const FROM_OFFSET: i8, const CAPTURES: bool, const WHITE: bool>(&self, move_mask: u64, moves : &mut MoveList) {
         let promotion_mask = match WHITE {
             true => ROWS[0],
             false => ROWS[7]
@@ -47,7 +49,7 @@ impl Board {
         self.extract_pawn_loop::<FROM_OFFSET, CAPTURES, WHITE, false>(move_mask & (!promotion_mask), moves);
     }
 
-    pub(in crate::core) fn generate_white_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_white_pawn_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let white_pawn_occupancy = self.get_piece_set(Piece::WhitePawn);
 
         let king_pos = self.get_piece_set(Piece::WhiteKing).trailing_zeros();
@@ -78,7 +80,7 @@ impl Board {
         self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
     }
 
-    pub(in crate::core) fn generate_black_pawn_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_black_pawn_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let black_pawn_occupancy = self.get_piece_set(Piece::BlackPawn);
 
         let king_pos =self.get_piece_set(Piece::BlackKing).trailing_zeros();
@@ -122,7 +124,7 @@ mod tests {
     fn test_pawn_move_gen() {
         let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
         let board = Board::new(Rc::clone(&constant_state));
-        let mut moves = Vec::new();
+        let mut moves = MoveList::empty();
         let movegen_state = MovegenState::new(&board);
         board.generate_white_pawn_moves(&mut moves, &movegen_state);
 

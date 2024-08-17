@@ -10,6 +10,7 @@ mod bishops;
 mod rooks;
 
 use bitboard::constants::*;
+use move_list::MoveList;
 use num::PrimInt;
 
 use crate::core::*;
@@ -159,20 +160,22 @@ impl MovegenState {
 
 impl Board {
     /// Get all valid moves for this position. Pushes the moves to the mutable vector `moves` which is passed in.
-    pub fn get_moves(&self, moves: &mut Vec<Move>)  {
+    pub fn get_moves(&self) -> MoveList  {
+        let mut moves = MoveList::empty();
         let mut state = MovegenState::new(&self);
         match self.current_player {
-            Color::White => self.generate_moves_white(moves, &mut state),
-            Color::Black => self.generate_moves_black(moves, &mut state)
+            Color::White => self.generate_moves_white(&mut moves, &mut state),
+            Color::Black => self.generate_moves_black(&mut moves, &mut state)
         }
+        return moves;
     }
 
-    fn contains_move(moves: &Vec<Move>, looking_for: String) -> bool {
+    fn contains_move(moves: &MoveList, looking_for: String) -> bool {
         moves.iter().any(|mv| mv.to_algebraic() == looking_for)
     }
 
     /// Generate valid moves for white
-    pub(in crate::core) fn generate_moves_white(&self, moves : &mut Vec<Move>, state: &mut MovegenState) {
+    pub(in crate::core) fn generate_moves_white(&self, moves : &mut MoveList, state: &mut MovegenState) {
         if state.checks < 2 {
             self.generate_white_pawn_moves(moves, state);
             self.generate_white_knight_moves(moves, state);
@@ -184,7 +187,7 @@ impl Board {
     }
 
     /// Generate valid moves for black
-    pub(in crate::core) fn generate_moves_black(&self, moves : &mut Vec<Move>, state: &mut MovegenState) {
+    pub(in crate::core) fn generate_moves_black(&self, moves : &mut MoveList, state: &mut MovegenState) {
         if state.checks < 2 {
             self.generate_black_pawn_moves(moves, state);
             self.generate_black_knight_moves(moves, state);
@@ -196,7 +199,7 @@ impl Board {
     }
 
     /// Helper function to extract moves from a move mask
-    pub(in crate::core) fn extract_moves_from_mask(&self, moves: &mut Vec<Move>, mut mask: u64, from_index: u8) {
+    pub(in crate::core) fn extract_moves_from_mask(&self, moves: &mut MoveList, mut mask: u64, from_index: u8) {
         while mask > 0 {
             let move_index = mask.trailing_zeros() as u8;
             mask &= mask - 1;

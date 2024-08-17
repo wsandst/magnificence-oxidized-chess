@@ -1,9 +1,11 @@
+use move_list::MoveList;
+
 use super::{Board, MovegenState};
 use super::bitboard::constants::*;
 use crate::core::*;
 
 impl Board {
-    fn extract_king_moves(&self, moves : &mut Vec<Move>, king_index: usize, same_color_occupancy: u64, threatened_squares: u64) {
+    fn extract_king_moves(&self, moves : &mut MoveList, king_index: usize, same_color_occupancy: u64, threatened_squares: u64) {
         if king_index == 64 { // No king
             return;
         }
@@ -11,12 +13,12 @@ impl Board {
         self.extract_moves_from_mask(moves, move_mask, king_index as u8);
     }
 
-    pub(in crate::core) fn generate_white_king_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_white_king_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let white_king_index = self.get_piece_set(Piece::WhiteKing).trailing_zeros() as usize;
         self.extract_king_moves(moves, white_king_index, state.white_occupancy, state.threatened_squares);
     }
 
-    pub(in crate::core) fn generate_black_king_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_black_king_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let black_king_index = self.get_piece_set(Piece::BlackKing).trailing_zeros() as usize;
         self.extract_king_moves(moves, black_king_index, state.black_occupancy, state.threatened_squares);
     }
@@ -33,7 +35,7 @@ mod tests {
 
     #[test]
     fn test_king_move_gen() {
-        let mut moves = Vec::new();
+        let mut moves = MoveList::empty();
         let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         let mut board = Board::empty(Rc::clone(&runtime_constants));
         board.set_piece_pos(3, 3, &Piece::WhiteKing);

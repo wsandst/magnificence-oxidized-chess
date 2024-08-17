@@ -1,44 +1,37 @@
 use constants::BitboardRuntimeConstants;
 
-use crate::core::Move;
+use crate::core::{move_list::MoveList, Move};
 use super::core::bitboard::*;
 
-pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
+pub fn perft(depth: usize, board: &mut Board) -> usize {
     if depth <= 0 {
         return 1;
     }
-    let mut moves = match reserved_moves.pop() {
-        None => Vec::new(),
-        Some(vec) => vec
-    };
-    moves.clear();
-    board.get_moves(&mut moves);
+    let moves = board.get_moves();
     if depth == 1 {
         let move_count = moves.len();
-        reserved_moves.push(moves);
         return move_count;
     }
     let mut total_move_count = 0;
     for mv in moves.iter() {
         board.make_move(&mv);
-        total_move_count += perft(depth - 1, board, reserved_moves);
+        total_move_count += perft(depth - 1, board);
         board.unmake_move(&mv);
     }
-    reserved_moves.push(moves);
     return total_move_count;
 }
 
-pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut Vec<Vec<Move>>) -> usize {
+pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
     let mut moves = match reserved_moves.pop() {
-        None => Vec::new(),
-        Some(vec) => vec
+        None => MoveList::empty(),
+        Some(moves) => moves
     };
     moves.clear();
-    board.get_moves(&mut moves);
+    let moves = board.get_moves();
     let mut results : Vec<(String, usize)> = Vec::new();
     for mv in moves.iter() {
         board.make_move(&mv);
-        let result = perft(depth - 1, board, reserved_moves);
+        let result = perft(depth - 1, board);
         results.push((mv.to_string(), result));
         board.unmake_move(&mv);
     }
@@ -68,12 +61,11 @@ pub fn perft_tests(runtime_constants: std::rc::Rc<BitboardRuntimeConstants>) {
             ("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", vec![44, 1_486, 62_379, 2_103_487, 89_941_194]),
             ("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", vec![46, 2_079, 89_890, 3_894_594, 164_075_511]) 
         ];
-    let mut moves = Vec::new();
     for (fen, results) in tests {
         let mut board = Board::from_fen(fen, runtime_constants.clone());
         println!("Running fen test on position {fen}");
         for (i, result) in results.iter().enumerate() {
-            let found = perft(i + 1, &mut board, &mut moves);
+            let found = perft(i + 1, &mut board);
             if found != (*result) as usize {
                 println!("Error on depth: {}, expected: {},  found: {}", i + 1, result, found);
                 break;
