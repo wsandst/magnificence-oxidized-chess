@@ -63,7 +63,7 @@ function hideCommandDialog() {
 </script>
 
 <template>
-   <div class="relative z-20 ease-in-out duration-300 transition-opacity mx-4 h-auto text-primary" :class="[
+   <div class="relative z-40 ease-in-out duration-300 transition-opacity mx-4 h-auto text-primary" :class="[
       isInvisible && 'opacity-0',
       !isInvisible && !isHidden && 'opacity-100',
       isHidden && '*:hidden']" role="dialog" aria-modal="true">

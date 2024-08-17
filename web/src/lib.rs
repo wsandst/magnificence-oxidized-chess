@@ -122,8 +122,9 @@ impl ChessEngine {
             &self.board,
             (from_y * 8 + from_x) as u8, 
             (to_y * 8 + to_x) as u8, 
+            Piece::from_u8(promotion as u8),
             capture_piece, 
-            Piece::from_u8(promotion as u8));
+        );
         self.board.make_move(&mv);
         self.game_moves.push(mv);
     }

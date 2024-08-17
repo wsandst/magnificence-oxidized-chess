@@ -197,16 +197,24 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["get_current_player_color"]);
     },
     makeMove(from: [number, number], to: [number, number], promotion : any|null = null) {
+      const from_piece = this.getPiece(from[0], from[1]).piece;
+      const to_piece = this.getPiece(to[0], to[1]).piece;
       if (promotion == null) {
         // Always promote pawns to queen for now
         promotion = 12;
-        if (to[1] == 7 && this.getPiece(from[0], from[1]).piece == 6) {
+        if (to[1] == 7 && from_piece.piece == 6) {
           promotion = 10;
         }
-        else if (to[1] == 0 && this.getPiece(from[0], from[1]).piece  == 0) {
+        else if (to[1] == 0 && from_piece.piece  == 0) {
           promotion = 4;
         }
       }
+
+      let moveType = "regular";
+      if (to_piece && to_piece != 12) {
+        moveType = "capture";
+      }
+    
 
       worker.postMessage(["make_move", from[0], from[1], to[0], to[1], promotion]);
       worker.postMessage(["get_game_status"]);
@@ -218,6 +226,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
         worker.postMessage(["search"]);
       }
       this.currentPly += 1;
+      return moveType;
     },
     
     undoMove() {

@@ -18,6 +18,8 @@ chessEngine.clearBoardSelectionsCallback = clearSelections;
 chessEngine.setPlayersFromLocalStorage();
 
 var moveSoundEffect = new Audio('./sounds/move.mp3');
+var captureSoundEffect = new Audio('./sounds/capture.mp3');
+
 
 const boardPieces = computed(() => {
     return chessEngine.currentBoardPieces;
@@ -69,14 +71,14 @@ function pieceDragStart(e: any, x: number, y: number) {
     legalMovesHighlightedSquares.value = piece.legal_moves.map(move => [move.to_x, move.to_y])
     movingPiece.value = e.target;
     movingPiece.value.style.transform = calculateTranslationBasedMousePosition(e.x, e.y);
-    movingPiece.value.style.zIndex = 100;
+    movingPiece.value.style.zIndex = 30;
     selectedPiecePos.value = [x, y];
 }
 
 function animatePieceToPosition(piece: any, to_x: number, to_y: number, from_x: any, from_y: any) {
     if (piece) {
         piece.style.transition = `all 300ms ease`;
-        piece.style.zIndex = `100`;
+        piece.style.zIndex = `30`;
         piece.style.transform = calculateTranslationBasedOnPosition(to_x, to_y);
     }
 }
@@ -93,7 +95,7 @@ function pieceDragStop(e: any, x: number, y: number) {
         dragStopY = e.y;
     }
     if (movingPiece.value != null && selectedPiecePos.value != null) {
-        movingPiece.value.style.zIndex = 1;
+        movingPiece.value.style.zIndex = 20;
         [x, y] = selectedPiecePos.value;
         let [to_x, to_y] = getMousePosAsBoardPos(dragStopX, dragStopY);
         if (to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8 && (to_x != x || to_y != y)) {
@@ -120,8 +122,13 @@ function makeHumanMove(from_x: number, from_y: number, to_x: number, to_y: numbe
 
 function makeMove(from_x: number, from_y: number, to_x: number, to_y: number, promotion : number|null = null) {
     // Validate that it is this players turn and that the player is human
-    chessEngine.makeMove([from_x, from_y], [to_x, to_y], promotion);
-    moveSoundEffect.play();
+    const moveType = chessEngine.makeMove([from_x, from_y], [to_x, to_y], promotion);
+    if (moveType == "regular") {
+        moveSoundEffect.play();
+    }
+    else if (moveType == "capture") {
+        captureSoundEffect.play();
+    }
     previousMoveFromPos.value = [from_x, from_y];
     previousMoveToPos.value = [to_x, to_y];
 }
@@ -135,7 +142,7 @@ function makeEngineMove(from_x: number, from_y: number, to_x: number, to_y: numb
     setTimeout(() => {
         if (piece) {
             piece.style.transition = "";
-            piece.style.zIndex = 100;
+            piece.style.zIndex = 30;
         }
         if (from_x != null) {
             makeMove(from_x, from_y, to_x, to_y, promotion);
@@ -192,24 +199,25 @@ function getSquareColor(col: number, row: number) : string {
     if (boardPositionModulo(row, col) == 1) {
         // Dark square
         if (shouldSquareBeHighlightedAsLegalMove(col, row)) {
-            return 'bg-dark-square-legal-highlight';
+            return 'dark-square-legal-highlight';
         }
         else if (shouldSquareBeHighlighted(col, row)) {
-            return 'bg-dark-square-highlight';
+            return 'dark-square-highlight';
         }
-        return 'bg-dark-square';
+        return 'dark-square';
     }
     else {
         // Light square
         if (shouldSquareBeHighlightedAsLegalMove(col, row)) {
-            return 'bg-light-square-legal-highlight';
+            return 'light-square-legal-highlight';
         }
         else if (shouldSquareBeHighlighted(col, row)) {
-            return 'bg-light-square-highlight';
+            return 'light-square-highlight';
         }
-        return 'bg-light-square';
+        return 'light-square';
     }
 }
+
 
 function posToAlgebraicPos(rows: number, cols: number) {
     return String.fromCharCode(cols - 1 + 'a'.charCodeAt(0)) + (9 - rows).toString();
@@ -224,15 +232,24 @@ onMounted(() => {
     }
 })
 
+// {{ (row - 1) * 8 + col - 1 }} {{ posToAlgebraicPos(row, col) }}
+
 </script>
 
 <template>
     <div @mousemove="boardMouseMove" @touchmove.prevent="boardTouchMove" class="flex select-none flex-col w-full aspect-square relative" ref="boardElement">
         <div class="flex flex-row w-full h-[12.5%]" v-for="row in 8" :key="row">
-            <div class="w-[12.5%] h-full text-sm"
-                :class="[getSquareColor(col - 1, row - 1)]"
+            <div class="w-[12.5%] h-full text-sm relative z-10"
+                :class="['bg-' + getSquareColor(col - 1, row - 1)]"
                 v-for="col in 8" :key="row * 8 + col">
-                {{ (row - 1) * 8 + col - 1 }} {{ posToAlgebraicPos(row, col) }}
+                    <div v-if="col == 8" class="absolute right-[4px] top-[2px] text-xs font-bold"
+                        :class="['text-' + getSquareColor(col, row - 1)]">
+                        {{row}}
+                    </div>
+                    <div v-if="row == 8" class="absolute bottom-[0px] left-[4px] text-xs font-bold"
+                        :class="['text-' + getSquareColor(col, row - 1)]"> 
+                       {{String.fromCharCode(col - 1 + 'a'.charCodeAt(0))}}
+                    </div>
             </div>
         </div>
         <div class="absolute w-full" v-if="chessEngine.boardStateCounter != 0">
@@ -241,7 +258,7 @@ onMounted(() => {
                 ref="allPieces"
                 :data-x="x"
                 :data-y="y"
-                class="w-[12.5%] object-cover absolute select-none cursor-pointer" 
+                class="w-[12.5%] object-cover absolute select-none cursor-pointer z-20" 
                 :class="{'cursor-grabbing': movingPiece != null}"
                 :src="pieceToIconMap[piece]"
                 :style="'transform:'+calculateTranslationBasedOnPosition(x, y)"

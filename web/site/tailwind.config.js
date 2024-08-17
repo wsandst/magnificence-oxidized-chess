@@ -41,4 +41,14 @@ export default {
         },
     },
     plugins: [],
+    safelist: [
+        'text-light-square',
+        'text-dark-square',
+        'bg-light-square',
+        'bg-dark-square',
+        'bg-light-square-highlight',
+        'bg-dark-square-highlight',
+        'bg-light-square-legal-highlight',
+        'bg-dark-square-legal-highlight',
+    ]
   }
