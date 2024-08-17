@@ -11,7 +11,6 @@ mod rooks;
 
 use bitboard::constants::*;
 use move_list::MoveList;
-use num::PrimInt;
 
 use crate::core::*;
 use super::Board;
@@ -166,10 +165,6 @@ impl Board {
             Color::White => self.generate_moves_white(moves, &mut state),
             Color::Black => self.generate_moves_black(moves, &mut state)
         }
-    }
-
-    fn contains_move(moves: &MoveList, looking_for: String) -> bool {
-        moves.iter().any(|mv| mv.to_algebraic() == looking_for)
     }
 
     /// Generate valid moves for white

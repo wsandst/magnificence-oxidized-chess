@@ -53,7 +53,7 @@ impl Board {
 
     /// Extracts en passant moves. en passant moves only have at most 1 set bit in the move mask
     fn extract_ep_moves<const FROM_OFFSET: i8, const WHITE: bool>(&self, move_mask: u64, moves: &mut MoveList) {
-        let EP_SQUARE_OFFSET: i8 = match WHITE {
+        let ep_square_offset: i8 = match WHITE {
             true => 8,
             false => -8
         };
@@ -76,7 +76,7 @@ impl Board {
             }).trailing_zeros() as usize;
             let to = move_mask.trailing_zeros() as u8;
             let from = (to as i8 + FROM_OFFSET) as u8;
-            let ep_square = (to as i8 + EP_SQUARE_OFFSET) as u8;
+            let ep_square = (to as i8 + ep_square_offset) as u8;
             let new_occupancy = (!self.piece_sets[Piece::Empty.to_u8() as usize]) ^ move_mask ^ (1u64 << from) ^ (1u64 << ep_square);
             let bishop_moves = self.runtime_constants.bishop_magic(king_pos , new_occupancy);
             let rook_moves = self.runtime_constants.rook_magic(king_pos, new_occupancy);

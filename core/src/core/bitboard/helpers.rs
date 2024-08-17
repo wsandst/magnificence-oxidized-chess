@@ -109,14 +109,6 @@ impl Board {
         self.ep = ep;
     }
 
-
-    pub (super) fn set_player(&mut self, color: Color) {
-        if self.current_player != color {
-            self.current_player = color;
-            self.hash_key ^= self.runtime_constants.zoobrist_keys[PLAYER_INDEX];
-        }
-    }
-
     pub (super) fn flip_player(&mut self) {
         self.current_player = self.current_player.next_player();
         self.hash_key ^= self.runtime_constants.zoobrist_keys[PLAYER_INDEX];

@@ -3,7 +3,6 @@
 use super::Move;
 use std::rc::Rc;
 
-use crate::commands::perft;
 use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
@@ -148,7 +147,7 @@ fn test_make_unmake_moves() {
 fn test_make_unmake_moves_special() {
     let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     // Castling
-    let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
+    let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R b KQkq", Rc::clone(&constant_state));
     // Black left side
     let mv = Move::new(&board, 4, 2, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
@@ -161,7 +160,7 @@ fn test_make_unmake_moves_special() {
     assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
 
     // Black right side
-    board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
+    board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R b KQkq", Rc::clone(&constant_state));
     let mv = Move::new(&board, 4, 6, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
@@ -173,7 +172,7 @@ fn test_make_unmake_moves_special() {
     assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
 
     // White left side
-    board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
+    board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq", Rc::clone(&constant_state));
     let mv = Move::new(&board, 60, 62, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
@@ -185,7 +184,7 @@ fn test_make_unmake_moves_special() {
     assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
 
     // White right side
-    board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
+    board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq", Rc::clone(&constant_state));
     let mv = Move::new(&board, 60, 58, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);

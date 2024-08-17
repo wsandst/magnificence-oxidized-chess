@@ -1,4 +1,4 @@
-use super::{Move, Piece};
+use super::Move;
 
 
 const MAX_MOVE_COUNT: usize = 210;
