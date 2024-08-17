@@ -6,6 +6,6 @@ resolver = "2"
 # Tell `rustc` to optimize for small code size.
 # opt-level = "s"
 # debug = true
-#lto = true
-#codegen-units = 1
-#panic = "abort"
+lto = true
+codegen-units = 1
+panic = "abort"
