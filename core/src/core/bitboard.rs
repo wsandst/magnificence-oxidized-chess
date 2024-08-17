@@ -46,6 +46,7 @@ impl Board {
             runtime_constants
         };
         board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
+        board.hash_key = board.calculate_hash();
         return board;
     }
 
@@ -132,7 +133,7 @@ impl Board {
         
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
-        self.ep = ep;
+        self.set_ep(ep);
         self.half_moves += 1;
     }
 
@@ -140,8 +141,9 @@ impl Board {
         self.half_moves -= 1;
         let moved_piece = self.get_piece(mv.to);
         self.current_player = self.current_player.next_player();
+
         self.set_castling(mv.castling);
-        self.ep = mv.ep;
+        self.set_ep(mv.ep);
         self.quiet = mv.quiet;
 
         if mv.promotion != Piece::Empty {
@@ -185,7 +187,6 @@ impl Board {
         else if moved_piece == Piece::BlackPawn && self.ep > 0 && ((mv.to - mv.from) % 8 != 0) && mv.captured == Piece::Empty {
             self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::WhitePawn);
         }
-
         self.set_piece(mv.to, mv.captured);
         self.set_piece(mv.from, moved_piece);
     }

@@ -60,7 +60,7 @@ impl Board {
             // Half moves
             board.half_moves = str::parse(parts[5]).unwrap();
         }
-
+        board.hash_key = board.calculate_hash();
         return board;
     }
 

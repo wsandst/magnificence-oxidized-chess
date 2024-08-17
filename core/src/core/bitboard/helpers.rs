@@ -49,6 +49,7 @@ impl Board {
             result = result ^ self.runtime_constants.zoobrist_keys[index + CASTLING_RIGHTS_INDEX];
             castling &= castling - 1;
         }
+        result ^= self.runtime_constants.zoobrist_keys[EP_INDEX + self.ep as usize];
         return result;
     }
 
@@ -97,6 +98,12 @@ impl Board {
 
     pub (super) fn get_piece_set(&self, piece: Piece) -> u64 {
         return unsafe { *self.piece_sets.get_unchecked(piece.to_u8() as usize) };
+    }
+
+    pub (super) fn set_ep(&mut self, ep: u8) {
+        self.hash_key ^= self.runtime_constants.zoobrist_keys[EP_INDEX + ep as usize];
+        self.hash_key ^= self.runtime_constants.zoobrist_keys[EP_INDEX + self.ep as usize];
+        self.ep = ep;
     }
 
     pub(super) fn set_one_castling_right<const COLOR: bool, const QUEENSIDE: bool, const ALLOWED: bool>(&mut self) {
