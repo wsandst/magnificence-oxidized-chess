@@ -10,7 +10,7 @@ mod bishops;
 mod rooks;
 
 use bitboard::constants::*;
-use move_list::MoveList;
+use move_list::{MoveList, SearchResult};
 use num::PrimInt;
 
 use crate::core::*;
@@ -162,9 +162,16 @@ impl Board {
     /// Get all valid moves for this position. Pushes the moves to the mutable vector `moves` which is passed in.
     pub fn get_moves(&self, moves: &mut MoveList) {
         let mut state = MovegenState::new(&self);
+        moves.clear();
         match self.current_player {
             Color::White => self.generate_moves_white(moves, &mut state),
             Color::Black => self.generate_moves_black(moves, &mut state)
+        }
+        if moves.len() == 0 {
+            moves.set_result(match state.checks {
+                0 => SearchResult::Stalemate,
+                _ => SearchResult::Loss
+            })
         }
     }
 
