@@ -48,7 +48,10 @@ pub struct Move {
     pub from : u8,
     pub to : u8,
     pub promotion : Piece,
-    pub captured : Piece
+    pub captured : Piece,
+    pub ep: u8,
+    pub castling: u8,
+    pub quiet: u8
 }
 
 impl Piece {
@@ -161,13 +164,26 @@ impl Move {
         return algebraic_move;
     }
 
-    pub fn from_pos(board: &Board, from_x: usize, from_y: usize, to_x: usize, to_y: usize) -> Move {
+    pub fn new(board: &Board, from: u8, to: u8, promotion: Piece, captured: Piece) -> Move {
         return Move {
-            from: (from_y * 8 + from_x) as u8,
-            to: (to_y * 8 + to_x) as u8,
-            captured: board.get_piece_pos(to_x, to_y),
-            promotion: Piece::Empty
+            from,
+            to,
+            promotion,
+            captured,
+            ep: board.get_ep(),
+            castling: board.get_castling_u8(),
+            quiet: board.get_quiet_moves()
         }
+    }
+
+    pub fn from_pos(board: &Board, from_x: usize, from_y: usize, to_x: usize, to_y: usize) -> Move {
+        return Move::new(
+            board, 
+            (from_y * 8 + from_x) as u8,
+            (to_y * 8 + to_x) as u8,
+            board.get_piece_pos(to_x, to_y),
+            Piece::Empty
+        );
     }
 
     pub fn from_algebraic(board: &Board, algebraic: &str) -> Move {

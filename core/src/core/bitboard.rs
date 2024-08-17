@@ -23,9 +23,6 @@ pub struct Board {
     /// is bit 1. A7 is bit 8. H1 (white kingside rook starting position) is bit 63.
     piece_sets: [u64; 13],
     hash_key: u64,
-    ep_history: Vec<u8>,
-    castling_history: Vec<u8>,
-    quiet_history: Vec<u8>,
     ep: u8,
     castling: u8,
     current_player: Color,
@@ -40,9 +37,6 @@ impl Board {
         let mut board = Board {
             piece_sets: [0; 13],
             hash_key: 0,
-            ep_history: Vec::new(),
-            castling_history: Vec::new(),
-            quiet_history: Vec::new(),
             ep: 0,
             castling: 0,
             current_player: Color::White,
@@ -61,11 +55,9 @@ impl Board {
     }
 
     pub fn make_move(&mut self, mv: &Move) {
-        self.castling_history.push(self.castling);
         self.flip_player();
         let mut piece_to_move = self.get_piece(mv.from);
         let mut ep = 0;
-        self.ep_history.push(self.ep);
         match mv.from {
             0 => self.set_one_castling_right::<BLACK, true, false>(),
             7 => self.set_one_castling_right::<BLACK, false, false>(),
@@ -80,6 +72,16 @@ impl Board {
             63 => self.set_one_castling_right::<WHITE, false, false>(),
             _ => (),
         }
+
+        // Quiet moves
+        if piece_to_move != Piece::WhitePawn && piece_to_move != Piece::BlackPawn 
+                && mv.captured == Piece::Empty {
+            self.quiet += 1;
+        }
+        else {
+            self.quiet = 0;
+        }
+
         if piece_to_move == Piece::WhitePawn || piece_to_move == Piece::BlackPawn {
             // Check if this move generates an ep square
             if piece_to_move == Piece::WhitePawn && mv.from.wrapping_sub(mv.to) == 16 {
@@ -128,6 +130,7 @@ impl Board {
                 self.set_piece(59, Piece::WhiteRook);
             }
         }
+        
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
         self.set_ep(ep);
@@ -138,10 +141,9 @@ impl Board {
         self.half_moves -= 1;
         let moved_piece = self.get_piece(mv.to);
         self.flip_player();
-        let castling = self.castling_history.pop();
-        self.set_castling(castling.unwrap());
-        let ep = self.ep_history.pop().unwrap();
-        self.set_ep(ep);
+        self.set_castling(mv.castling);
+        self.set_ep(mv.ep);
+        self.quiet = mv.quiet;
 
         if mv.promotion != Piece::Empty {
             // Undo promotion

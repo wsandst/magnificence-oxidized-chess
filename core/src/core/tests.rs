@@ -79,7 +79,7 @@ fn test_fen() {
     board1.validate();
 
     // Kiwipete
-    let board2 = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w Kq c3 2 3", Rc::clone(&constant_state));
+    let board2 = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w Kq c6 2 3", Rc::clone(&constant_state));
     let expected_pieces2 = [
         Piece::BlackRook,   Piece::Empty,      Piece::Empty,      Piece::Empty,      Piece::BlackKing, Piece::Empty,      Piece::Empty,      Piece::BlackRook,
         Piece::BlackPawn,   Piece::Empty,      Piece::BlackPawn,  Piece::BlackPawn,  Piece::BlackQueen,Piece::BlackPawn,  Piece::BlackBishop,Piece::Empty,
@@ -91,17 +91,17 @@ fn test_fen() {
         Piece::WhiteRook,   Piece::Empty,      Piece::Empty,      Piece::Empty,      Piece::WhiteKing, Piece::Empty,      Piece::Empty,      Piece::WhiteRook,
     ];
     assert_board_equal_to_array_board(&board2, &expected_pieces2);
-    assert_eq!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w Kq c3 2 3", &board2.to_fen());
+    assert_eq!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w Kq c6 2 3", &board2.to_fen());
     assert_eq!(board2.get_current_player(), Color::White);
     assert_eq!(board2.get_ep(), 3);
     assert_eq!(board2.get_quiet_moves(), 2);
     assert_eq!(board2.get_half_moves(), 3);
     board2.validate();
 
-    let board3 = Board::from_fen("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 b - d6 23 26", Rc::clone(&constant_state));
+    let board3 = Board::from_fen("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 b - d3 23 26", Rc::clone(&constant_state));
     assert_eq!(board3.get_current_player(), Color::Black);
     assert_eq!(board3.get_ep(), 4);
-    assert_eq!("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 b - d6 23 26", &board3.to_fen());
+    assert_eq!("8/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/8 b - d3 23 26", &board3.to_fen());
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn test_make_unmake_moves() {
 
     assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::BlackPawn);
     assert_eq!(board.get_piece_pos(2 % 8, 2 / 8), Piece::Empty);
-    let mv = Move {from: 10, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 10, 2, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     println!("{}", board);
     assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::Empty);
@@ -134,7 +134,7 @@ fn test_make_unmake_moves() {
 
     assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::WhiteRook);
     assert_eq!(board.get_piece_pos(37 % 8, 37 / 8), Piece::BlackPawn);
-    let mv = Move {from: 33, to: 37, promotion: Piece::Empty, captured: Piece::BlackPawn};
+    let mv = Move::new(&board, 33, 37, Piece::Empty, Piece::BlackPawn);
     board.make_move(&mv);
     println!("{}", board);
     assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::Empty);
@@ -150,7 +150,7 @@ fn test_make_unmake_moves_special() {
     // Castling
     let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
     // Black left side
-    let mv = Move {from: 4, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 4, 2, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
     assert_eq!(board.get_piece_pos(3, 0), Piece::BlackRook);
@@ -162,7 +162,7 @@ fn test_make_unmake_moves_special() {
 
     // Black right side
     board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
-    let mv = Move {from: 4, to: 6, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 4, 6, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
     assert_eq!(board.get_piece_pos(5, 0), Piece::BlackRook);
@@ -174,7 +174,7 @@ fn test_make_unmake_moves_special() {
 
     // White left side
     board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
-    let mv = Move {from: 60, to: 62, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 60, 62, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
     assert_eq!(board.get_piece_pos(5, 7), Piece::WhiteRook);
@@ -186,7 +186,7 @@ fn test_make_unmake_moves_special() {
 
     // White right side
     board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
-    let mv = Move {from: 60, to: 58, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 60, 58, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
     assert_eq!(board.get_piece_pos(3, 7), Piece::WhiteRook);
@@ -198,7 +198,7 @@ fn test_make_unmake_moves_special() {
 
     // Promotions
     board = Board::from_fen("1r6/P7/8/8/8/8/p7/1R6 b", Rc::clone(&constant_state));
-    let mv = Move {from: 48, to: 56, promotion: Piece::BlackQueen, captured: Piece::Empty};
+    let mv = Move::new(&board, 48, 56, Piece::BlackQueen, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(0, 6), Piece::Empty);
     assert_eq!(board.get_piece_pos(0, 7), Piece::BlackQueen);
@@ -207,7 +207,7 @@ fn test_make_unmake_moves_special() {
     assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "1r6/P7/8/8/8/8/p7/1R6");
 
     board = Board::from_fen("1r6/P7/8/8/8/8/p7/1R6", Rc::clone(&constant_state));
-    let mv = Move {from: 8, to: 0, promotion: Piece::WhiteBishop, captured: Piece::Empty};
+    let mv = Move::new(&board, 8, 0, Piece::WhiteBishop, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(0, 1), Piece::Empty);
     assert_eq!(board.get_piece_pos(0, 0), Piece::WhiteBishop);
@@ -293,7 +293,7 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
 
 #[test]
 fn board_validation_with_perft() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::new(Rc::clone(&constant_state));
     let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     validation_perft(4, &mut board, &mut reserved_moves);
@@ -309,22 +309,11 @@ fn board_validation_with_perft() {
     // rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6
 }
 
-
-
 #[test]
-fn debug_test() {
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
-    let mut board = Board::new(Rc::clone(&constant_state));
-    commands::perft(4, &mut board, &mut reserved_moves);
-}
-
-
-#[test]
-fn debug_test_harald() {
-    Board::print_bits(6917529027641081856);
-    //assert!(1==0);
-}
+fn perft_tests() {
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
+    assert!(commands::perft_tests(Rc::clone(&constant_state), 2_000_000), "Perft tests failed, see print output for more details.");
+}            
 
 
 pub fn assert_moves_eq_algebraic(lhs: &MoveList, rhs: &Vec<&str>) {

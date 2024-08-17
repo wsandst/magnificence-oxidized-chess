@@ -201,12 +201,12 @@ impl Board {
         while mask > 0 {
             let move_index = mask.trailing_zeros() as u8;
             mask &= mask - 1;
-            moves.push(Move {
-                from: from_index as u8,
-                to: move_index as u8,
-                promotion: Piece::Empty,
-                captured: self.get_piece(move_index)
-            });
+            moves.push(Move::new(&self,
+                from_index as u8,
+                move_index as u8,
+                Piece::Empty,
+                self.get_piece(move_index)
+            ));
         };
     }
 }

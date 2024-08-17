@@ -32,7 +32,7 @@ impl Board {
     /// Updates the zoobrist key based on the addition/removal of `piece` at `pos`.
     pub(super) fn flip_zoobrist_piece(&mut self, pos: u8, piece: Piece) {
         let index = (piece.to_u8() as usize) * 64 + (pos as usize);
-        let key =  self.runtime_constants.zoobrist_keys[index];
+        let key =  unsafe { self.runtime_constants.zoobrist_keys.get_unchecked(index) } ;
         self.hash_key = self.hash_key ^ key;
     }
 
@@ -77,6 +77,10 @@ impl Board {
             self.hash_key = self.hash_key ^ self.runtime_constants.zoobrist_keys[index + CASTLING_RIGHTS_INDEX];
             difference &= difference - 1;
         }
+    }
+
+    pub fn get_castling_u8(&self) -> u8 {
+        return self.castling;
     }
 
     /// Generate a u8 representing castling rights from named booleans.

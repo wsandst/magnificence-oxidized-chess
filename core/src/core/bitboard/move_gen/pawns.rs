@@ -22,20 +22,22 @@ impl Board {
                     false => PROMOTION_PIECES_BLACK
                 };
                 for piece in promotion_pieces {
-                    moves.push(Move {
-                        to: index,
-                        from: (index as i8 + FROM_OFFSET) as u8,
-                        promotion: piece,
-                        captured: taken
-                    });
+                    moves.push(Move::new(
+                        self,
+                        (index as i8 + FROM_OFFSET) as u8,
+                        index,
+                        piece,
+                        taken
+                    ));
                 }
             } else {
-                moves.push(Move {
-                    to: index,
-                    from: (index as i8 + FROM_OFFSET) as u8,
-                    promotion: Piece::Empty,
-                    captured: taken
-                });
+                moves.push(Move::new(
+                    self,
+                    (index as i8 + FROM_OFFSET) as u8,
+                    index,
+                    Piece::Empty,
+                    taken
+                ));
             }
         }
     }
@@ -79,12 +81,12 @@ impl Board {
             let bishop_moves = self.runtime_constants.bishop_magic(king_pos , new_occupancy);
             let rook_moves = self.runtime_constants.rook_magic(king_pos, new_occupancy);
             if bishop_moves & enemy_bishops == 0 && rook_moves & enemy_rooks == 0 {
-                moves.push(Move {
-                    to: to,
-                    from: from,
-                    promotion: Piece::Empty,
-                    captured: Piece::Empty
-                })
+                moves.push(Move::new(self, 
+                    from,
+                    to,
+                    Piece::Empty,
+                    Piece::Empty
+                ));
             }
         }
     }

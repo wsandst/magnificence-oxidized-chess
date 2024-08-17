@@ -58,7 +58,7 @@ pub fn board_from_moves(board: &Board, moves: &Vec<String>) -> Board {
     return board_copy;
 }
 
-pub fn perft_tests(runtime_constants: std::rc::Rc<BitboardRuntimeConstants>) {
+pub fn perft_tests(runtime_constants: std::rc::Rc<BitboardRuntimeConstants>, node_limit: usize) -> bool {
     let tests: Vec<(&str, Vec<u64>)> = vec![
             ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", vec![20, 400, 8902, 197_281, 4_865_609]),
             ("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", vec![48, 2039, 97_862, 4_085_603, 193_690_690, 8_031_647_685]),
@@ -68,15 +68,22 @@ pub fn perft_tests(runtime_constants: std::rc::Rc<BitboardRuntimeConstants>) {
             ("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", vec![46, 2_079, 89_890, 3_894_594, 164_075_551, 6_923_051_137]) 
         ];
     let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+    let mut success = true;
     for (fen, results) in tests {
         let mut board = Board::from_fen(fen, runtime_constants.clone());
         println!("Running fen test on position {fen}");
         for (i, result) in results.iter().enumerate() {
+            if *result as usize >= node_limit {
+                // Stop searching for positions if the expected node count exceeds the node limit
+                break;
+            }
             let found = perft(i + 1, &mut board, &mut reserved_moves);
             if found != (*result) as usize {
                 println!("Error on depth: {}, expected: {},  found: {}", i + 1, result, found);
+                success = false;
                 break;
             }
         }
     }
+    return true;
 }

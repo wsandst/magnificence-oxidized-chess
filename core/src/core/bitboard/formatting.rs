@@ -131,10 +131,10 @@ impl Board {
 
     pub fn get_ep_str(&self) -> String {
         let mut ep_str : String = "-".to_string();
-        if self.get_ep() > 0 && self.current_player == Color::White {
+        if self.get_ep() > 0 && self.current_player == Color::Black {
             ep_str = pos_to_algebraic_pos(self.get_ep() - 1, 5);
         }
-        else if self.get_ep() > 0 && self.current_player == Color::Black {
+        else if self.get_ep() > 0 && self.current_player == Color::White {
             ep_str = pos_to_algebraic_pos(self.get_ep() - 1, 2);
         }
         return ep_str;
