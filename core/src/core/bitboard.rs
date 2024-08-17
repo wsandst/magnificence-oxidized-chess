@@ -58,20 +58,6 @@ impl Board {
         self.flip_player();
         let mut piece_to_move = self.get_piece(mv.from);
         let mut ep = 0;
-        match mv.from {
-            0 => self.set_one_castling_right::<BLACK, true, false>(),
-            7 => self.set_one_castling_right::<BLACK, false, false>(),
-            56 => self.set_one_castling_right::<WHITE, true, false>(),
-            63 => self.set_one_castling_right::<WHITE, false, false>(),
-            _ => (),
-        }
-        match mv.to {
-            0 => self.set_one_castling_right::<BLACK, true, false>(),
-            7 => self.set_one_castling_right::<BLACK, false, false>(),
-            56 => self.set_one_castling_right::<WHITE, true, false>(),
-            63 => self.set_one_castling_right::<WHITE, false, false>(),
-            _ => (),
-        }
 
         // Quiet moves
         if piece_to_move != Piece::WhitePawn && piece_to_move != Piece::BlackPawn 
@@ -104,30 +90,47 @@ impl Board {
                 piece_to_move = mv.promotion;
             }
         }
-        else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
-            if piece_to_move == Piece::WhiteKing {
-                self.set_castling(self.castling & !(0b11))
-            } else {
-                self.set_castling(self.castling & !(0b1100));
+        else if self.castling > 0 {
+            match mv.from {
+                0 => self.set_one_castling_right::<BLACK, true, false>(),
+                7 => self.set_one_castling_right::<BLACK, false, false>(),
+                56 => self.set_one_castling_right::<WHITE, true, false>(),
+                63 => self.set_one_castling_right::<WHITE, false, false>(),
+                _ => (),
             }
-            if mv.from == 4 && mv.to == 2 {
-                self.set_piece(0, Piece::Empty);
-                self.set_piece(3, Piece::BlackRook);
+            match mv.to {
+                0 => self.set_one_castling_right::<BLACK, true, false>(),
+                7 => self.set_one_castling_right::<BLACK, false, false>(),
+                56 => self.set_one_castling_right::<WHITE, true, false>(),
+                63 => self.set_one_castling_right::<WHITE, false, false>(),
+                _ => (),
             }
-            // Black king side castling
-            else if mv.from == 4 && mv.to == 6 {
-                self.set_piece(5, Piece::BlackRook);
-                self.set_piece(7, Piece::Empty);
-            }
-            // White king side castling
-            else if mv.from == 60 && mv.to == 62 {
-                self.set_piece(61, Piece::WhiteRook);
-                self.set_piece(63, Piece::Empty);
-            }
-            // White queen side castling
-            else if mv.from == 60 && mv.to == 58 {
-                self.set_piece(56, Piece::Empty);
-                self.set_piece(59, Piece::WhiteRook);
+
+            if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
+                if piece_to_move == Piece::WhiteKing {
+                    self.set_castling(self.castling & !(0b11))
+                } else {
+                    self.set_castling(self.castling & !(0b1100));
+                }
+                if mv.from == 4 && mv.to == 2 {
+                    self.set_piece(0, Piece::Empty);
+                    self.set_piece(3, Piece::BlackRook);
+                }
+                // Black king side castling
+                else if mv.from == 4 && mv.to == 6 {
+                    self.set_piece(5, Piece::BlackRook);
+                    self.set_piece(7, Piece::Empty);
+                }
+                // White king side castling
+                else if mv.from == 60 && mv.to == 62 {
+                    self.set_piece(61, Piece::WhiteRook);
+                    self.set_piece(63, Piece::Empty);
+                }
+                // White queen side castling
+                else if mv.from == 60 && mv.to == 58 {
+                    self.set_piece(56, Piece::Empty);
+                    self.set_piece(59, Piece::WhiteRook);
+                }
             }
         }
         

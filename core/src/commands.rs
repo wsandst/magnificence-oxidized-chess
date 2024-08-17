@@ -3,6 +3,8 @@ use constants::BitboardRuntimeConstants;
 use crate::core::{move_list::MoveList, Move};
 use super::core::bitboard::*;
 
+const USE_LEAF_NODE_OPTIMIZATION : bool = true;
+
 pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
     if depth <= 0 {
         return 1;
@@ -13,7 +15,7 @@ pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>
     };
     moves.clear();
     board.get_moves(&mut moves);
-    if depth == 1 {
+    if depth == 1 && USE_LEAF_NODE_OPTIMIZATION {
         let move_count = moves.len();
         reserved_moves.push(moves);
         return move_count;
@@ -85,5 +87,5 @@ pub fn perft_tests(runtime_constants: std::rc::Rc<BitboardRuntimeConstants>, nod
             }
         }
     }
-    return true;
+    return success;
 }

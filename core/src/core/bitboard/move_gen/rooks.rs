@@ -43,8 +43,6 @@ mod tests {
     use move_gen::MovegenState;
 
     use crate::core::tests::BOARD_CONSTANT_STATE;
-    use crate::core::tests::assert_moves_eq_algebraic;
-
     use super::bitboard::*;
 
     #[test]

@@ -1,9 +1,10 @@
-use super::{GameStatus, Move, Piece};
+use super::Move;
 
 
 const MAX_MOVE_COUNT: usize = 210;
 
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub enum SearchResult {
     InProgress,
     Stalemate,

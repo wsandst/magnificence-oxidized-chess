@@ -11,7 +11,6 @@ mod rooks;
 
 use bitboard::constants::*;
 use move_list::{MoveList, SearchResult};
-use num::PrimInt;
 
 use crate::core::*;
 use super::Board;
@@ -173,10 +172,6 @@ impl Board {
                 _ => SearchResult::Loss
             })
         }
-    }
-
-    fn contains_move(moves: &MoveList, looking_for: String) -> bool {
-        moves.iter().any(|mv| mv.to_algebraic() == looking_for)
     }
 
     /// Generate valid moves for white
