@@ -293,7 +293,7 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
 
 #[test]
 fn board_validation_with_perft() {
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::new(Rc::clone(&constant_state));
     let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     validation_perft(4, &mut board, &mut reserved_moves);
@@ -309,22 +309,11 @@ fn board_validation_with_perft() {
     // rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6
 }
 
-
-
 #[test]
-fn debug_test() {
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
-    let constant_state = Rc::new(BitboardRuntimeConstants::create());
-    let mut board = Board::new(Rc::clone(&constant_state));
-    commands::perft(4, &mut board, &mut reserved_moves);
-}
-
-
-#[test]
-fn debug_test_harald() {
-    Board::print_bits(6917529027641081856);
-    //assert!(1==0);
-}
+fn perft_tests() {
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
+    assert!(commands::perft_tests(Rc::clone(&constant_state), 2_000_000), "Perft tests failed, see print output for more details.");
+}            
 
 
 pub fn assert_moves_eq_algebraic(lhs: &MoveList, rhs: &Vec<&str>) {

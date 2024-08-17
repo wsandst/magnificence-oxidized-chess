@@ -261,7 +261,7 @@ fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state:
             println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
         }
         CommandType::PerftTests => {
-            commands::perft_tests(Rc::clone(&state.board_constant_state));
+            commands::perft_tests(Rc::clone(&state.board_constant_state), 20_000_000_000);
         }
         _ => {}
     };
