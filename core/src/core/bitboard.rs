@@ -55,7 +55,7 @@ impl Board {
 
     pub fn make_move(&mut self, mv: &Move) {
         self.current_player = self.current_player.next_player();
-        let piece_to_move = self.get_piece(mv.from);
+        let mut piece_to_move = self.get_piece(mv.from);
         let mut ep = 0;
         match mv.from {
             0 => self.set_one_castling_right::<BLACK, true, false>(),
@@ -72,12 +72,6 @@ impl Board {
             _ => (),
         }
         if piece_to_move == Piece::WhitePawn || piece_to_move == Piece::BlackPawn {
-            if mv.promotion != Piece::Empty {
-                // This piece is being promoted
-                self.set_piece(mv.to, mv.promotion);
-                self.set_piece(mv.from, Piece::Empty);
-                return;
-            }
             // Check if this move generates an ep square
             if piece_to_move == Piece::WhitePawn && mv.from.wrapping_sub(mv.to) == 16 {
                 // Double move, need to set en passant square
@@ -93,6 +87,10 @@ impl Board {
             }
             else if piece_to_move == Piece::BlackPawn && self.ep > 0 && (self.ep + 40 - 1) == mv.to {
                 self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::Empty);
+            }
+            else if mv.promotion != Piece::Empty {
+                // This piece is being promoted
+                piece_to_move = mv.promotion;
             }
         }
         else if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {

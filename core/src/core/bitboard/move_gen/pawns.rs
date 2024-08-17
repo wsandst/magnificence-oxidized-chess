@@ -51,9 +51,48 @@ impl Board {
         self.extract_pawn_loop::<FROM_OFFSET, CAPTURES, WHITE, false>(move_mask & (!promotion_mask), moves);
     }
 
+    /// Extracts en passant moves. en passant moves only have at most 1 set bit in the move mask
+    fn extract_ep_moves<const FROM_OFFSET: i8, const WHITE: bool>(&self, move_mask: u64, moves: &mut MoveList) {
+        let EP_SQUARE_OFFSET: i8 = match WHITE {
+            true => 8,
+            false => -8
+        };
+        if move_mask > 0 {
+            let enemy_queen = match WHITE {
+                true => self.piece_sets[Piece::BlackQueen.to_u8() as usize],
+                false => self.piece_sets[Piece::WhiteQueen.to_u8() as usize]
+            };
+            let enemy_bishops = enemy_queen | match WHITE {
+                true => self.piece_sets[Piece::BlackBishop.to_u8() as usize],
+                false => self.piece_sets[Piece::WhiteBishop.to_u8() as usize] 
+            };
+            let enemy_rooks = enemy_queen | match WHITE {
+                true => self.piece_sets[Piece::BlackRook.to_u8() as usize],
+                false => self.piece_sets[Piece::WhiteRook.to_u8() as usize] 
+            };
+            let king_pos = (match WHITE {
+                true => self.piece_sets[Piece::WhiteKing.to_u8() as usize],
+                false => self.piece_sets[Piece::BlackKing.to_u8() as usize] 
+            }).trailing_zeros() as usize;
+            let to = move_mask.trailing_zeros() as u8;
+            let from = (to as i8 + FROM_OFFSET) as u8;
+            let ep_square = (to as i8 + EP_SQUARE_OFFSET) as u8;
+            let new_occupancy = (!self.piece_sets[Piece::Empty.to_u8() as usize]) ^ move_mask ^ (1u64 << from) ^ (1u64 << ep_square);
+            let bishop_moves = self.runtime_constants.bishop_magic(king_pos , new_occupancy);
+            let rook_moves = self.runtime_constants.rook_magic(king_pos, new_occupancy);
+            if bishop_moves & enemy_bishops == 0 && rook_moves & enemy_rooks == 0 {
+                moves.push(Move {
+                    to: to,
+                    from: from,
+                    promotion: Piece::Empty,
+                    captured: Piece::Empty
+                })
+            }
+        }
+    }
+
     pub(in crate::core) fn generate_white_pawn_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let white_pawn_occupancy = self.get_piece_set(Piece::WhitePawn);
-
         let king_pos = self.get_piece_set(Piece::WhiteKing).trailing_zeros();
         let rook_pins_horizontal = state.rook_pins & ROWS[(king_pos >> 3) as usize];
         let bishop_pins_left_diagonal = state.bishop_pins & RIGHT_LEFT_DIAGONALS[king_pos as usize];
@@ -68,18 +107,28 @@ impl Board {
         self.extract_pawn_loop::<16, false, true, false>(double_move_mask & state.legal_targets, moves);
 
         // Add EP square to occupancy as a virtual piece
-        let legal_captures_with_ep = match self.ep {
-            0 => state.black_occupancy,
-            _ => state.black_occupancy | (1 << (self.ep + 16 - 1)) 
-        } & state.legal_targets;
+        let ep_mask = if self.ep == 0 {
+            0
+        } else {
+            let ep_pawn = 1u64 << (self.ep - 1 + 24);
+            let ep_square = 1u64 << ((self.ep - 1 + 16));
+            if (ep_pawn | ep_square) & state.legal_targets > 0 {
+                ep_square
+            } else {
+                0
+            }
+        };
+        let legal_captures_with_ep = ((state.black_occupancy) & state.legal_targets) | ep_mask;
         
         // Captures left
         let left_captures_mask = ((white_pawn_occupancy & !state.rook_pins & !bishop_pins_left_diagonal) >> 9) & !(COLUMNS[7]) & legal_captures_with_ep;
-        self.extract_pawn_moves::<9, true, true>(left_captures_mask, moves);
+        self.extract_pawn_moves::<9, true, true>(left_captures_mask & (!ep_mask), moves);
+        self.extract_ep_moves::<9, true>(left_captures_mask & ep_mask, moves);
 
         // Captures right
         let right_captures_mask = ((white_pawn_occupancy & !state.rook_pins & !bishop_pins_right_diagonal) >> 7) & !(COLUMNS[0]) & legal_captures_with_ep;
-        self.extract_pawn_moves::<7, true, true>(right_captures_mask, moves);
+        self.extract_pawn_moves::<7, true, true>(right_captures_mask & (!ep_mask), moves);
+        self.extract_ep_moves::<7, true>(right_captures_mask & ep_mask, moves)
     }
 
     pub(in crate::core) fn generate_black_pawn_moves(&self, moves : &mut MoveList, state: &MovegenState) {
@@ -99,18 +148,28 @@ impl Board {
         self.extract_pawn_loop::<-16, false, false, false>(double_move_mask & state.legal_targets, moves);
         
         // Add EP square to occupancy as a virtual piece
-        let legal_captures_with_ep = match self.ep {
-            0 => state.white_occupancy,
-            _ => state.white_occupancy | (1 << (40 + self.ep - 1)) 
-        } & state.legal_targets;
+        let ep_mask = if self.ep == 0 {
+            0
+        } else {
+            let ep_pawn = 1u64 << (self.ep - 1 + 32);
+            let ep_square = 1u64 << ((self.ep - 1 + 40));
+            if (ep_pawn | ep_square) & state.legal_targets > 0 {
+                ep_square
+            } else {
+                0
+            }
+        };
+        let legal_captures_with_ep = (state.white_occupancy & state.legal_targets) | ep_mask;
 
         // Captures left
         let left_captures_mask = ((black_pawn_occupancy & !state.rook_pins & !bishop_pins_left_diagonal) << 9) & !(COLUMNS[0]) & legal_captures_with_ep;
-        self.extract_pawn_moves::<-9, true, false>(left_captures_mask, moves);
+        self.extract_pawn_moves::<-9, true, false>(left_captures_mask & (!ep_mask), moves);
+        self.extract_ep_moves::<-9, false>(left_captures_mask & ep_mask, moves);
 
         // Captures right
         let right_captures_mask = ((black_pawn_occupancy & !state.rook_pins & !bishop_pins_right_diagonal) << 7) & !(COLUMNS[7]) & legal_captures_with_ep;
-        self.extract_pawn_moves::<-7, true, false>(right_captures_mask, moves);
+        self.extract_pawn_moves::<-7, true, false>(right_captures_mask & (!ep_mask), moves);
+        self.extract_ep_moves::<-7, false>(right_captures_mask & ep_mask, moves);
     }
 }
 
