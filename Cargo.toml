@@ -5,7 +5,7 @@ resolver = "2"
 [profile.release]
 # Tell `rustc` to optimize for small code size.
 # opt-level = "s"
-debug = true
+# debug = true
 lto = true
 codegen-units = 1
 panic = "abort"

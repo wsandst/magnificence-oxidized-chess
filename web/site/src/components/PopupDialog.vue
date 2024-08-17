@@ -7,11 +7,14 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 const chessEngine = useChessEngineStore();
 chessEngine.showCommandDialogCallback = showCommandDialog;
 chessEngine.commandResponseCallback = onCommandResponse;
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner'
+
 
 const isInvisible = ref(true);
 const isHidden = ref(true);
 const commandResponse = ref(null);
 const currentCommand = ref(null);
+const commandRunning = ref(false);
 const optionFields = ref([]);
 
 function showCommandDialog(command: any) {
@@ -26,6 +29,7 @@ function onCommandResponse(responseRows: any) {
     responseRows.forEach(response => {
         chessEngine.logHistory.push(response);
     });
+    commandRunning.value = false;
 }
 
 function runCommand() {
@@ -45,6 +49,9 @@ function runCommand() {
     currentCommand.value.command(...args);
     if (!currentCommand.value.hasResponse) {
         hideCommandDialog();
+    }
+    else {
+        commandRunning.value = true;
     }
 }
 
@@ -104,6 +111,7 @@ function hideCommandDialog() {
               >
                 Cancel
               </button>
+              <FontAwesomeIcon v-if="commandRunning" title="Command is executing..." spin class="text-2xl duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" :icon="faSpinner"/>
               <button
                 className="text-white bg-blue-500 hover:bg-blue-400 font-bold uppercase text-sm px-6 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1"
                 type="button"

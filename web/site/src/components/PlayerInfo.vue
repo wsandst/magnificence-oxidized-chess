@@ -59,7 +59,7 @@ const shouldShowCalculationSpinner = computed(() => {
     <div class="flex flex-row gap-2 relative z-10">
         <img width="55" height="55" class="w-[50px] h-[50px] rounded-[3px] box-box" 
         :class="[chessEngine.currentPlayerColor == playerColor && 'border-[3px] border-solid border-green-600']" :src="playerInfo?.profile">
-        <FontAwesomeIcon v-if="shouldShowCalculationSpinner" title="Calculating..." spin class="absolute left-[52px] top-[25px] cursor-pointer hover:scale-110 duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" :icon="faSpinner"/>
+        <FontAwesomeIcon v-if="shouldShowCalculationSpinner" title="Calculating..." spin class="absolute left-[52px] top-[25px]  duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" :icon="faSpinner"/>
         <div @click="toggleDropdownVisibility" class="cursor-pointer flex flex-row hover:scale-105 transition-all duration-300 ease-in-out">
             <span class="text-sm font-bold">{{ playerInfo?.name }}</span>
             <FontAwesomeIcon class="cursor-pointer hover:scale-110 duration-300 ease-in-out ml-[6px]" :style="{ color: 'hsla(0, 0%, 96%, 1)' }" :icon="faCaretDown"/>
