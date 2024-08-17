@@ -95,6 +95,11 @@ impl Board {
         return unsafe { *self.piece_sets.get_unchecked(piece.to_u8() as usize) };
     }
 
+    pub (super) fn set_ep(&mut self, ep: u8) {
+        self.hash_key ^= self.runtime_constants.zoobrist_keys[EP_INDEX + ep as usize - 1];
+        self.hash_key ^= self.runtime_constants.zoobrist_keys[EP_INDEX + ep as usize - 1];
+    }
+
     pub(super) fn set_one_castling_right<const COLOR: bool, const QUEENSIDE: bool, const ALLOWED: bool>(&mut self) {
         let color_offset = match COLOR {
             WHITE => 0,

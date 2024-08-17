@@ -182,7 +182,6 @@ impl Board {
         else if moved_piece == Piece::BlackPawn && self.ep > 0 && ((mv.to - mv.from) % 8 != 0) && mv.captured == Piece::Empty {
             self.set_piece((self.ep as usize + 32 - 1) as u8, Piece::WhitePawn);
         }
-
         self.set_piece(mv.to, mv.captured);
         self.set_piece(mv.from, moved_piece);
     }

@@ -8,7 +8,7 @@ pub const BLACK: bool = false;
 
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
-pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 8;
+pub const PLAYER_INDEX: usize = 13 * 64 + 4 + 9;
 #[cfg(any(test,debug_assertions))]
 const NUMBER_OF_MAGIC_TABLE_TRIES: usize = 10;
 #[cfg(not(any(test,debug_assertions)))]
@@ -243,7 +243,7 @@ pub struct BitboardRuntimeConstants {
     #[cfg(not(target_feature = "bmi2"))]
     rook_magic_magic_table: ([u8;64], [u64; 64], [Vec<u64>; 64]),
 
-    pub zoobrist_keys: [u64;13*64 + 4 + 8 + 1]
+    pub zoobrist_keys: [u64;13*64 + 4 + 9 + 1]
 }
 
 impl BitboardRuntimeConstants{
@@ -428,8 +428,8 @@ impl BitboardRuntimeConstants{
         magic
     }
 
-    fn create_zoobrist_keys() -> [u64;13*64 + 4 + 8 + 1] {
-        let mut keys = [0u64; 13*64 + 4 + 8 + 1];
+    fn create_zoobrist_keys() -> [u64;13*64 + 4 + 9 + 1] {
+        let mut keys = [0u64; 13*64 + 4 + 9 + 1];
         let mut rng = rand::thread_rng();
         for i in 0..keys.len() {
             keys[i] = rng.gen::<u64>();
