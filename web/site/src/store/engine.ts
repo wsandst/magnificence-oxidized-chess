@@ -264,7 +264,6 @@ export const useChessEngineStore = defineStore('chess_engine', {
       return piece.legal_moves.find((move: any) => move.to_x == to[0] && move.to_y == to[1]);
     },  
     perft(depth: number) {
-      console.log("Perft: ", depth);
       worker.postMessage(["perft", depth]);
     },
     setBoardFen(fen: string) {
@@ -281,7 +280,6 @@ export const useChessEngineStore = defineStore('chess_engine', {
     setPlayersFromLocalStorage() {
       const whitePlayer = localStorage.getItem("white_player");
       const blackPlayer = localStorage.getItem("black_player");
-      console.log(whitePlayer, blackPlayer);
       if (whitePlayer) {
         this.whitePlayer = JSON.parse(whitePlayer);
       }
@@ -301,7 +299,6 @@ export const useChessEngineStore = defineStore('chess_engine', {
     },
     pauseGame() {
       if (this.engineSearching) {
-        console.log("Aborting!");
         worker.postMessage(["abort"]);
       }
       this.gamePaused = true;
@@ -332,7 +329,6 @@ export const useChessEngineStore = defineStore('chess_engine', {
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
       }
       let pieces = []
-      console.log(fen);
       const fenPieces = fen.split(" ")[0];
       let rows = fenPieces.split("/");
       let y = 0;
