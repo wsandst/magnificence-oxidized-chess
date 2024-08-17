@@ -1,6 +1,7 @@
 use constants::BitboardRuntimeConstants;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata};
+use move_list::MoveList;
 /// Functionality for running the Universal Chess Protocol
 /// 
 /// This is a standardized way for chess engines to communicate.
@@ -253,7 +254,7 @@ fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state:
             divide(depth, state);
         }
         CommandType::LegalMoves => {
-            let mut move_vector = Vec::new();
+            let mut move_vector = MoveList::empty();
             state.board.get_moves(&mut move_vector);
             let mut moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
             moves.sort();
@@ -279,7 +280,7 @@ fn uci_start() {
 
 fn perft(depth: &usize, state: &mut WorkerState) {
     println!("Performing perft of depth {}", depth);
-    let mut reserved_moves : Vec<Vec<Move>> = Vec::new();
+    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
@@ -288,7 +289,7 @@ fn perft(depth: &usize, state: &mut WorkerState) {
 
 fn divide(depth: &usize, state: &mut WorkerState) {
     println!("Performing perft of depth {}", depth);
-    let mut reserved_moves : Vec<Vec<Move>> = Vec::new();
+    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     let (perft_count, duration) = timeit(|| commands::divide(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);

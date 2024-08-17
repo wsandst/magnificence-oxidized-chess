@@ -6,6 +6,7 @@ mod helpers;
 mod move_gen;
 use constants::*;
 use move_gen::MovegenState;
+use move_list::MoveList;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
@@ -226,7 +227,7 @@ impl Board {
     }
 
     pub fn get_game_status(&mut self) -> GameStatus {
-        let mut legal_moves = Vec::new();
+        let mut legal_moves = MoveList::empty();
         let mut state = MovegenState::new(&self);
         match self.current_player {
             Color::White => self.generate_moves_white(&mut legal_moves, &mut state),
