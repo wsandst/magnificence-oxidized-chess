@@ -90,7 +90,7 @@ impl Board {
                 piece_to_move = mv.promotion;
             }
         }
-        else if self.ep > 0 {
+        else if self.castling > 0 {
             match mv.from {
                 0 => self.set_one_castling_right::<BLACK, true, false>(),
                 7 => self.set_one_castling_right::<BLACK, false, false>(),
@@ -105,7 +105,7 @@ impl Board {
                 63 => self.set_one_castling_right::<WHITE, false, false>(),
                 _ => (),
             }
-            
+
             if piece_to_move == Piece::WhiteKing || piece_to_move == Piece::BlackKing {
                 if piece_to_move == Piece::WhiteKing {
                     self.set_castling(self.castling & !(0b11))
@@ -132,7 +132,7 @@ impl Board {
                     self.set_piece(59, Piece::WhiteRook);
                 }
             }
-        } 
+        }
         
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
