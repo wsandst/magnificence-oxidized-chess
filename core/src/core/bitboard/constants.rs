@@ -430,7 +430,7 @@ impl BitboardRuntimeConstants{
 
     fn create_zoobrist_keys() -> [u64;13*64 + 4 + 9 + 1] {
         let mut keys = [0u64; 13*64 + 4 + 9 + 1];
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_pcg::Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
         for i in 0..keys.len() {
             keys[i] = rng.gen::<u64>();
         }

@@ -52,6 +52,7 @@ impl Board {
             runtime_constants
         };
         board.piece_sets[Piece::Empty.to_u8() as usize] = !(0u64);
+        board.hash_key = board.calculate_hash();
         return board;
     }
 
@@ -129,7 +130,7 @@ impl Board {
         }
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
-        self.ep = ep;
+        self.set_ep(ep);
         self.half_moves += 1;
     }
 
@@ -139,7 +140,8 @@ impl Board {
         self.current_player = self.current_player.next_player();
         let castling = self.castling_history.pop();
         self.set_castling(castling.unwrap());
-        self.ep = self.ep_history.pop().unwrap();
+        let ep = self.ep_history.pop().unwrap();
+        self.set_ep(ep);
 
         if mv.promotion != Piece::Empty {
             // Undo promotion
