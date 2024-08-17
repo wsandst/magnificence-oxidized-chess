@@ -36,7 +36,7 @@ async function initWorker() {
 
     // Set callback to handle messages passed to the worker.
     self.onmessage = async (e) => {
-        //console.log('Message received from main thread: ', e.data);
+        console.log('Message received from main thread: ', e.data);
         let functionName = e.data[0];
         let args = e.data.slice(1);
         let result = null;

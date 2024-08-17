@@ -217,7 +217,11 @@ function posToAlgebraicPos(rows: number, cols: number) {
 
 onMounted(() => {
     new ResizeObserver(boardResized).observe(boardElement.value);
+    const localFen = localStorage.getItem("current_board_fen");
     chessEngine.currentBoardPieces = chessEngine.convertFenToBoardPieces(localStorage.getItem("current_board_fen"));
+    if (localFen) {
+        chessEngine.currentPlayerColor = localFen.split(" ").includes("b") ? "black" : "white";
+    }
 })
 
 </script>

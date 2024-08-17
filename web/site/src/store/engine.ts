@@ -40,6 +40,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
     logHistory: [],
     engineSearching: false,
     gameStatus: null,
+    currentPly: 0,
 
     // Callbacks
     makeBoardEngineMoveCallback: null,
@@ -59,8 +60,14 @@ export const useChessEngineStore = defineStore('chess_engine', {
       if (!this.whitePlayer) {
         this.setWhitePlayer(human);
       }
+      else {
+        worker.postMessage(["set_white_player", this.whitePlayer.name]);
+      }
       if (!this.blackPlayer) {
         this.setBlackPlayer(this.availablePlayers[1]);
+      }
+      else {
+        worker.postMessage(["set_black_player", this.blackPlayer.name]);
       }
     },
     setWhitePlayer(player: any) {
@@ -111,7 +118,6 @@ export const useChessEngineStore = defineStore('chess_engine', {
             if (savedBoardFen) {
               worker.postMessage(["set_board_fen", savedBoardFen]);
             } 
-
             worker.postMessage(["get_allowed_engines"]);
             this.syncBoardState();
           }
@@ -211,8 +217,13 @@ export const useChessEngineStore = defineStore('chess_engine', {
         this.engineSearching = true;
         worker.postMessage(["search"]);
       }
+      this.currentPly += 1;
     },
+    
     undoMove() {
+      if (this.currentPly <= 0) {
+        return;
+      }
       if (this.engineSearching) {
         worker.postMessage(["abort"]);
       }
@@ -221,6 +232,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
       this.progressTurn();
       this.startSearchIfNecessary();
       this.clearBoardSelectionsCallback();
+      this.currentPly -= 1;
     },
     isMoveLegal(from: [number, number], to: [number, number], promotion : any|null = null, moving_piece = null) {
       // Make sure it is this players turn
@@ -255,10 +267,12 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["get_pieces"]);
       worker.postMessage(["get_board_fen"]);
       worker.postMessage(["get_current_player_color"]);
+      this.currentPly = 0;
     },
     setPlayersFromLocalStorage() {
       const whitePlayer = localStorage.getItem("white_player");
       const blackPlayer = localStorage.getItem("black_player");
+      console.log(whitePlayer, blackPlayer);
       if (whitePlayer) {
         this.whitePlayer = JSON.parse(whitePlayer);
       }
@@ -274,6 +288,7 @@ export const useChessEngineStore = defineStore('chess_engine', {
       this.currentPlayerColor = "white";
       this.clearBoardSelectionsCallback();
       this.startSearchIfNecessary();
+      this.currentPly = 0;
     },
     pauseGame() {
       if (this.engineSearching) {
@@ -303,8 +318,12 @@ export const useChessEngineStore = defineStore('chess_engine', {
         worker.postMessage(["search"]);
       }
     },
-    convertFenToBoardPieces(fen: string) {
+    convertFenToBoardPieces(fen: string | null) {
+      if (fen == null) {
+        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      }
       let pieces = []
+      console.log(fen);
       const fenPieces = fen.split(" ")[0];
       let rows = fenPieces.split("/");
       let y = 0;
