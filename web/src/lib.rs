@@ -92,7 +92,8 @@ impl ChessEngine {
 
     pub fn get_pieces(&self) -> Vec<JsValue> {
         let mut pieces : Vec<JsValue> = Vec::new();
-        let legal_moves = self.board.get_moves();
+        let mut legal_moves = MoveList::empty();
+        self.board.get_moves(&mut legal_moves);
 
         for y in 0..8 {
             for x in 0..8 {
@@ -229,8 +230,9 @@ impl ChessEngine {
     }
 
     pub fn perft(&self, depth: usize) -> usize {
+        let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
         let mut board_copy = self.board.clone();
-        return commands::perft(depth, &mut board_copy);
+        return commands::perft(depth, &mut board_copy, &mut reserved_moves);
     }
 }
 

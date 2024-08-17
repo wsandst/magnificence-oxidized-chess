@@ -1,43 +1,53 @@
 use super::{Move, Piece};
 
 
-pub struct MoveList {
-    moves: [Move; 180],
-    current_index: u8
-}
+const MAX_MOVE_COUNT: usize = 210;
 
+/// MoveList which unsafely wraps a Vector, to avoid runtime checks.
+/// This is valid as we can garantuee no chess position has more than MAX_MOVE_COUNT=210 valid moves
+pub struct MoveList {
+    moves: Vec<Move>
+}
 
 impl MoveList {
     pub fn empty() -> MoveList {
         return MoveList {
-            moves: [Move { from: 0, to: 0, promotion: Piece::Empty, captured: Piece::Empty }; 180],
-            current_index: 0
+            moves: Vec::with_capacity(MAX_MOVE_COUNT)
         }
     }
 
-    pub fn to_vec(&self) -> Vec<Move> {
-        return self.moves[0..self.current_index as usize].to_vec();
-    }
-
+    /// Push a move to the move list. No more than MAX_MOVE_COUNT=210 valid moves can be pushed at once.
     pub fn push(&mut self, mv: Move) {
-        unsafe { *self.moves.get_unchecked_mut(self.current_index as usize) = mv };
-        self.current_index += 1;
+        unsafe {
+            let len = self.moves.len();
+            self.moves.set_len(len + 1);
+            *self.moves.get_unchecked_mut(len) = mv;
+        }
     }
 
+    /// Pop a move from the move list. Popping an empty MoveList leads to undefined behaviour.
     pub fn pop(&mut self) -> Move {
-        self.current_index -= 1;
-        return unsafe { *self.moves.get_unchecked(self.current_index as usize) };
-    }
+        unsafe {
+            let len = self.moves.len() - 1;
+            self.moves.set_len(len);
+            return *self.moves.get_unchecked_mut(len);
 
-    pub fn len(&self) -> usize {
-        return self.current_index as usize;
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<'_, Move> {
-        return self.moves[0..self.current_index as usize].iter();
+        }
     }
 
     pub fn clear(&mut self) {
-        self.current_index = 0;
+        unsafe { self.moves.set_len(0); }
+    }
+
+    pub fn len(&self) -> usize {
+        return self.moves.len();
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Move> {
+        return self.moves.iter();
+    }
+
+    pub fn to_vec(&self) -> Vec<Move> {
+        return self.moves.clone();
     }
 }

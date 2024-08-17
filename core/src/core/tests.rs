@@ -264,12 +264,19 @@ fn test_bit_twiddling() {
 }
 
 pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
-    let moves = board.get_moves();
+    let mut moves = match reserved_moves.pop() {
+        None => MoveList::empty(),
+        Some(moves) => moves
+    };
+    moves.clear();
+
+    board.get_moves(&mut moves);
     if depth == 1 {
         let move_count = moves.len();
         reserved_moves.push(moves);
         return move_count;
     }
+    
     let mut total_move_count = 0;
     for mv in moves.iter() {
         let old_board = board.clone();
@@ -306,9 +313,10 @@ fn board_validation_with_perft() {
 
 #[test]
 fn debug_test() {
+    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     let constant_state = Rc::new(BitboardRuntimeConstants::create());
     let mut board = Board::new(Rc::clone(&constant_state));
-    commands::perft(4, &mut board);
+    commands::perft(4, &mut board, &mut reserved_moves);
 }
 
 
