@@ -62,7 +62,7 @@ impl Board {
 
     pub fn make_move(&mut self, mv: &Move) {
         self.castling_history.push(self.castling);
-        self.current_player = self.current_player.next_player();
+        self.flip_player();
         let mut piece_to_move = self.get_piece(mv.from);
         let mut ep = 0;
         self.ep_history.push(self.ep);
@@ -137,7 +137,7 @@ impl Board {
     pub fn unmake_move(&mut self, mv: &Move) {
         self.half_moves -= 1;
         let moved_piece = self.get_piece(mv.to);
-        self.current_player = self.current_player.next_player();
+        self.flip_player();
         let castling = self.castling_history.pop();
         self.set_castling(castling.unwrap());
         let ep = self.ep_history.pop().unwrap();
@@ -222,7 +222,7 @@ impl Board {
     }
 
     pub fn switch_current_player(&mut self) {
-        self.current_player = self.current_player.next_player();
+        self.flip_player();
     }
 
     pub fn get_game_status(&mut self) -> GameStatus {

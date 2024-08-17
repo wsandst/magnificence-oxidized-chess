@@ -50,6 +50,9 @@ impl Board {
             castling &= castling - 1;
         }
         result ^= self.runtime_constants.zoobrist_keys[EP_INDEX + self.ep as usize];
+        if self.current_player == Color::White {
+            result ^= self.runtime_constants.zoobrist_keys[PLAYER_INDEX];
+        }
         return result;
     }
 
@@ -101,6 +104,19 @@ impl Board {
         self.hash_key ^= self.runtime_constants.zoobrist_keys[EP_INDEX + self.ep as usize];
         self.ep = ep;
     }
+
+
+    pub (super) fn set_player(&mut self, color: Color) {
+        if self.current_player != color {
+            self.current_player = color;
+            self.hash_key ^= self.runtime_constants.zoobrist_keys[PLAYER_INDEX];
+        }
+    }
+
+    pub (super) fn flip_player(&mut self) {
+        self.current_player = self.current_player.next_player();
+        self.hash_key ^= self.runtime_constants.zoobrist_keys[PLAYER_INDEX];
+    } 
 
     pub(super) fn set_one_castling_right<const COLOR: bool, const QUEENSIDE: bool, const ALLOWED: bool>(&mut self) {
         let color_offset = match COLOR {
