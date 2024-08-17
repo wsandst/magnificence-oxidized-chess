@@ -71,6 +71,16 @@ impl Board {
             63 => self.set_one_castling_right::<WHITE, false, false>(),
             _ => (),
         }
+
+        // Quiet moves
+        if piece_to_move != Piece::WhitePawn && piece_to_move != Piece::BlackPawn 
+                && mv.captured == Piece::Empty {
+            self.quiet += 1;
+        }
+        else {
+            self.quiet = 0;
+        }
+
         if piece_to_move == Piece::WhitePawn || piece_to_move == Piece::BlackPawn {
             // Check if this move generates an ep square
             if piece_to_move == Piece::WhitePawn && mv.from.wrapping_sub(mv.to) == 16 {
@@ -119,6 +129,7 @@ impl Board {
                 self.set_piece(59, Piece::WhiteRook);
             }
         }
+        
         self.set_piece(mv.to, piece_to_move);
         self.set_piece(mv.from, Piece::Empty);
         self.ep = ep;
@@ -131,6 +142,7 @@ impl Board {
         self.current_player = self.current_player.next_player();
         self.set_castling(mv.castling);
         self.ep = mv.ep;
+        self.quiet = mv.quiet;
 
         if mv.promotion != Piece::Empty {
             // Undo promotion
