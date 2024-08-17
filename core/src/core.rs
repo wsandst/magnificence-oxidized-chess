@@ -1,4 +1,6 @@
 pub mod bitboard;
+pub mod move_list;
+
 #[cfg(test)]
 mod tests;
 

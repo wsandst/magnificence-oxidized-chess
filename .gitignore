@@ -5,3 +5,4 @@ perf.data
 log.txt
 flamegraph.svg
 perf.data.old
+benchmark

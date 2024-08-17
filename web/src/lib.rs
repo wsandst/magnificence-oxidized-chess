@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use constants::BitboardRuntimeConstants;
 use engine_core::commands;
+use engine_core::core::move_list::MoveList;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
@@ -91,7 +92,7 @@ impl ChessEngine {
 
     pub fn get_pieces(&self) -> Vec<JsValue> {
         let mut pieces : Vec<JsValue> = Vec::new();
-        let mut legal_moves = Vec::new();
+        let mut legal_moves = MoveList::empty();
         self.board.get_moves(&mut legal_moves);
 
         for y in 0..8 {
@@ -99,7 +100,7 @@ impl ChessEngine {
                 let piece_value = self.board.get_piece_pos(x, y).to_u8();
                 if piece_value != 12 {
                     let mut piece_legal_moves: Vec<MoveWrapper> = Vec::new();
-                    for mv in &legal_moves {
+                    for mv in legal_moves.iter() {
                         if (mv.from % 8) as usize == x && (mv.from / 8) as usize == y {
                             piece_legal_moves.push(MoveWrapper::from_move(mv));
                         }
@@ -229,8 +230,8 @@ impl ChessEngine {
     }
 
     pub fn perft(&self, depth: usize) -> usize {
+        let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
         let mut board_copy = self.board.clone();
-        let mut reserved_moves : Vec<Vec<Move>> = (0..15).map(|_| Vec::with_capacity(30)).collect();
         return commands::perft(depth, &mut board_copy, &mut reserved_moves);
     }
 }

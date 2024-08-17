@@ -1,9 +1,11 @@
+use move_list::MoveList;
+
 use super::{Board, MovegenState};
 use super::bitboard::constants::*;
 use crate::core::*;
 
 impl Board {
-    fn extract_knight_moves(&self, moves : &mut Vec<Move>, knight_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
+    fn extract_knight_moves(&self, moves : &mut MoveList, knight_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
         let mut occupancy_mask = knight_occupancy & !(state.bishop_pins | state.rook_pins);
         let legal_squares = !same_color_occupancy & state.legal_targets;
         while occupancy_mask > 0 {
@@ -14,12 +16,12 @@ impl Board {
         }
     }
 
-    pub(in crate::core) fn generate_white_knight_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_white_knight_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let white_knight_occupancy = self.get_piece_set(Piece::WhiteKnight);
         self.extract_knight_moves(moves, white_knight_occupancy, state.white_occupancy, state);
     }
 
-    pub(in crate::core) fn generate_black_knight_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_black_knight_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let black_knight_occupancy = self.get_piece_set(Piece::BlackKnight);
         self.extract_knight_moves(moves, black_knight_occupancy, state.black_occupancy, state);
     }
@@ -36,7 +38,7 @@ mod tests {
 
     #[test]
     fn test_knight_move_gen() {
-        let mut moves = Vec::new();
+        let mut moves = MoveList::empty();
         let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         // Check that knight moves are generated correctly in the starting position
         let board = Board::new(Rc::clone(&runtime_constants));

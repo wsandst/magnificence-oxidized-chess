@@ -1,3 +1,5 @@
+use move_list::MoveList;
+
 use super::{Board, MovegenState};
 use crate::core::*;
 use crate::core::bitboard::constants::*;
@@ -16,7 +18,7 @@ const WHITE_KING_SQUARE: u8 = 60;
 const BLACK_KING_SQUARE: u8 = 4;
 
 impl Board {
-    fn extract_castling_moves<const COLOR: bool>(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    fn extract_castling_moves<const COLOR: bool>(&self, moves : &mut MoveList, state: &MovegenState) {
         // Get some constants based on color
         let (
             queenside_castling_offset, 
@@ -73,11 +75,11 @@ impl Board {
         }
     }
 
-    pub(in crate::core) fn generate_white_castling_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_white_castling_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         return self.extract_castling_moves::<WHITE>(moves, state);
     }
 
-    pub(in crate::core) fn generate_black_castling_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_black_castling_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         return self.extract_castling_moves::<BLACK>(moves, state);
     }
 }
@@ -93,13 +95,12 @@ mod tests {
 
     #[test]
     fn test_castling_move_gen() {
-        let mut moves = Vec::new();
+        let mut moves = MoveList::empty();
         let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         // Check that the castling moves are not generated if blocked in the starting position
         let board = Board::new(Rc::clone(&runtime_constants));
         let movegen_state = MovegenState::new(&board);
         board.generate_white_castling_moves(&mut moves, &movegen_state);
-        println!("{:?}", moves);
         assert_eq!(moves.len(), 0);
         board.generate_black_castling_moves(&mut moves, &movegen_state);
         assert_eq!(moves.len(), 0);

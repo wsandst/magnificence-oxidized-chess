@@ -1,8 +1,10 @@
+use move_list::MoveList;
+
 use super::{Board, MovegenState};
 use crate::core::*;
 
 impl Board {
-    fn extract_bishop_moves(&self, moves : &mut Vec<Move>, bishop_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
+    fn extract_bishop_moves(&self, moves : &mut MoveList, bishop_like_occupancy: u64, same_color_occupancy: u64, state: &MovegenState) {
         let moveable_bishops = bishop_like_occupancy & !state.rook_pins;
         let mut unpinned_bishops = moveable_bishops & (!state.bishop_pins);
         let legal_squares = !same_color_occupancy & state.legal_targets;
@@ -24,13 +26,13 @@ impl Board {
     }
 
     /// Generate moves for white bishops + queen diagonals
-    pub(in crate::core) fn generate_white_bishop_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_white_bishop_like_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let bishop_like_occupancy = self.get_piece_set(Piece::WhiteBishop) | self.get_piece_set(Piece::WhiteQueen);
         self.extract_bishop_moves(moves, bishop_like_occupancy, state.white_occupancy, state);
     }
 
     /// Generate moves for black bishops + queen diagonals
-    pub(in crate::core) fn generate_black_bishop_like_moves(&self, moves : &mut Vec<Move>, state: &MovegenState) {
+    pub(in crate::core) fn generate_black_bishop_like_moves(&self, moves : &mut MoveList, state: &MovegenState) {
         let bishop_like_occupancy = self.get_piece_set(Piece::BlackBishop) | self.get_piece_set(Piece::BlackQueen);
         self.extract_bishop_moves(moves, bishop_like_occupancy, state.black_occupancy, state);
     }
@@ -46,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_knight_move_gen() {
-        let mut moves = Vec::new();
+        let mut moves = MoveList::empty();
         let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         // Check that knight moves are generated correctly in the starting position
         let board = Board::new(Rc::clone(&runtime_constants));
