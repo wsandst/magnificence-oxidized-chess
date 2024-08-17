@@ -23,9 +23,6 @@ pub struct Board {
     /// is bit 1. A7 is bit 8. H1 (white kingside rook starting position) is bit 63.
     piece_sets: [u64; 13],
     hash_key: u64,
-    ep_history: Vec<u8>,
-    castling_history: Vec<u8>,
-    quiet_history: Vec<u8>,
     ep: u8,
     castling: u8,
     current_player: Color,
@@ -40,9 +37,6 @@ impl Board {
         let mut board = Board {
             piece_sets: [0; 13],
             hash_key: 0,
-            ep_history: Vec::new(),
-            castling_history: Vec::new(),
-            quiet_history: Vec::new(),
             ep: 0,
             castling: 0,
             current_player: Color::White,
@@ -60,11 +54,9 @@ impl Board {
     }
 
     pub fn make_move(&mut self, mv: &Move) {
-        self.castling_history.push(self.castling);
         self.current_player = self.current_player.next_player();
         let piece_to_move = self.get_piece(mv.from);
         let mut ep = 0;
-        self.ep_history.push(self.ep);
         match mv.from {
             0 => self.set_one_castling_right::<BLACK, true, false>(),
             7 => self.set_one_castling_right::<BLACK, false, false>(),
@@ -139,9 +131,8 @@ impl Board {
         self.half_moves -= 1;
         let moved_piece = self.get_piece(mv.to);
         self.current_player = self.current_player.next_player();
-        let castling = self.castling_history.pop();
-        self.set_castling(castling.unwrap());
-        self.ep = self.ep_history.pop().unwrap();
+        self.set_castling(mv.castling);
+        self.ep = mv.ep;
 
         if mv.promotion != Piece::Empty {
             // Undo promotion

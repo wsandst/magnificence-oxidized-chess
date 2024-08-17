@@ -118,12 +118,12 @@ impl ChessEngine {
             return;
         }
         let capture_piece = self.board.get_piece_pos(to_x, to_y);
-        let mv = Move { 
-            from: (from_y * 8 + from_x) as u8, 
-            to: (to_y * 8 + to_x) as u8, 
-            captured: capture_piece, 
-            promotion: Piece::from_u8(promotion as u8)
-        };
+        let mv = Move::new( 
+            &self.board,
+            (from_y * 8 + from_x) as u8, 
+            (to_y * 8 + to_x) as u8, 
+            capture_piece, 
+            Piece::from_u8(promotion as u8));
         self.board.make_move(&mv);
         self.game_moves.push(mv);
     }

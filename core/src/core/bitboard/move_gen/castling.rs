@@ -66,12 +66,13 @@ impl Board {
         while move_mask > 0 {
             let index = move_mask.trailing_zeros() as u8;
             move_mask &= move_mask - 1;
-            moves.push(Move {
-                from: king_square,
-                to: index,
-                promotion: Piece::Empty,
-                captured: Piece::Empty
-            })
+            moves.push(Move::new(
+                self,
+                king_square,
+                index,
+                Piece::Empty,
+                Piece::Empty
+            ));
         }
     }
 

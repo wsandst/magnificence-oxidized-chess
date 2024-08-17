@@ -123,7 +123,7 @@ fn test_make_unmake_moves() {
 
     assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::BlackPawn);
     assert_eq!(board.get_piece_pos(2 % 8, 2 / 8), Piece::Empty);
-    let mv = Move {from: 10, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 10, 2, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     println!("{}", board);
     assert_eq!(board.get_piece_pos(10 % 8, 10 / 8), Piece::Empty);
@@ -134,7 +134,7 @@ fn test_make_unmake_moves() {
 
     assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::WhiteRook);
     assert_eq!(board.get_piece_pos(37 % 8, 37 / 8), Piece::BlackPawn);
-    let mv = Move {from: 33, to: 37, promotion: Piece::Empty, captured: Piece::BlackPawn};
+    let mv = Move::new(&board, 33, 37, Piece::Empty, Piece::BlackPawn);
     board.make_move(&mv);
     println!("{}", board);
     assert_eq!(board.get_piece_pos(33 % 8, 33 / 8), Piece::Empty);
@@ -150,7 +150,7 @@ fn test_make_unmake_moves_special() {
     // Castling
     let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
     // Black left side
-    let mv = Move {from: 4, to: 2, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 4, 2, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
     assert_eq!(board.get_piece_pos(3, 0), Piece::BlackRook);
@@ -162,7 +162,7 @@ fn test_make_unmake_moves_special() {
 
     // Black right side
     board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
-    let mv = Move {from: 4, to: 6, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 4, 6, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 0), Piece::Empty);
     assert_eq!(board.get_piece_pos(5, 0), Piece::BlackRook);
@@ -174,7 +174,7 @@ fn test_make_unmake_moves_special() {
 
     // White left side
     board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
-    let mv = Move {from: 60, to: 62, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 60, 62, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
     assert_eq!(board.get_piece_pos(5, 7), Piece::WhiteRook);
@@ -186,7 +186,7 @@ fn test_make_unmake_moves_special() {
 
     // White right side
     board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R", Rc::clone(&constant_state));
-    let mv = Move {from: 60, to: 58, promotion: Piece::Empty, captured: Piece::Empty};
+    let mv = Move::new(&board, 60, 58, Piece::Empty, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(4, 7), Piece::Empty);
     assert_eq!(board.get_piece_pos(3, 7), Piece::WhiteRook);
@@ -198,7 +198,7 @@ fn test_make_unmake_moves_special() {
 
     // Promotions
     board = Board::from_fen("1r6/P7/8/8/8/8/p7/1R6 b", Rc::clone(&constant_state));
-    let mv = Move {from: 48, to: 56, promotion: Piece::BlackQueen, captured: Piece::Empty};
+    let mv = Move::new(&board, 48, 56, Piece::BlackQueen, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(0, 6), Piece::Empty);
     assert_eq!(board.get_piece_pos(0, 7), Piece::BlackQueen);
@@ -207,7 +207,7 @@ fn test_make_unmake_moves_special() {
     assert_eq!(board.to_fen().split(" ").nth(0).unwrap(), "1r6/P7/8/8/8/8/p7/1R6");
 
     board = Board::from_fen("1r6/P7/8/8/8/8/p7/1R6", Rc::clone(&constant_state));
-    let mv = Move {from: 8, to: 0, promotion: Piece::WhiteBishop, captured: Piece::Empty};
+    let mv = Move::new(&board, 8, 0, Piece::WhiteBishop, Piece::Empty);
     board.make_move(&mv);
     assert_eq!(board.get_piece_pos(0, 1), Piece::Empty);
     assert_eq!(board.get_piece_pos(0, 0), Piece::WhiteBishop);

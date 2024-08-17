@@ -75,6 +75,10 @@ impl Board {
         }
     }
 
+    pub fn get_castling_u8(&self) -> u8 {
+        return self.castling;
+    }
+
     /// Generate a u8 representing castling rights from named booleans.
     pub(super) fn generate_castling_u8(white_kingside: bool, white_queenside: bool, black_kingside: bool, 
             black_queenside: bool) -> u8 {

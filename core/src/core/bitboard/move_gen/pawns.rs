@@ -22,20 +22,22 @@ impl Board {
                     false => PROMOTION_PIECES_BLACK
                 };
                 for piece in promotion_pieces {
-                    moves.push(Move {
-                        to: index,
-                        from: (index as i8 + FROM_OFFSET) as u8,
-                        promotion: piece,
-                        captured: taken
-                    });
+                    moves.push(Move::new(
+                        self,
+                        index,
+                        (index as i8 + FROM_OFFSET) as u8,
+                        piece,
+                        taken
+                    ));
                 }
             } else {
-                moves.push(Move {
-                    to: index,
-                    from: (index as i8 + FROM_OFFSET) as u8,
-                    promotion: Piece::Empty,
-                    captured: taken
-                });
+                moves.push(Move::new(
+                    self,
+                    index,
+                    (index as i8 + FROM_OFFSET) as u8,
+                    Piece::Empty,
+                    taken
+                ));
             }
         }
     }
