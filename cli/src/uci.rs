@@ -12,6 +12,7 @@ use move_list::MoveList;
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use std::ops::Index;
 use std::sync::{Arc, Mutex};
 use std::{io, thread};
 use std::io::BufRead;
@@ -71,8 +72,7 @@ enum CommandType {
     IsReady,
     SetOption(String, String),
     UCINewGame,
-    Position(String),
-    PositionMoves(Vec<String>),
+    Position(Option<String>, Vec<String>),
     Go(GoState),
     Stop,
     Quit,
@@ -233,14 +233,14 @@ fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state:
         CommandType::Go(go_state) => {
             search(state, go_state, shared_state)
         },
-        CommandType::Position(fen) => {
-            state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
+        CommandType::Position(fen, moves) => {
+            if let Some(fen_pos) = fen {
+                state.board = Board::from_fen(&fen_pos, Rc::clone(&state.board_constant_state));
+            }
+            state.board = commands::board_from_moves(&state.board, moves);
         },
         CommandType::Perft(depth) => {
             perft(depth, state);
-        },
-        CommandType::PositionMoves(moves) => {
-            state.board = commands::board_from_moves(&state.board, moves);
         },
         CommandType::Move(mv_algebraic) => {
             let mv = Move::from_algebraic(&state.board, mv_algebraic);
@@ -421,26 +421,50 @@ fn get_named_argument(words : &[&str], name: &str) -> Option<String> {
     return None;
 }
 
-// Parse the UCI 'position' command into a CommandType::Position(FEN)
+// Parse the UCI 'position' command into a CommandType::Position(FEN, MOVES)
 // Returns a CommandType::Error if the command is not well formed
-fn parse_uci_position_cmd(words : &[&str]) -> CommandType {
+fn parse_uci_position_cmd(words_slice : &[&str]) -> CommandType {
+    let words = Vec::from(words_slice);
     if words.len() > 0 {
-        return match words[0] {
-            "startpos" | "sp" if words.len() > 1 => { 
-                CommandType::Position(STARTING_POS_FEN.to_string()) 
+        let moves_cmd_index = words.iter().position(|x| *x == "moves" || *x == "mv");
+
+        // Isolate first part: fen/startpos
+        let fen_command = match words[0] {
+            "fen" if moves_cmd_index.is_some() => Some(Vec::from(&words[0..moves_cmd_index.unwrap()])),
+            "startpos" | "sp" => Some(vec!["startpos"]),
+            _ if !words.contains(&"moves") => Some(words.clone()),
+            "moves" | "mv" => None,
+            _ => None
+        };
+        
+        // Isolate last part: moves
+        let move_command = match words[0] {
+            "fen" | "startpos" if moves_cmd_index.is_some() => Some(Vec::from(&words[moves_cmd_index.unwrap()..])),
+            "moves" | "mv" => Some(words.clone()),
+            _ => None,
+        };
+        
+        let fen = match fen_command {
+            Some(command) => {
+                match command[0] {
+                    "fen" => Some(command[1..].join(" ").to_string()),
+                    "startpos" => Some(STARTING_POS_FEN.to_string()),
+                    _ => Some(words[0..].join(" ").to_string()) 
+                }
             }
-            "moves" | "m" if words.len() > 1 => { 
-                CommandType::PositionMoves(words[1..].iter().map(|word| word.to_string()).collect::<Vec<String>>().to_vec())
-            }
-            "fen" if words.len() > 1 => { 
-                // Check if _ is a valid fen string
-                CommandType::Position(words[1..].join(" ").to_string()) 
-            }
-            _ => {
-                CommandType::Position(words[0..].join(" ").to_string()) 
-            }
-            
+            None => None
+        };
+
+        let move_list = match move_command {
+            Some(command) => command[1..].iter().map(|word| word.to_string()).collect::<Vec<String>>().to_vec(),
+            None => Vec::new(),
+        };
+
+        if move_list.len() == 0 && fen.is_none() {
+            return CommandType::Error("Please specify position arguments".to_string());
         }
+
+        return CommandType::Position(fen, move_list);
     } else {
         return CommandType::Error("Please specify position arguments".to_string());
     }
