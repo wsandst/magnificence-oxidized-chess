@@ -1,6 +1,6 @@
 use constants::BitboardRuntimeConstants;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
-use engine_core::engine::{Engine, SearchMetadata};
+use engine_core::engine::{Engine, SearchMetadata, ShouldAbortSearchCallback};
 use move_list::MoveList;
 /// Functionality for running the Universal Chess Protocol
 /// 
@@ -50,7 +50,7 @@ struct WorkerState {
     board: Board,
     engine: StandardAlphaBetaEngine,
     move_history: Vec<Move>,
-    strict_uci_mode: bool
+    strict_uci_mode: bool,
 }
 
 struct SharedState {
@@ -109,7 +109,6 @@ pub fn start_uci_protocol() {
     }));
     let shared_state_worker = Arc::clone(&shared_state);
 
-
     let (tx, rx) : (Sender<CommandType>, Receiver<CommandType>) = mpsc::channel();
 
     // Spawn a worker thread performs various commands
@@ -145,6 +144,12 @@ pub fn start_uci_protocol() {
         let mut state = shared_state.lock().unwrap();
         if tx.send(command.clone()).is_err() || command == CommandType::Quit {
             break;
+        }
+
+        if command == CommandType::Stop && !state.is_worker_complete {
+            state.stop_search = true;
+            drop(state);
+            continue;
         }
 
         state.is_worker_complete = false;
@@ -188,8 +193,13 @@ pub fn run_single_uci_command(command_line: &str) {
     handle_command(&command, &mut state, &shared_state);
 }
 
-fn search(state: &mut WorkerState, go_state: &GoState) {
-    let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), Box::new(|| false));
+fn search(state: &mut WorkerState, go_state: &GoState, shared_state: &Arc<Mutex<SharedState>>) {
+    let shared_state_clone = Arc::clone(shared_state);
+    let should_abort_search_callback: ShouldAbortSearchCallback = Box::new(move || {
+        return shared_state_clone.lock().unwrap().stop_search;
+    });
+
+    let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), should_abort_search_callback);
     let mv = pv.first().unwrap();
     println!("bestmove {}", mv);
 }
@@ -221,7 +231,7 @@ fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state:
             
         }
         CommandType::Go(go_state) => {
-            search(state, go_state)
+            search(state, go_state, shared_state)
         },
         CommandType::Position(fen) => {
             state.board = Board::from_fen(fen, Rc::clone(&state.board_constant_state));
