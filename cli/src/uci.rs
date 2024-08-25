@@ -335,7 +335,7 @@ fn read_input_uci_on() -> String {
 
 fn parse_command(line: &str) -> CommandType {
     // Parse input into a command
-    let split = line.split(" ");
+    let split = line.trim().split(" ");
     let words = split.collect::<Vec<&str>>();
 
     let command = match words[0] {
@@ -386,7 +386,7 @@ fn parse_command(line: &str) -> CommandType {
         "moves" | "getmoves" | "legalmoves" | "mvs" => CommandType::LegalMoves,
         "undo" | "unmake" => CommandType::Undo,
         "perfttests" | "perftest" | "testperft" => CommandType::PerftTests,
-        _ => CommandType::Unknown,
+        _ => CommandType::Unknown
     };
     return command;
 }

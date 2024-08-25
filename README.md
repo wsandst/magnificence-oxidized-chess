@@ -41,3 +41,15 @@ Install with: `cargo install rsw`
 ### Possible future web functionality
 - [ ] Time controls
 - [ ] New game dialog
+
+## Install CuteChess
+`git clone https://github.com/cutechess/cutechess`
+`cd cutechess`
+`pip3 install aqtinstall`
+`aqt install-qt linux desktop 5.15.2` 
+Setup path to point to 5.15.2
+`cd cutechess && mkdir build && cd build && cmake .. && make`
+
+## Tournament commands
+`./cutechess-cli -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -each proto=uci tc=40/60 -debug` 
+`./cutechess-cli -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -engine cmd=/home/williamsandst/repos/cpp/magnificence-chess/build/magnificence-chess -each proto=uci tc=40/60+2 -debug -pgnout result.pgn`
