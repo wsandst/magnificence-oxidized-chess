@@ -4,7 +4,7 @@ pub mod move_list;
 #[cfg(test)]
 mod tests;
 
-use std::fmt;
+use std::{collections::binary_heap::Iter, fmt};
 
 use bitboard::Board;
 use strum_macros::EnumIter;
@@ -55,6 +55,16 @@ pub struct Move {
 }
 
 impl Piece {
+    pub fn white_pieces() -> std::slice::Iter<'static, Piece> {
+        const PIECES: [Piece; 6] = [Piece::WhitePawn, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing];
+        PIECES.iter()
+    }
+
+    pub fn black_pieces() -> std::slice::Iter<'static, Piece> {
+        const PIECES: [Piece; 6] = [Piece::BlackPawn, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen, Piece::BlackKing];
+        PIECES.iter()
+    }
+
     pub fn as_char(&self) -> char {
         match *self {
             Piece::WhitePawn => 'P',

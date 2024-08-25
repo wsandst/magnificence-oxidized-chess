@@ -12,7 +12,7 @@ pub enum SearchResult {
 }
 
 /// MoveList which unsafely wraps a Vector, to avoid runtime checks.
-/// This is valid as we can garantuee no chess position has more than MAX_MOVE_COUNT=210 valid moves
+/// This is valid as we can 'garantuee' no chess position has more than MAX_MOVE_COUNT=210 valid moves
 pub struct MoveList {
     moves: Vec<Move>,
     result: SearchResult

@@ -1,10 +1,19 @@
-#![allow(long_running_const_eval)]
-
 use rand::Rng;
 use super::super::*;
 
 pub const WHITE: bool = true;
 pub const BLACK: bool = false;
+
+
+pub const PAWN_VALUE: i32 = 100;
+pub const BISHOP_VALUE: i32 = 3 * PAWN_VALUE;
+pub const KNIGHT_VALUE: i32 = 3 * PAWN_VALUE;
+pub const ROOK_VALUE: i32 = 5 * PAWN_VALUE;
+pub const QUEEN_VALUE: i32 = 9 * PAWN_VALUE;
+pub const KING_VALUE: i32 = 100 * PAWN_VALUE;
+pub const PIECE_VALUES: [i32; 6] = [PAWN_VALUE, BISHOP_VALUE, KNIGHT_VALUE,
+                                    ROOK_VALUE, QUEEN_VALUE, KING_VALUE];
+
 
 pub const CASTLING_RIGHTS_INDEX: usize = 13*64;
 pub const EP_INDEX: usize = 13 * 64 + 4;
