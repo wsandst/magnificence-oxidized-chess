@@ -203,12 +203,6 @@ impl ChessEngine {
     }
 
     pub async fn search(&mut self) -> JsValue {
-        for _ in 0..20 {
-            TimeoutFuture::new(50).await;
-            if js_should_search_be_aborted() {
-                return "aborted".into();
-            }
-        }
         if self.board.get_current_player() == Color::Black && self.black_player.is_some() {
             let black_player = self.black_player.as_mut().unwrap();
             let moves = ChessEngine::moves_to_return_moves(
