@@ -52,7 +52,7 @@ impl Engine for StandardAlphaBetaEngine {
 impl StandardAlphaBetaEngine {
     fn alpha_beta(&mut self, board: &mut Board, move_lists: &mut Vec<MoveList>, depth: i32, mut lower_bound: i32, upper_bound: i32) -> (i32, Option<Move>) {
         if depth == 0 {
-            return (-board.eval(), None);
+            return (board.eval(), None);
         }
         let mut moves = match move_lists.pop() {
             None => MoveList::empty(),
