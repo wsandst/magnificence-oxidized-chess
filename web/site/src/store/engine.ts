@@ -152,6 +152,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
             console.log("Search metadata update: ", data);
             this.searchMetadata = data;
           }
+          else if (messageType == "search_engine_info") {
+            this.logHistory.push(data);
+          }
           else if (messageType == "perft") {
             const perft_count = data;
             const million_moves_per_second = (perft_count / 1000000) / (duration / 1000);
@@ -239,7 +242,9 @@ export const useChessEngineStore = defineStore('chess_engine', {
       worker.postMessage(["undo_move"]);
       worker.postMessage(["get_pieces"]);
       this.progressTurn();
-      this.startSearchIfNecessary();
+      window.setTimeout(() => {
+        this.startSearchIfNecessary();
+      }, 1000)
       this.clearBoardSelectionsCallback();
       this.currentPly -= 1;
     },

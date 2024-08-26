@@ -19,7 +19,7 @@ async function initWorker() {
     var startTime = performance.now()
     let engine = ChessEngine.new();
     var endTime = performance.now()
-    self.postMessage(["log", `Engine initialization took ${endTime - startTime} ms`]);
+    self.postMessage(["log", `Engine initialization took ${(Math.round(endTime - startTime))} ms`]);
 
     self.onerror = async function(event) {
         await resetWasm();

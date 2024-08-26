@@ -6,8 +6,8 @@ mod helpers;
 mod move_gen;
 mod evaluation;
 use constants::*;
-use move_gen::MovegenState;
 use move_list::MoveList;
+use move_list::SearchResult;
 
 #[cfg(target_feature = "bmi2")]
 use std::arch::x86_64::{_pdep_u64, _pext_u64};
@@ -233,26 +233,16 @@ impl Board {
 
     pub fn get_game_status(&mut self) -> GameStatus {
         let mut legal_moves = MoveList::empty();
-        let mut state = MovegenState::new(&self);
-        match self.current_player {
-            Color::White => self.generate_moves_white(&mut legal_moves, &mut state),
-            Color::Black => self.generate_moves_black(&mut legal_moves, &mut state)
-        }
-        let no_legal_moves = legal_moves.len() == 0;
-        if !no_legal_moves {
-            return GameStatus::InProgress;
-        }
-
-        if no_legal_moves && !state.in_check() {
-            return GameStatus::Stalemate
-        }
-        else if no_legal_moves && state.in_check() {
-            return match self.get_current_player() {
-                Color::Black => GameStatus::WhiteWon,
-                Color::White => GameStatus::BlackWon
+        self.get_moves(&mut legal_moves);
+        return match legal_moves.result() {
+            SearchResult::InProgress => GameStatus::InProgress,
+            SearchResult::Stalemate => GameStatus::Stalemate,
+            SearchResult::Loss => {
+                match self.get_current_player() {
+                    Color::White => GameStatus::BlackWon,
+                    Color::Black => GameStatus::WhiteWon
+                }
             }
         }
-
-        return GameStatus::InProgress;
     }
 }

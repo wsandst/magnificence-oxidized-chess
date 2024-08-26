@@ -24,15 +24,11 @@ Install with: `cargo install rsw`
 `cd ./web/site && ./BUILD.sh`. The generated site will be available under `./web/site/dist`.
 
 ## Todo
+- [ ] Implement standardized testing with cutechess-cli tournaments
+- [ ] Validate Go parameter parsing and pass to engine
 
-### Web  
-- [ ] Improve sidebar
+### Web interface
 - [ ] Improve win condition popup
-- [ ] Add proper board square numbering
-
-### UCI
-- [ ] Implement go/search properly
-- [ ] Test in a UCI GUI interface
 
 ## Ideas
 * Using Stockfish NNUE for eval

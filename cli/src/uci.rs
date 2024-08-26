@@ -12,7 +12,6 @@ use move_list::MoveList;
 // Allows for line history and more
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
-use std::ops::Index;
 use std::sync::{Arc, Mutex};
 use std::{io, thread};
 use std::io::BufRead;
@@ -49,7 +48,7 @@ struct GoState {
 struct WorkerState {
     board_constant_state: Rc<BitboardRuntimeConstants>,
     board: Board,
-    engine: StandardAlphaBetaEngine,
+    engine: Box<dyn Engine>,
     move_history: Vec<Move>,
     strict_uci_mode: bool,
 }
@@ -110,15 +109,19 @@ pub fn start_uci_protocol() {
     let shared_state_worker = Arc::clone(&shared_state);
 
     let (tx, rx) : (Sender<CommandType>, Receiver<CommandType>) = mpsc::channel();
-
     // Spawn a worker thread performs various commands
     let worker_thread = thread::spawn(move || {
+        let shared_state_worker_clone = Arc::clone(&shared_state_worker);
+        let should_abort_search_callback: ShouldAbortSearchCallback = Box::new(move || {
+            return shared_state_worker_clone.lock().unwrap().stop_search;
+        });
+
         // The worker thread listens for commands
         let board_constant_state_rc = Rc::new(board_constant_state);
         let mut worker_state = WorkerState {
             board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state_rc)),
             board_constant_state: board_constant_state_rc,
-            engine: StandardAlphaBetaEngine::new(),
+            engine: Box::new(StandardAlphaBetaEngine::new(Box::new(handle_search_metadata), Box::new(log_callback), should_abort_search_callback)),
             move_history: Vec::new(),
             strict_uci_mode: false,
         };
@@ -176,7 +179,7 @@ pub fn run_single_uci_command(command_line: &str) {
     let mut state = WorkerState {
         board: Board::new(Rc::clone(&board_constant_state)),
         board_constant_state,
-        engine: StandardAlphaBetaEngine::new(),
+        engine: Box::new(StandardAlphaBetaEngine::new(Box::new(handle_search_metadata), Box::new(log_callback), Box::new(|| false))),
         move_history: Vec::new(),
         strict_uci_mode: false,
     };
@@ -194,14 +197,13 @@ pub fn run_single_uci_command(command_line: &str) {
 }
 
 fn search(state: &mut WorkerState, go_state: &GoState, shared_state: &Arc<Mutex<SharedState>>) {
-    let shared_state_clone = Arc::clone(shared_state);
-    let should_abort_search_callback: ShouldAbortSearchCallback = Box::new(move || {
-        return shared_state_clone.lock().unwrap().stop_search;
-    });
-
-    let pv = state.engine.search(&state.board, Box::new(handle_search_metadata), should_abort_search_callback);
+    let pv = state.engine.search(&state.board);
     let mv = pv.first().unwrap();
     println!("bestmove {}", mv);
+}
+
+fn log_callback(text: &str) {
+    println!("{}", text);
 }
 
 fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state: &Arc<Mutex<SharedState>>) {

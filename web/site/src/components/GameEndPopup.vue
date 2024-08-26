@@ -40,10 +40,10 @@ function newGame() {
               <div v-if="gameStatus == 'white_won'">
                 White has won
               </div> 
-              <div v-else="gameStatus == 'black_won'">
+              <div v-else-if="gameStatus == 'black_won'">
                 Black has won
               </div> 
-              <div v-else="gameStatus == 'stalemate'">
+              <div v-else-if="gameStatus == 'stalemate'">
                 Stalemate
               </div> 
             </div>
