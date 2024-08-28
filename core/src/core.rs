@@ -169,7 +169,8 @@ impl Move {
         let to = pos_to_algebraic_pos(self.to % 8, self.to / 8);
         let mut algebraic_move = format!("{}{}", from, to);
         if self.promotion != Piece::Empty {
-            algebraic_move.push(self.promotion.as_char());
+            let promotion_piece_offset = if self.promotion.is_white() {6} else {0};
+            algebraic_move.push(Piece::from_u8(self.promotion.to_u8()).as_char());
         }
         return algebraic_move;
     }
@@ -202,7 +203,12 @@ impl Move {
         let to_x = algebraic.chars().nth(2).unwrap() as usize - 'a' as usize;
         let to_y = 7 - (algebraic.chars().nth(3).unwrap() as usize - '1' as usize);
         let promotion = if algebraic.len() > 4 {
-            Piece::from_char(algebraic.chars().nth(4).unwrap())
+            if board.get_piece_pos(from_x, from_y).is_white() {
+                Piece::from_char(algebraic.to_uppercase().chars().nth(4).unwrap())
+            }
+            else {
+                Piece::from_char(algebraic.to_lowercase().chars().nth(4).unwrap())
+            }
         }   
         else {
             Piece::Empty

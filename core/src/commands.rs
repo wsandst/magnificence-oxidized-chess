@@ -54,7 +54,7 @@ pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList
 pub fn board_from_moves(board: &Board, moves: &Vec<String>) -> Board {
     let mut board_copy = board.clone();
     for mv_algebraic in moves {
-        let mv = Move::from_algebraic(board, mv_algebraic);
+        let mv = Move::from_algebraic(&board_copy, mv_algebraic);
         board_copy.make_move(&mv);
     }
     return board_copy;

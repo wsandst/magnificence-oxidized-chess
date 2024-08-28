@@ -244,7 +244,7 @@ onMounted(() => {
                 v-for="col in 8" :key="row * 8 + col">
                     <div v-if="col == 8" class="absolute right-[4px] top-[2px] text-xs font-bold"
                         :class="['text-' + getSquareColor(col, row - 1)]">
-                        {{row}}
+                        {{8 - row + 1}}
                     </div>
                     <div v-if="row == 8" class="absolute bottom-[0px] left-[4px] text-xs font-bold"
                         :class="['text-' + getSquareColor(col, row - 1)]"> 

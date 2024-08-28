@@ -36,7 +36,7 @@ impl Engine for StandardAlphaBetaEngine {
         let mut moves = MoveList::empty();
         let mut board_copy = board.clone();
         let mut moves = Vec::new();
-        let depth = 4;
+        let depth = 6;
         let (eval, mv) = self.alpha_beta(&mut board_copy, &mut moves, depth, i32::MIN + 1, i32::MAX);
         let pv: Vec<Move> = vec!(mv.unwrap());
 

@@ -47,5 +47,7 @@ Setup path to point to 5.15.2
 `cd cutechess && mkdir build && cd build && cmake .. && make`
 
 ## Tournament commands
-`./cutechess-cli -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -each proto=uci tc=40/60 -debug` 
-`./cutechess-cli -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -engine cmd=/home/williamsandst/repos/cpp/magnificence-chess/build/magnificence-chess -each proto=uci tc=40/60+2 -debug -pgnout result.pgn`
+`cutechess-cli -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -each proto=uci tc=40/60 -debug` 
+`cutechess-cli -engine cmd=/home/williamsandst/repos/rust/magnificence-oxidized-chess/target/release/magnificence-oxidized -engine cmd=/home/williamsandst/repos/cpp/magnificence-chess/build/magnificence-chess -each proto=uci tc=40/60+2 -debug -pgnout result.pgn`
+
+`REPO=/home/williamsandst/repos/rust/magnificence-oxidized-chess cutechess-cli -engine cmd=$REPO/target/release/magnificence-oxidized -engine cmd=$REPO/benchmark/engines/stash-9.0-linux-x86_64-bmi2 -each proto=uci tc=40/60 -debug` 

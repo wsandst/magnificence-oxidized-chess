@@ -205,7 +205,7 @@ mod tests {
             "b2b3","c2c3","d2d3","g5g6","h4h5",
             "c2c4", "d2d4",
             "b2a3", "f6e7", "f6g7",
-            "b7a8Q", "b7b8Q", "b7c8Q", "b7a8R", "b7b8R", "b7c8R", "b7a8B", "b7b8B", "b7c8B", "b7a8N", "b7b8N", "b7c8N"
+            "b7a8q", "b7b8q", "b7c8q", "b7a8r", "b7b8r", "b7c8r", "b7a8b", "b7b8b", "b7c8b", "b7a8n", "b7b8n", "b7c8n"
         ]);
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, &movegen_state);

@@ -111,7 +111,7 @@ fn test_algebraic_notation() {
     assert_eq!("d4d5", Move::to_algebraic(&Move::from_algebraic(&board, "d4d5")));
     assert_eq!("d8d1", Move::to_algebraic(&Move::from_algebraic(&board, "d8d1")));
     assert_eq!("g2g1q", Move::to_algebraic(&Move::from_algebraic(&board, "g2g1q")));
-    assert_eq!("h2h1Q", Move::to_algebraic(&Move::from_algebraic(&board, "h2h1Q")));
+    assert_eq!("h2h1q", Move::to_algebraic(&Move::from_algebraic(&board, "h2h1q")));
     assert_eq!("a2a1b", Move::to_algebraic(&Move::from_algebraic(&board, "a2a1b")));
 }
 
