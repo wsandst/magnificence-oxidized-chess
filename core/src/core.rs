@@ -217,6 +217,10 @@ impl Move {
         mv.promotion = promotion;
         return mv;
     }
+
+    pub fn is_quiet(&self) -> bool {
+        return self.captured == Piece::Empty;
+    }
 }
 
 impl fmt::Display for Move {
