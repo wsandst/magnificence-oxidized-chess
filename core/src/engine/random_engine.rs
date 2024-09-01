@@ -18,7 +18,7 @@ pub struct RandomEngine {
 impl Engine for RandomEngine {
     fn search(&mut self, board: &Board) -> Vec<Move> {
         let mut moves = MoveList::empty();
-        board.get_moves(&mut moves);
+        board.get_moves(&mut moves, false);
         let pv = vec!(*moves.to_vec().choose(&mut rand::thread_rng()).unwrap());
         return pv;
     }

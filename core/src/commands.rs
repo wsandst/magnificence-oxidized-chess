@@ -11,7 +11,7 @@ pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut MoveListColle
     }
     let mut moves = reserved_moves.get_move_list();
     moves.clear();
-    board.get_moves(&mut moves);
+    board.get_moves(&mut moves, false);
     if depth == 1 && USE_LEAF_NODE_OPTIMIZATION {
         let move_count = moves.len();
         reserved_moves.push_move_list(moves);
@@ -30,7 +30,7 @@ pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut MoveListColle
 pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut MoveListCollection) -> usize {
     let mut moves = reserved_moves.get_move_list();
     moves.clear();
-    board.get_moves(&mut moves);
+    board.get_moves(&mut moves, false);
     let mut results : Vec<(String, usize)> = Vec::new();
     for mv in moves.iter() {
         board.make_move(&mv);

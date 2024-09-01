@@ -22,13 +22,14 @@ pub(crate) struct MovegenState {
     threatened_squares: u64,
     // Check related
     checks: u8,
+    only_captures: bool,
     legal_targets: u64, // Used for legal targets during checks,
     rook_pins: u64,
     bishop_pins: u64
 }
 
 impl MovegenState {
-    pub fn new(board: &Board) -> MovegenState {
+    pub fn new(board: &Board, only_captures: bool) -> MovegenState {
         let occupancy = !(board.piece_sets[Piece::Empty.to_u8() as usize]);
         let white_occupancy = board.piece_sets[0] | board.piece_sets[1] | board.piece_sets[2] | board.piece_sets[3] | board.piece_sets[4] | board.piece_sets[5];
         let black_occupancy = white_occupancy ^ occupancy;
@@ -39,6 +40,7 @@ impl MovegenState {
             black_occupancy,
             threatened_squares: 0,
             checks: 0,
+            only_captures: only_captures,
             legal_targets: 0,
             rook_pins: 0,
             bishop_pins: 0
@@ -47,6 +49,12 @@ impl MovegenState {
             Color::White => state.calculate_threatened_squares::<BLACK>(board),
             Color::Black => state.calculate_threatened_squares::<WHITE>(board),
         };
+        if only_captures {
+            state.legal_targets &= match board.get_current_player() {
+                Color::White => black_occupancy,
+                Color::Black => white_occupancy
+            };
+        }
         return state;
     }
 
@@ -159,8 +167,8 @@ impl MovegenState {
 
 impl Board {
     /// Get all valid moves for this position. Pushes the moves to the mutable vector `moves` which is passed in.
-    pub fn get_moves(&self, moves: &mut MoveList) {
-        let mut state = MovegenState::new(&self);
+    pub fn get_moves(&self, moves: &mut MoveList, only_captures: bool) {
+        let mut state = MovegenState::new(&self, only_captures);
         moves.clear();
         match self.current_player {
             Color::White => self.generate_moves_white(moves, &mut state),

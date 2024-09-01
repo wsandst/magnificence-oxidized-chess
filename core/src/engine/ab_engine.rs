@@ -1,4 +1,5 @@
 
+use core::panic;
 use std::i32;
 
 use super::{move_sorting, Engine, LogCallback, SearchMetadataCallback, ShouldAbortSearchCallback};
@@ -28,6 +29,8 @@ pub struct StandardAlphaBetaEngine {
 #[allow(unused)]
 impl Engine for StandardAlphaBetaEngine {
     fn search(&mut self, board: &Board) -> Vec<Move> {
+        let now = Instant::now();
+
         /*let now = Instant::now();
         loop {
             thread::sleep(Duration::from_millis(100));
@@ -42,11 +45,13 @@ impl Engine for StandardAlphaBetaEngine {
             self.nodes_per_depth[i] = 0;
         }
 
-        let depth = 1;
+        let depth = 5;
         let (eval, mv) = self.alpha_beta(depth, i32::MIN + 1, i32::MAX);
         let pv: Vec<Move> = vec!(mv.unwrap());
         (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
 
+        let elapsed = now.elapsed();
+        (self.info)(&format!("info search took {:.2?} s", elapsed));
         self.report_node_counts(depth);
 
         return pv;
@@ -66,7 +71,8 @@ impl StandardAlphaBetaEngine {
             return (self.qsearch(lower_bound, upper_bound), None);
         }
         let mut moves = self.move_lists.get_move_list();
-        self.board.get_moves(&mut moves);
+
+        self.board.get_moves(&mut moves, false);
         move_sorting::sort_moves_simple(&self.board, &mut moves);
 
         let mut best_move = None;
@@ -107,18 +113,13 @@ impl StandardAlphaBetaEngine {
         }
 
         let mut moves = self.move_lists.get_move_list();
-        self.board.get_moves(&mut moves); // Get only captures here in the future instead
-        move_sorting::sort_moves_simple(&self.board, &mut moves);
+        self.board.get_moves(&mut moves, true); // Only generate captures
 
         let returning = match moves.result() {
             SearchResult::Loss => -KING_VALUE * 8,
             SearchResult::Stalemate => 0,
             SearchResult::InProgress => {
                 for mv in moves.iter() {
-                    if mv.is_quiet() {
-                        // Skip quiet moves in Quiescence Search
-                        continue;
-                    }
                     self.board.make_move(mv);
                     let result = -self.qsearch(-upper_bound, -lower_bound);
                     self.board.unmake_move(mv);

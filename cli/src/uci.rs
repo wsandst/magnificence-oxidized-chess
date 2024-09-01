@@ -270,7 +270,7 @@ fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state:
         }
         CommandType::LegalMoves => {
             let mut move_vector = MoveList::empty();
-            state.board.get_moves(&mut move_vector);
+            state.board.get_moves(&mut move_vector, false);
             let mut moves : Vec<String> = move_vector.iter().map(|mv| mv.to_algebraic()).collect();
             moves.sort();
             println!("Legal moves ({}): {}", state.board.get_current_player().to_char(), moves.join(" "));
