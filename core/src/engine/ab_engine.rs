@@ -29,7 +29,7 @@ pub struct StandardAlphaBetaEngine {
 #[allow(unused)]
 impl Engine for StandardAlphaBetaEngine {
     fn search(&mut self, board: &Board) -> Vec<Move> {
-        let now = Instant::now();
+        //let now = Instant::now();
 
         /*let now = Instant::now();
         loop {
@@ -45,13 +45,13 @@ impl Engine for StandardAlphaBetaEngine {
             self.nodes_per_depth[i] = 0;
         }
 
-        let depth = 5;
+        let depth = 4;
         let (eval, mv) = self.alpha_beta(depth, i32::MIN + 1, i32::MAX);
         let pv: Vec<Move> = vec!(mv.unwrap());
         (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
 
-        let elapsed = now.elapsed();
-        (self.info)(&format!("info search took {:.2?} s", elapsed));
+        //let elapsed = now.elapsed();
+        //(self.info)(&format!("info search took {:.2?} s", elapsed));
         self.report_node_counts(depth);
 
         return pv;
