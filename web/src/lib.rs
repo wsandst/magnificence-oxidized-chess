@@ -163,6 +163,7 @@ impl ChessEngine {
         else {
             self.white_player = Some(engine::from_name(
                     &engine_name,
+                    &self.board,
                     Self::get_search_metadata_callback(),
                     Self::get_log_engine_info_callback(),
                     Self::get_should_abort_search_callback()
@@ -178,6 +179,7 @@ impl ChessEngine {
         else {
             self.black_player = Some(engine::from_name(
                     &engine_name,
+                    &self.board,
                     Self::get_search_metadata_callback(),
                     Self::get_log_engine_info_callback(),
                     Self::get_should_abort_search_callback()

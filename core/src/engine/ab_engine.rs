@@ -17,7 +17,10 @@ pub const ENGINE_NAME: &str = "magnificence";
 pub struct StandardAlphaBetaEngine {
     update_metadata: SearchMetadataCallback,
     info: LogCallback,
-    should_abort_search: ShouldAbortSearchCallback
+    should_abort_search: ShouldAbortSearchCallback,
+
+    board: Board,
+    move_lists: MoveListCollection
 }
 
 #[allow(unused)]
@@ -33,10 +36,10 @@ impl Engine for StandardAlphaBetaEngine {
         }*/
 
         (self.info)("hello world");
-        let mut moves = MoveListCollection::new();
+        self.board = board.clone();
         let mut board_copy = board.clone();
         let depth = 6;
-        let (eval, mv) = self.alpha_beta(&mut board_copy, &mut moves, depth, i32::MIN + 1, i32::MAX);
+        let (eval, mv) = self.alpha_beta(depth, i32::MIN + 1, i32::MAX);
         let pv: Vec<Move> = vec!(mv.unwrap());
 
         (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
@@ -49,22 +52,23 @@ impl Engine for StandardAlphaBetaEngine {
 }
 
 impl StandardAlphaBetaEngine {
-    fn alpha_beta(&mut self, board: &mut Board, move_lists: &mut MoveListCollection, depth: i32, mut lower_bound: i32, upper_bound: i32) -> (i32, Option<Move>) {
+    fn alpha_beta(&mut self, depth: i32, mut lower_bound: i32, upper_bound: i32) -> (i32, Option<Move>) {
         if depth == 0 {
-            return (board.eval(), None);
+            return (self.board.eval(), None);
         }
-        let mut moves = move_lists.get_move_list();
-        board.get_moves(&mut moves);
+        let mut moves = self.move_lists.get_move_list();
+        self.board.get_moves(&mut moves);
+
         let mut best_move = None;
         let returning = match moves.result() {
             SearchResult::Loss => -KING_VALUE * 8 - depth,
             SearchResult::Stalemate => 0,
             SearchResult::InProgress => {
                 for mv in moves.iter() {
-                    board.make_move(mv);
-                    let (result, _) = self.alpha_beta(board, move_lists, depth - 1, -upper_bound, -lower_bound);
+                    self.board.make_move(mv);
+                    let (result, _) = self.alpha_beta(depth - 1, -upper_bound, -lower_bound);
                     let result = -result;
-                    board.unmake_move(mv);
+                    self.board.unmake_move(mv);
                     if result > lower_bound {
                         lower_bound = result;
                         best_move = Some(*mv);
@@ -76,15 +80,21 @@ impl StandardAlphaBetaEngine {
                 lower_bound
             }
         };
-        move_lists.push_move_list(moves);
+        self.move_lists.push_move_list(moves);
         return (returning, best_move);
     }
 
-    pub fn new(update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> StandardAlphaBetaEngine {
+    pub fn qsearch(&mut self, mut lower_bound: i32, upper_bound: i32) {
+
+    }
+
+    pub fn new(board: &Board, update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> StandardAlphaBetaEngine {
         return StandardAlphaBetaEngine {
             update_metadata: update_metadata_callback,
             info: info_callback,
-            should_abort_search: should_abort_callback
+            should_abort_search: should_abort_callback,
+            board: board.clone(),
+            move_lists: MoveListCollection::new()
         };
     }
 }

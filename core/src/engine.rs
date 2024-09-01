@@ -29,10 +29,10 @@ pub trait Engine {
     fn get_name(&self) -> &'static str;
 }
 
-pub fn from_name(name: &str, update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> Box<dyn Engine> {
+pub fn from_name(name: &str, board: &Board, update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> Box<dyn Engine> {
     return match name.to_lowercase().as_str() {
-            ab_engine::ENGINE_NAME => Box::new(StandardAlphaBetaEngine::new(update_metadata_callback, info_callback, should_abort_callback)),
-            random_engine::ENGINE_NAME => Box::new(RandomEngine::new(update_metadata_callback, info_callback, should_abort_callback)),
+            ab_engine::ENGINE_NAME => Box::new(StandardAlphaBetaEngine::new(board, update_metadata_callback, info_callback, should_abort_callback)),
+            random_engine::ENGINE_NAME => Box::new(RandomEngine::new(board, update_metadata_callback, info_callback, should_abort_callback)),
             _ => panic!("Attempted to instantiate engine with invalid name: {}", name)
     };
 }
