@@ -100,7 +100,7 @@ mod tests {
         let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         // Check that the castling moves are not generated if blocked in the starting position
         let board = Board::new(Rc::clone(&runtime_constants));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_white_castling_moves(&mut moves, &movegen_state);
         assert_eq!(moves.len(), 0);
         board.generate_black_castling_moves(&mut moves, &movegen_state);
@@ -108,12 +108,12 @@ mod tests {
 
         // Check that the castling moves generate when not blocked
         let mut board = Board::from_fen("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1 ", Rc::clone(&runtime_constants));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_white_castling_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec!["e1c1", "e1g1"]);
         moves.clear();
         board.switch_current_player();
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_black_castling_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec!["e8c8", "e8g8"]);
         moves.clear();
@@ -122,7 +122,7 @@ mod tests {
         // Check that the castling flags are taken into account
         board.set_castling_bools(true, false, false, false);
         board.switch_current_player();
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_white_castling_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec!["e1g1"]);
         moves.clear();
@@ -134,7 +134,7 @@ mod tests {
 
         board.set_castling_bools(false, false, true, false);
         board.switch_current_player();
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_black_castling_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec!["e8g8"]);
         moves.clear();

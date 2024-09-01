@@ -186,7 +186,7 @@ mod tests {
         let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
         let board = Board::new(Rc::clone(&constant_state));
         let mut moves = MoveList::empty();
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_white_pawn_moves(&mut moves, &movegen_state);
 
         assert_moves_eq_algebraic(&moves, &vec!["a2a3","b2b3","c2c3","d2d3","e2e3","f2f3","g2g3","h2h3",
@@ -197,7 +197,7 @@ mod tests {
                                                "a7a5","b7b5","c7c5","d7d5","e7e5","f7f5","g7g5","h7h5"]);
 
         let board = Board::from_fen("r1bqkbnr/1P2pppp/5P2/2p3P1/1p5P/p7/PPPP2p1/RNBQKB1R", Rc::clone(&constant_state));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         moves.clear();
         board.generate_white_pawn_moves(&mut moves, &movegen_state);
 
@@ -218,7 +218,7 @@ mod tests {
 
 
         let board = Board::from_fen("K7/8/1p6/p1p5/8/P1P5/1P6/k7 b - - 0 1", Rc::clone(&constant_state));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![
@@ -227,7 +227,7 @@ mod tests {
 
         // En passant
         let board = Board::from_fen("K7/8/8/1pP5/5Pp1/8/8/k7 w - b6", Rc::clone(&constant_state));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         moves.clear();
         board.generate_white_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![
@@ -235,7 +235,7 @@ mod tests {
         ]);
 
         let board = Board::from_fen("K7/8/8/1pP5/5Pp1/8/8/k7 b - f3", Rc::clone(&constant_state));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         moves.clear();
         board.generate_black_pawn_moves(&mut moves, &movegen_state);
         assert_moves_eq_algebraic(&moves, &vec![

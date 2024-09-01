@@ -233,7 +233,7 @@ impl Board {
 
     pub fn get_game_status(&mut self) -> GameStatus {
         let mut legal_moves = MoveList::empty();
-        self.get_moves(&mut legal_moves);
+        self.get_moves(&mut legal_moves, false);
         return match legal_moves.result() {
             SearchResult::InProgress => GameStatus::InProgress,
             SearchResult::Stalemate => GameStatus::Stalemate,

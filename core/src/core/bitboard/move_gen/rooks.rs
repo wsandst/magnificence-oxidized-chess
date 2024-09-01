@@ -51,7 +51,7 @@ mod tests {
         let runtime_constants = Rc::new(BOARD_CONSTANT_STATE.clone());
         // Check that knight moves are generated correctly in the starting position
         let board = Board::new(Rc::clone(&runtime_constants));
-        let movegen_state = MovegenState::new(&board);
+        let movegen_state = MovegenState::new(&board, false);
         board.generate_white_bishop_like_moves(&mut moves, &movegen_state);
         //assert_moves_eq_algebraic(&moves, &vec!["b1a3", "b1c3","g1f3", "g1h3"]);
     }

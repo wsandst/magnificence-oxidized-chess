@@ -95,7 +95,7 @@ impl ChessEngine {
     pub fn get_pieces(&self) -> Vec<JsValue> {
         let mut pieces : Vec<JsValue> = Vec::new();
         let mut legal_moves = MoveList::empty();
-        self.board.get_moves(&mut legal_moves);
+        self.board.get_moves(&mut legal_moves, false);
 
         for y in 0..8 {
             for x in 0..8 {

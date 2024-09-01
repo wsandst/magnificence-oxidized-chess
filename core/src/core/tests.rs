@@ -269,7 +269,7 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
     };
     moves.clear();
 
-    board.get_moves(&mut moves);
+    board.get_moves(&mut moves, false);
     if depth == 1 {
         let move_count = moves.len();
         reserved_moves.push(moves);
@@ -288,6 +288,28 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
     }
     reserved_moves.push(moves);
     return total_move_count;
+}
+
+
+
+pub fn attacking_perft_test(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> u64 {
+    if depth == 0 {
+        return 1;
+    }
+    let mut moves = match reserved_moves.pop() {
+        None => MoveList::empty(),
+        Some(moves) => moves
+    };
+    moves.clear();
+    let mut attacks = match reserved_moves.pop() {
+        None => MoveList::empty(),
+        Some(moves) => moves
+    };
+    attacks.clear();
+
+    board.get_moves(&mut moves, false);
+    board.get_moves(&mut attacks, true);
+    return 0;
 }
 
 #[test]

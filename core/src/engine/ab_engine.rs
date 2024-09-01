@@ -58,7 +58,7 @@ impl StandardAlphaBetaEngine {
             None => MoveList::empty(),
             Some(list) => list
         };
-        board.get_moves(&mut moves);
+        board.get_moves(&mut moves, false);
         let mut best_move = None;
         let returning = match moves.result() {
             SearchResult::Loss => -KING_VALUE * 8 - depth,
