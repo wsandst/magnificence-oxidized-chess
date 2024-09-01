@@ -19,6 +19,9 @@ const BLACK_KING_SQUARE: u8 = 4;
 
 impl Board {
     fn extract_castling_moves<const COLOR: bool>(&self, moves : &mut MoveList, state: &MovegenState) {
+        if state.only_captures {
+            return;
+        }
         // Get some constants based on color
         let (
             queenside_castling_offset, 

@@ -7,7 +7,7 @@ use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
 use lazy_static::lazy_static;
-use move_list::MoveList;
+use move_list::{MoveList, MoveListCollection};
 use strum::IntoEnumIterator;
 
 
@@ -262,17 +262,14 @@ fn test_bit_twiddling() {
     assert_eq!(num, 0b101010101001);
 }
 
-pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
-    let mut moves = match reserved_moves.pop() {
-        None => MoveList::empty(),
-        Some(moves) => moves
-    };
+pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut MoveListCollection) -> usize {
+    let mut moves = reserved_moves.get_move_list();
     moves.clear();
 
     board.get_moves(&mut moves, false);
     if depth == 1 {
         let move_count = moves.len();
-        reserved_moves.push(moves);
+        reserved_moves.push_move_list(moves);
         return move_count;
     }
     
@@ -286,29 +283,55 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
                 mv, old_board.to_string(), old_board.get_hashkey(), old_board.calculate_hash(), board.to_string(), board.get_hashkey(), board.calculate_hash());
         board.validate();
     }
-    reserved_moves.push(moves);
+    reserved_moves.push_move_list(moves);
     return total_move_count;
 }
 
 
 
-pub fn attacking_perft_test(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> u64 {
+fn is_move_quiet(board: &Board, mv: &Move) -> bool {
+    if !mv.is_quiet() {
+        return false;
+    }
+    let diff = (mv.to as i8) - (mv.from as i8);
+    if diff != 8 && diff != -8 && diff != 16 && diff != -16 && (board.get_piece(mv.from) == Piece::WhitePawn || board.get_piece(mv.from) == Piece::BlackPawn) {
+        return false;
+    }
+    return true;
+}
+
+pub fn attacking_perft_test(depth: usize, board: &mut Board, reserved_moves: &mut MoveListCollection) -> u64 {
     if depth == 0 {
         return 1;
     }
-    let mut moves = match reserved_moves.pop() {
-        None => MoveList::empty(),
-        Some(moves) => moves
-    };
+    let mut moves = reserved_moves.get_move_list();
     moves.clear();
-    let mut attacks = match reserved_moves.pop() {
-        None => MoveList::empty(),
-        Some(moves) => moves
-    };
+    let mut attacks = reserved_moves.get_move_list();
     attacks.clear();
 
     board.get_moves(&mut moves, false);
     board.get_moves(&mut attacks, true);
+
+    if attacks.iter().any(|mv| is_move_quiet(board, mv)) {
+        panic!("On position {}, a quiet move was generated as an attack!", board.to_fen());
+    }
+    let attacks_vec = attacks.to_vec();
+    if !moves.iter().all(|mv| is_move_quiet(board, mv) || attacks_vec.contains(mv)) {
+        panic!("On position {}, an attack was not generated as an attack!", board.to_fen());
+    }
+    let move_vec = moves.to_vec();
+    if !attacks.iter().all(|mv| move_vec.contains(mv)) {
+        panic!("On position {}, an attack was generated which was illegal", board.to_fen());
+    }
+    let mut total = 0;
+    if depth == 1 {
+        return moves.len() as u64;
+    }
+    for mv in moves.iter() {
+        board.make_move(mv);
+        total += attacking_perft_test(depth - 1, board, reserved_moves);
+        board.unmake_move(mv);
+    }
     return 0;
 }
 
@@ -316,16 +339,30 @@ pub fn attacking_perft_test(depth: usize, board: &mut Board, reserved_moves: &mu
 fn board_validation_with_perft() {
     let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::new(Rc::clone(&constant_state));
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+    let mut reserved_moves = MoveListCollection::new();
     validation_perft(4, &mut board, &mut reserved_moves);
 
     let mut board = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", Rc::clone(&constant_state));
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     validation_perft(4, &mut board, &mut reserved_moves);
 
     let mut board = Board::from_fen("rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6", Rc::clone(&constant_state));
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     validation_perft(3, &mut board, &mut reserved_moves);
+
+    // rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6
+}
+
+#[test]
+fn attack_move_gen_test() {
+    let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
+    let mut board = Board::new(Rc::clone(&constant_state));
+    let mut reserved_moves = MoveListCollection::new();
+    attacking_perft_test(4, &mut board, &mut reserved_moves);
+
+    let mut board = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", Rc::clone(&constant_state));
+    attacking_perft_test(4, &mut board, &mut reserved_moves);
+
+    let mut board = Board::from_fen("rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6", Rc::clone(&constant_state));
+    attacking_perft_test(3, &mut board, &mut reserved_moves);
 
     // rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6
 }

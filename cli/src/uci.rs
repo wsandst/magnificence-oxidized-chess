@@ -1,7 +1,7 @@
 use constants::BitboardRuntimeConstants;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{self, Engine, SearchMetadata, ShouldAbortSearchCallback};
-use move_list::MoveList;
+use move_list::{MoveList, MoveListCollection};
 /// Functionality for running the Universal Chess Protocol
 /// 
 /// This is a standardized way for chess engines to communicate.
@@ -119,10 +119,11 @@ pub fn start_uci_protocol(player_type: &str) {
 
         // The worker thread listens for commands
         let board_constant_state_rc = Rc::new(board_constant_state);
+        let board = Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state_rc));
         let mut worker_state = WorkerState {
-            board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state_rc)),
+            board: board.clone(),
             board_constant_state: board_constant_state_rc,
-            engine: engine::from_name(&player_type_copy, Box::new(handle_search_metadata), Box::new(log_callback), should_abort_search_callback),
+            engine: engine::from_name(&player_type_copy, &board, Box::new(handle_search_metadata), Box::new(log_callback), should_abort_search_callback),
             move_history: Vec::new(),
             strict_uci_mode: false,
         };
@@ -177,10 +178,11 @@ pub fn start_uci_protocol(player_type: &str) {
 pub fn run_single_uci_command(command_line: &str, player_type: &str) {
     let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
 
+    let board = Board::new(Rc::clone(&board_constant_state));
     let mut state = WorkerState {
-        board: Board::new(Rc::clone(&board_constant_state)),
+        board: board.clone(),
         board_constant_state,
-        engine: engine::from_name(player_type, Box::new(handle_search_metadata), Box::new(log_callback), Box::new(|| false)),
+        engine: engine::from_name(player_type, &board, Box::new(handle_search_metadata), Box::new(log_callback), Box::new(|| false)),
         move_history: Vec::new(),
         strict_uci_mode: false,
     };
@@ -293,7 +295,7 @@ fn uci_start() {
 
 fn perft(depth: &usize, state: &mut WorkerState) {
     println!("Performing perft of depth {}", depth);
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+    let mut reserved_moves = MoveListCollection::new();
     let (perft_count, duration) = timeit(|| commands::perft(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);
@@ -302,7 +304,7 @@ fn perft(depth: &usize, state: &mut WorkerState) {
 
 fn divide(depth: &usize, state: &mut WorkerState) {
     println!("Performing perft of depth {}", depth);
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+    let mut reserved_moves = MoveListCollection::new();
     let (perft_count, duration) = timeit(|| commands::divide(*depth, &mut state.board, &mut reserved_moves));
     let million_moves_per_second = (perft_count / 1_000_000) as f64 / duration;
     println!("Perft completed in {:.3} seconds ({:.2}M moves per second)", duration, million_moves_per_second);

@@ -170,7 +170,7 @@ impl Move {
         let mut algebraic_move = format!("{}{}", from, to);
         if self.promotion != Piece::Empty {
             let promotion_piece_offset = if self.promotion.is_white() {6} else {0};
-            algebraic_move.push(Piece::from_u8(self.promotion.to_u8()).as_char());
+            algebraic_move.push(Piece::from_u8(self.promotion.to_u8() + promotion_piece_offset).as_char());
         }
         return algebraic_move;
     }
@@ -216,6 +216,10 @@ impl Move {
         let mut mv = Move::from_pos(board, from_x, from_y, to_x, to_y);
         mv.promotion = promotion;
         return mv;
+    }
+
+    pub fn is_quiet(&self) -> bool {
+        return self.captured == Piece::Empty;
     }
 }
 

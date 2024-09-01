@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use constants::BitboardRuntimeConstants;
 use engine_core::{commands, engine};
-use engine_core::core::move_list::MoveList;
+use engine_core::core::move_list::{MoveList, MoveListCollection};
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, LogCallback, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
@@ -163,6 +163,7 @@ impl ChessEngine {
         else {
             self.white_player = Some(engine::from_name(
                     &engine_name,
+                    &self.board,
                     Self::get_search_metadata_callback(),
                     Self::get_log_engine_info_callback(),
                     Self::get_should_abort_search_callback()
@@ -178,6 +179,7 @@ impl ChessEngine {
         else {
             self.black_player = Some(engine::from_name(
                     &engine_name,
+                    &self.board,
                     Self::get_search_metadata_callback(),
                     Self::get_log_engine_info_callback(),
                     Self::get_should_abort_search_callback()
@@ -247,7 +249,7 @@ impl ChessEngine {
     }
 
     pub fn perft(&self, depth: usize) -> usize {
-        let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+        let mut reserved_moves = MoveListCollection::new();
         let mut board_copy = self.board.clone();
         return commands::perft(depth, &mut board_copy, &mut reserved_moves);
     }

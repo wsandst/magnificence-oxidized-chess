@@ -29,7 +29,7 @@ impl Engine for RandomEngine {
 }
 
 impl RandomEngine {
-    pub fn new(update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> RandomEngine {
+    pub fn new(board: &Board, update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> RandomEngine {
         return RandomEngine {
             update_metadata: update_metadata_callback,
             info: info_callback,
