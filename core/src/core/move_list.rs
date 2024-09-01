@@ -62,12 +62,23 @@ impl MoveList {
         return self.moves.clone();
     }
 
+    pub fn from_vec(vec: Vec<Move>) -> MoveList {
+        return MoveList {
+            moves: vec,
+            result: SearchResult::InProgress,
+        }
+    }
+
     pub fn set_result(&mut self, result: SearchResult) {
         self.result = result;
     }
 
     pub fn result(&self) -> SearchResult {
         self.result
+    }
+
+    pub fn get_underlying_vec(&mut self) -> &mut Vec<Move> {
+        return &mut self.moves;
     }
 }
 

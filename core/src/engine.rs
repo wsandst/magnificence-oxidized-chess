@@ -1,5 +1,6 @@
 pub mod ab_engine;
 pub mod random_engine;
+pub mod move_sorting;
 
 use ab_engine::StandardAlphaBetaEngine;
 use random_engine::RandomEngine;

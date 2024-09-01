@@ -2,11 +2,11 @@ pub mod bitboard;
 pub mod move_list;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 use std::{collections::binary_heap::Iter, fmt};
 
-use bitboard::Board;
+use bitboard::{constants::{BISHOP_VALUE, KING_VALUE, KNIGHT_VALUE, PAWN_VALUE, QUEEN_VALUE, ROOK_VALUE}, Board};
 use strum_macros::EnumIter;
 use num;
 use num_derive::{FromPrimitive, ToPrimitive};
@@ -118,6 +118,24 @@ impl Piece {
     pub fn to_u8(&self) -> u8 {
         return num::ToPrimitive::to_u8(self).unwrap();
     }
+
+    pub fn eval_score(&self) -> i32 {
+        match *self {
+            Piece::WhitePawn => PAWN_VALUE,
+            Piece::WhiteBishop => BISHOP_VALUE,
+            Piece::WhiteKnight => KNIGHT_VALUE,
+            Piece::WhiteRook => ROOK_VALUE,
+            Piece::WhiteQueen => QUEEN_VALUE,
+            Piece::WhiteKing => KING_VALUE,
+            Piece::BlackPawn => PAWN_VALUE,
+            Piece::BlackBishop => BISHOP_VALUE,
+            Piece::BlackKnight => KNIGHT_VALUE,
+            Piece::BlackRook => ROOK_VALUE,
+            Piece::BlackQueen => QUEEN_VALUE,
+            Piece::BlackKing => KING_VALUE,
+            Piece::Empty => 0,
+        }
+    }
 }
 
 impl Color {
@@ -215,6 +233,7 @@ impl Move {
         };
         let mut mv = Move::from_pos(board, from_x, from_y, to_x, to_y);
         mv.promotion = promotion;
+        mv.captured = board.get_piece_pos(to_x, to_y);
         return mv;
     }
 
