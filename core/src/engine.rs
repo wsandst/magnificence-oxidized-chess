@@ -1,7 +1,10 @@
+pub mod ab_engine;
+pub mod random_engine;
+
 use ab_engine::StandardAlphaBetaEngine;
+use random_engine::RandomEngine;
 
 use super::core::Move;
-pub mod ab_engine;
 use crate::core::bitboard::Board;
 
 pub type SearchMetadataCallback = Box<dyn Fn(SearchMetadata) -> ()>;
@@ -27,9 +30,9 @@ pub trait Engine {
 }
 
 pub fn from_name(name: &str, update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> Box<dyn Engine> {
-    return Box::new(
-        match name {
-            ab_engine::ENGINE_NAME => StandardAlphaBetaEngine::new(update_metadata_callback, info_callback, should_abort_callback),
+    return match name.to_lowercase().as_str() {
+            ab_engine::ENGINE_NAME => Box::new(StandardAlphaBetaEngine::new(update_metadata_callback, info_callback, should_abort_callback)),
+            random_engine::ENGINE_NAME => Box::new(RandomEngine::new(update_metadata_callback, info_callback, should_abort_callback)),
             _ => panic!("Attempted to instantiate engine with invalid name: {}", name)
-    });
+    };
 }

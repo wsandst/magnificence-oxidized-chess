@@ -11,7 +11,7 @@ use std::time::Instant;
 
 use crate::core::bitboard::constants;
 
-pub const ENGINE_NAME: &str = "Magnificence";
+pub const ENGINE_NAME: &str = "magnificence";
 
 #[allow(unused)]
 pub struct StandardAlphaBetaEngine {

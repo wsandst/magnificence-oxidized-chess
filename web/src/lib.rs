@@ -145,7 +145,7 @@ impl ChessEngine {
 
     pub fn get_allowed_engines() -> Vec<String> {
         // Iterate over some list of engines here
-        return vec!["Magnificence".to_owned(), "Magnificence Experimental".to_owned()];
+        return vec!["Magnificence".to_owned(), "Random".to_owned()];
     }
 
     pub fn get_board_fen(&self) -> String {

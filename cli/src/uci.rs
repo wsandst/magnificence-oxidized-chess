@@ -1,6 +1,6 @@
 use constants::BitboardRuntimeConstants;
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
-use engine_core::engine::{Engine, SearchMetadata, ShouldAbortSearchCallback};
+use engine_core::engine::{self, Engine, SearchMetadata, ShouldAbortSearchCallback};
 use move_list::MoveList;
 /// Functionality for running the Universal Chess Protocol
 /// 
@@ -90,7 +90,7 @@ enum CommandType {
 }
 
 /// Start the UCI protocol, start accepting command
-pub fn start_uci_protocol() {
+pub fn start_uci_protocol(player_type: &str) {
     let mut rl = Editor::<()>::new();
     let _ = rl.load_history(".linehistory.txt");
 
@@ -107,6 +107,7 @@ pub fn start_uci_protocol() {
         is_worker_complete: false
     }));
     let shared_state_worker = Arc::clone(&shared_state);
+    let player_type_copy = player_type.to_string();
 
     let (tx, rx) : (Sender<CommandType>, Receiver<CommandType>) = mpsc::channel();
     // Spawn a worker thread performs various commands
@@ -121,7 +122,7 @@ pub fn start_uci_protocol() {
         let mut worker_state = WorkerState {
             board: Board::from_fen(STARTING_POS_FEN, Rc::clone(&board_constant_state_rc)),
             board_constant_state: board_constant_state_rc,
-            engine: Box::new(StandardAlphaBetaEngine::new(Box::new(handle_search_metadata), Box::new(log_callback), should_abort_search_callback)),
+            engine: engine::from_name(&player_type_copy, Box::new(handle_search_metadata), Box::new(log_callback), should_abort_search_callback),
             move_history: Vec::new(),
             strict_uci_mode: false,
         };
@@ -173,13 +174,13 @@ pub fn start_uci_protocol() {
     }
 }
 
-pub fn run_single_uci_command(command_line: &str) {
+pub fn run_single_uci_command(command_line: &str, player_type: &str) {
     let board_constant_state = Rc::new(BitboardRuntimeConstants::create());
 
     let mut state = WorkerState {
         board: Board::new(Rc::clone(&board_constant_state)),
         board_constant_state,
-        engine: Box::new(StandardAlphaBetaEngine::new(Box::new(handle_search_metadata), Box::new(log_callback), Box::new(|| false))),
+        engine: engine::from_name(player_type, Box::new(handle_search_metadata), Box::new(log_callback), Box::new(|| false)),
         move_history: Vec::new(),
         strict_uci_mode: false,
     };
