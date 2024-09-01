@@ -1,23 +1,20 @@
 use constants::BitboardRuntimeConstants;
 
-use crate::core::{move_list::MoveList, Move};
+use crate::core::{move_list::{MoveList, MoveListCollection}, Move};
 use super::core::bitboard::*;
 
 const USE_LEAF_NODE_OPTIMIZATION : bool = true;
 
-pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
+pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut MoveListCollection) -> usize {
     if depth <= 0 {
         return 1;
     }
-    let mut moves = match reserved_moves.pop() {
-        None => MoveList::empty(),
-        Some(moves) => moves
-    };
+    let mut moves = reserved_moves.get_move_list();
     moves.clear();
     board.get_moves(&mut moves);
     if depth == 1 && USE_LEAF_NODE_OPTIMIZATION {
         let move_count = moves.len();
-        reserved_moves.push(moves);
+        reserved_moves.push_move_list(moves);
         return move_count;
     }
     let mut total_move_count = 0;
@@ -26,15 +23,12 @@ pub fn perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>
         total_move_count += perft(depth - 1, board, reserved_moves);
         board.unmake_move(&mv);
     }
-    reserved_moves.push(moves);
+    reserved_moves.push_move_list(moves);
     return total_move_count;
 }
 
-pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
-    let mut moves = match reserved_moves.pop() {
-        None => MoveList::empty(),
-        Some(moves) => moves
-    };
+pub fn divide(depth: usize, board: &mut Board, reserved_moves: &mut MoveListCollection) -> usize {
+    let mut moves = reserved_moves.get_move_list();
     moves.clear();
     board.get_moves(&mut moves);
     let mut results : Vec<(String, usize)> = Vec::new();
@@ -72,7 +66,7 @@ pub fn perft_tests(runtime_constants: std::rc::Rc<BitboardRuntimeConstants>, nod
             // Manually added extra case (promotions + ep)
             ("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P2P/2N2Q2/PPPBBPp1/1R2K2R b Kkq h3 0 4", vec![50, 2069, 99_997, 42_35_277])
         ];
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+    let mut reserved_moves = MoveListCollection::new();
     let mut success = true;
     for (fen, results) in tests {
         let mut board = Board::from_fen(fen, runtime_constants.clone());

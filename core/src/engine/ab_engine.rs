@@ -5,7 +5,7 @@ use super::{Engine, LogCallback, SearchMetadataCallback, ShouldAbortSearchCallba
 use crate::core::bitboard::Board;
 use crate::core::*;
 use bitboard::constants::KING_VALUE;
-use move_list::{MoveList, SearchResult};
+use move_list::{MoveList, MoveListCollection, SearchResult};
 use std::{thread, time::Duration};
 use std::time::Instant;
 
@@ -33,9 +33,8 @@ impl Engine for StandardAlphaBetaEngine {
         }*/
 
         (self.info)("hello world");
-        let mut moves = MoveList::empty();
+        let mut moves = MoveListCollection::new();
         let mut board_copy = board.clone();
-        let mut moves = Vec::new();
         let depth = 6;
         let (eval, mv) = self.alpha_beta(&mut board_copy, &mut moves, depth, i32::MIN + 1, i32::MAX);
         let pv: Vec<Move> = vec!(mv.unwrap());
@@ -50,14 +49,11 @@ impl Engine for StandardAlphaBetaEngine {
 }
 
 impl StandardAlphaBetaEngine {
-    fn alpha_beta(&mut self, board: &mut Board, move_lists: &mut Vec<MoveList>, depth: i32, mut lower_bound: i32, upper_bound: i32) -> (i32, Option<Move>) {
+    fn alpha_beta(&mut self, board: &mut Board, move_lists: &mut MoveListCollection, depth: i32, mut lower_bound: i32, upper_bound: i32) -> (i32, Option<Move>) {
         if depth == 0 {
             return (board.eval(), None);
         }
-        let mut moves = match move_lists.pop() {
-            None => MoveList::empty(),
-            Some(list) => list
-        };
+        let mut moves = move_lists.get_move_list();
         board.get_moves(&mut moves);
         let mut best_move = None;
         let returning = match moves.result() {
@@ -80,7 +76,7 @@ impl StandardAlphaBetaEngine {
                 lower_bound
             }
         };
-        move_lists.push(moves);
+        move_lists.push_move_list(moves);
         return (returning, best_move);
     }
 

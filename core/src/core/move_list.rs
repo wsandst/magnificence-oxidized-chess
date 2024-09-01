@@ -70,3 +70,28 @@ impl MoveList {
         self.result
     }
 }
+
+pub struct MoveListCollection {
+    move_lists: Vec<MoveList>
+}
+
+impl MoveListCollection {
+    pub fn new() -> MoveListCollection {
+        return MoveListCollection { move_lists: Vec::new() };
+    }
+
+    pub fn get_move_list(&mut self) -> MoveList {
+        return match self.move_lists.pop() {
+            None => MoveList::empty(),
+            Some(list) => list
+        };
+    }
+
+    pub fn push_move_list(&mut self, move_list: MoveList) {
+        self.move_lists.push(move_list);
+    }
+
+    pub fn clear(&mut self) {
+        self.move_lists = Vec::new();
+    }
+}

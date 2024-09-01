@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use constants::BitboardRuntimeConstants;
 use engine_core::{commands, engine};
-use engine_core::core::move_list::MoveList;
+use engine_core::core::move_list::{MoveList, MoveListCollection};
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
 use engine_core::engine::{Engine, LogCallback, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
@@ -247,7 +247,7 @@ impl ChessEngine {
     }
 
     pub fn perft(&self, depth: usize) -> usize {
-        let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+        let mut reserved_moves = MoveListCollection::new();
         let mut board_copy = self.board.clone();
         return commands::perft(depth, &mut board_copy, &mut reserved_moves);
     }

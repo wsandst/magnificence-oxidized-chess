@@ -7,7 +7,7 @@ use crate::core::bitboard::*;
 use crate::core::bitboard::constants::*;
 use crate::{commands, core::*};
 use lazy_static::lazy_static;
-use move_list::MoveList;
+use move_list::{MoveList, MoveListCollection};
 use strum::IntoEnumIterator;
 
 
@@ -262,17 +262,14 @@ fn test_bit_twiddling() {
     assert_eq!(num, 0b101010101001);
 }
 
-pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Vec<MoveList>) -> usize {
-    let mut moves = match reserved_moves.pop() {
-        None => MoveList::empty(),
-        Some(moves) => moves
-    };
+pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut MoveListCollection) -> usize {
+    let mut moves = reserved_moves.get_move_list();
     moves.clear();
 
     board.get_moves(&mut moves);
     if depth == 1 {
         let move_count = moves.len();
-        reserved_moves.push(moves);
+        reserved_moves.push_move_list(moves);
         return move_count;
     }
     
@@ -286,7 +283,7 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
                 mv, old_board.to_string(), old_board.get_hashkey(), old_board.calculate_hash(), board.to_string(), board.get_hashkey(), board.calculate_hash());
         board.validate();
     }
-    reserved_moves.push(moves);
+    reserved_moves.push_move_list(moves);
     return total_move_count;
 }
 
@@ -294,15 +291,13 @@ pub fn validation_perft(depth: usize, board: &mut Board, reserved_moves: &mut Ve
 fn board_validation_with_perft() {
     let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     let mut board = Board::new(Rc::clone(&constant_state));
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
+    let mut reserved_moves = MoveListCollection::new();
     validation_perft(4, &mut board, &mut reserved_moves);
 
     let mut board = Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", Rc::clone(&constant_state));
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     validation_perft(4, &mut board, &mut reserved_moves);
 
     let mut board = Board::from_fen("rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6", Rc::clone(&constant_state));
-    let mut reserved_moves : Vec<MoveList> = (0..15).map(|_| MoveList::empty()).collect();
     validation_perft(3, &mut board, &mut reserved_moves);
 
     // rnbqkbnr/pppppp2/8/6pp/7P/P7/1PPPPPP1/RNBQKBNR b KQkq - 0 6
