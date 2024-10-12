@@ -16,5 +16,5 @@ export function js_log_engine_info(infoMessage) {
 }
 
 export function js_get_unix_time() {
-    return BigInt(Date.now());
+    return BigInt(Math.round(performance.now()));
 }

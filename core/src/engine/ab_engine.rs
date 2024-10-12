@@ -15,6 +15,8 @@ use crate::core::bitboard::constants;
 
 pub const ENGINE_NAME: &str = "magnificence";
 
+pub const CHECK_ABORT_NODE_INTERVAL: u64 = 1_000_000;
+
 #[allow(unused)]
 pub struct StandardAlphaBetaEngine {
     update_metadata: SearchMetadataCallback,
@@ -26,47 +28,47 @@ pub struct StandardAlphaBetaEngine {
     move_lists: MoveListCollection,
     nodes_per_depth: Vec<u64>,
     qsearch_nodes: u64,
-    pv_table: PrincipalVariation
+    pv_table: PrincipalVariation,
+    keep_searching: bool,
+    total_nodes_searched_since_last_abort_check: u64,
+    alloted_time_for_search: Duration,
+    search_start_time: Duration,
 }
 
 #[allow(unused)]
 impl Engine for StandardAlphaBetaEngine {
-    fn search(&mut self, board: &Board) -> Vec<Move> {
-        //let now = Instant::now();
-
-        /*let now = Instant::now();
-        loop {
-            thread::sleep(Duration::from_millis(100));
-            
-            if (should_abort_search_callback() || now.elapsed().as_millis() > 2000) {
-                break;
-            }
-        }*/
-
-        // TODO: Iterative deepening + timekeeping. Will need to keep track of PVs for that probs
-        // How do I handle timekeeping when I can't get the current time on WASM? Maybe do per X nodes instead.
-        
-        let start_time = (self.get_system_time)();
+    fn search(&mut self, board: &Board) -> Vec<Move> {        
+        self.search_start_time = (self.get_system_time)();
 
         self.board = board.clone();
         let mut board_copy = board.clone();
+
+        // Reset various variables
         for i in 0..self.nodes_per_depth.len() {
             self.nodes_per_depth[i] = 0;
         }
+        self.total_nodes_searched_since_last_abort_check = 0;
+        self.alloted_time_for_search = Duration::from_secs(1);
+        self.keep_searching = true;
 
-        let max_depth = 6;
+        // Iterative deepening
+        let max_depth = 12;
         let mut pv: Vec<Move> = Vec::new();
-        for depth in 0..max_depth {
+        let mut depth = 1;
+        while depth < max_depth && self.keep_searching {
             self.pv_table.set_max_depth(depth);
             let eval = self.alpha_beta(depth, i32::MIN + 1, i32::MAX, &mut pv);
             pv = self.pv_table.get_pv();
+            (self.info)(&format!("update metadata {depth} {eval}"));
             (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
+            depth += 1;
+            self.update_should_abort();
         }
 
-        let elapsed = (self.get_system_time)() - start_time;
+        let elapsed = (self.get_system_time)() - self.search_start_time;
         //let elapsed = now.elapsed();
         (self.info)(&format!("info search took {:.2?} s", (elapsed.as_secs_f64())));
-        self.report_node_counts(max_depth);
+        //self.report_node_counts(max_depth);
 
         return pv;
     }
@@ -81,6 +83,8 @@ impl StandardAlphaBetaEngine {
     /// Evaluate the current position using an alpha beta search. Quiescence Search is ran for the leaf nodes.
     fn alpha_beta(&mut self, depth: usize, mut lower_bound: i32, upper_bound: i32, previous_pv: &mut Vec<Move>) -> i32 {
         self.nodes_per_depth[depth as usize] += 1;
+        self.total_nodes_searched_since_last_abort_check += 1;
+
         if depth == 0 {
             return self.qsearch(lower_bound, upper_bound);
         }
@@ -104,6 +108,9 @@ impl StandardAlphaBetaEngine {
                             break;
                         }
                     }
+                    if self.should_abort() {
+                        return lower_bound;
+                    }
                 }
                 lower_bound
             }
@@ -114,8 +121,10 @@ impl StandardAlphaBetaEngine {
 
     // Evaluate the current position until it is quiet (no capturing moves).
     pub fn qsearch(&mut self, mut lower_bound: i32, upper_bound: i32) -> i32 {
-        // Handle standing pat
         self.nodes_per_depth[0] += 1;
+        self.total_nodes_searched_since_last_abort_check += 1;
+
+        // Handle standing pat
         let eval = self.board.eval();
         if eval > lower_bound {
             lower_bound = eval;
@@ -141,6 +150,9 @@ impl StandardAlphaBetaEngine {
                             break;
                         }
                     }
+                    if self.should_abort() {
+                        return lower_bound;
+                    }
                 }
                 lower_bound
             }
@@ -148,6 +160,35 @@ impl StandardAlphaBetaEngine {
 
         self.move_lists.push_move_list(moves);
         return returning;
+    }
+
+    fn update_should_abort(&mut self) {
+        // Only check the more expensive operations every CHECK_ABORT_NODE_INTERVAL nodes
+        // Should we abort based on user abort?
+        if (self.should_abort_search)() {
+            self.keep_searching = false;
+            return;
+        }
+        // Should we abort based on timekeeping?
+        let current_time = (self.get_system_time)();
+        let elapsed_time = current_time - self.search_start_time;
+        if elapsed_time > self.alloted_time_for_search {
+            self.keep_searching = false;
+            return;
+        }
+    }
+
+    fn should_abort(&mut self) -> bool {
+        // If we have decided to no longer search, abort
+        if !self.keep_searching {
+            return true;
+        }
+        if self.total_nodes_searched_since_last_abort_check > CHECK_ABORT_NODE_INTERVAL {
+            self.update_should_abort();
+            self.total_nodes_searched_since_last_abort_check = 0;
+        } 
+        
+        return false;
     }
 
     fn report_node_counts(&self, depth: usize) {
@@ -183,6 +224,10 @@ impl StandardAlphaBetaEngine {
             move_lists: MoveListCollection::new(),
             nodes_per_depth: vec![0; 100],
             qsearch_nodes: 0,
+            keep_searching: true,
+            alloted_time_for_search: Duration::from_millis(0),
+            search_start_time: Duration::from_millis(0),
+            total_nodes_searched_since_last_abort_check: 0,
             pv_table: PrincipalVariation::new()
         };
     }

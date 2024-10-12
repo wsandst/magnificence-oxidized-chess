@@ -9,6 +9,8 @@ name = "web"
 root = "../../"
 link = true
 out-dir = "site/wasm"
+[crates.watch]
+profile = "release"
 
 [[crates]]
 name = "core"

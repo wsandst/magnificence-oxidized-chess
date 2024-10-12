@@ -75,7 +75,7 @@ mod tests {
 
         // Test move sorting
         let board = Board::from_fen("7k/8/8/8/8/P1Q5/1b6/2R4K b - - 0 1", Rc::new(BOARD_CONSTANT_STATE.clone()));
-        let mut moves = vec![
+        let moves = vec![
             Move::from_algebraic(&board, "b2a3"), // Pawn capture
             Move::from_algebraic(&board, "b2c3"), // Queen capture
             Move::from_algebraic(&board, "b2c1"), // Rook capture
