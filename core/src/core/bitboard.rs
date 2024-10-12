@@ -4,6 +4,7 @@ mod formatting;
 pub mod constants;
 mod helpers;
 mod move_gen;
+mod see;
 mod evaluation;
 use constants::*;
 use move_list::MoveList;
