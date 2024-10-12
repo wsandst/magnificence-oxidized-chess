@@ -17,7 +17,7 @@ use std::{io, thread};
 use std::io::BufRead;
 use std::rc::Rc;
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 
 use engine_core::core::*;
@@ -123,7 +123,14 @@ pub fn start_uci_protocol(player_type: &str) {
         let mut worker_state = WorkerState {
             board: board.clone(),
             board_constant_state: board_constant_state_rc,
-            engine: engine::from_name(&player_type_copy, &board, Box::new(handle_search_metadata), Box::new(log_callback), should_abort_search_callback),
+            engine: engine::from_name(
+                &player_type_copy, 
+                &board, 
+                Box::new(handle_search_metadata), 
+                Box::new(log_callback), 
+                should_abort_search_callback,
+                Box::new(get_system_time),
+            ),
             move_history: Vec::new(),
             strict_uci_mode: false,
         };
@@ -182,7 +189,14 @@ pub fn run_single_uci_command(command_line: &str, player_type: &str) {
     let mut state = WorkerState {
         board: board.clone(),
         board_constant_state,
-        engine: engine::from_name(player_type, &board, Box::new(handle_search_metadata), Box::new(log_callback), Box::new(|| false)),
+        engine: engine::from_name(
+            player_type, 
+            &board, 
+            Box::new(handle_search_metadata), 
+            Box::new(log_callback), 
+            Box::new(|| false),
+            Box::new(get_system_time)
+        ),
         move_history: Vec::new(),
         strict_uci_mode: false,
     };
@@ -285,6 +299,11 @@ fn handle_command(command : &CommandType, state: &mut WorkerState, shared_state:
 
 fn handle_search_metadata(metadata: SearchMetadata) {
     //println!("Go status: {:?}", metadata);
+}
+
+fn get_system_time() -> Duration {
+    let start = SystemTime::now();
+    return start.duration_since(UNIX_EPOCH).unwrap();
 }
 
 fn uci_start() {

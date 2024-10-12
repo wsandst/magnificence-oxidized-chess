@@ -1,10 +1,11 @@
 use std::rc::Rc;
+use std::time::Duration;
 
 use constants::BitboardRuntimeConstants;
 use engine_core::{commands, engine};
 use engine_core::core::move_list::{MoveList, MoveListCollection};
 use engine_core::engine::ab_engine::StandardAlphaBetaEngine;
-use engine_core::engine::{Engine, LogCallback, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
+use engine_core::engine::{Engine, GetSystemTimeCallback, LogCallback, SearchMetadata, SearchMetadataCallback, ShouldAbortSearchCallback};
 /// This file contains a wasm_bindgen interface to the chess engine core
 use wasm_bindgen::prelude::*;
 use engine_core::core::{Color, GameStatus, Move, Piece, STARTING_POS_FEN};
@@ -166,7 +167,8 @@ impl ChessEngine {
                     &self.board,
                     Self::get_search_metadata_callback(),
                     Self::get_log_engine_info_callback(),
-                    Self::get_should_abort_search_callback()
+                    Self::get_should_abort_search_callback(),
+                    Self::get_system_time_callback()
                 )
             );
         }
@@ -182,7 +184,8 @@ impl ChessEngine {
                     &self.board,
                     Self::get_search_metadata_callback(),
                     Self::get_log_engine_info_callback(),
-                    Self::get_should_abort_search_callback()
+                    Self::get_should_abort_search_callback(),
+                    Self::get_system_time_callback()
                 )
             );
         }
@@ -210,6 +213,11 @@ impl ChessEngine {
         js_search_metadata_update(serde_wasm_bindgen::to_value(&wrapped_metadata).unwrap());
     }
 
+    fn handle_get_system_time_callback() -> Duration {
+        let unix_time = js_get_unix_time();
+        return Duration::from_millis(unix_time);
+    }
+
     fn handle_log_engine_info(info: &str) {
         js_log_engine_info(serde_wasm_bindgen::to_value(&info).unwrap());
     }
@@ -224,6 +232,10 @@ impl ChessEngine {
 
     fn get_log_engine_info_callback() -> LogCallback {
         return Box::new(Self::handle_log_engine_info);
+    }
+
+    fn get_system_time_callback() -> GetSystemTimeCallback {
+        return Box::new(Self::handle_get_system_time_callback);
     }
 
     pub async fn search(&mut self) -> JsValue {
@@ -260,4 +272,5 @@ extern "C" {
     fn js_search_metadata_update(metadata: JsValue);
     fn js_should_search_be_aborted() -> bool;
     fn js_log_engine_info(info: JsValue);
+    fn js_get_unix_time() -> u64;
 }

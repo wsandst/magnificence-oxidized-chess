@@ -2,7 +2,7 @@
 use core::panic;
 use std::i32;
 
-use super::{move_sorting, Engine, LogCallback, SearchMetadataCallback, ShouldAbortSearchCallback};
+use super::{move_sorting, Engine, GetSystemTimeCallback, LogCallback, SearchMetadataCallback, ShouldAbortSearchCallback};
 use crate::core::bitboard::Board;
 use crate::core::*;
 use bitboard::constants::KING_VALUE;
@@ -20,6 +20,7 @@ pub struct StandardAlphaBetaEngine {
     update_metadata: SearchMetadataCallback,
     info: LogCallback,
     should_abort_search: ShouldAbortSearchCallback,
+    get_system_time: GetSystemTimeCallback,
 
     board: Board,
     move_lists: MoveListCollection,
@@ -45,6 +46,8 @@ impl Engine for StandardAlphaBetaEngine {
         // TODO: Iterative deepening + timekeeping. Will need to keep track of PVs for that probs
         // How do I handle timekeeping when I can't get the current time on WASM? Maybe do per X nodes instead.
         
+        let start_time = (self.get_system_time)();
+
         self.board = board.clone();
         let mut board_copy = board.clone();
         for i in 0..self.nodes_per_depth.len() {
@@ -60,8 +63,9 @@ impl Engine for StandardAlphaBetaEngine {
             (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
         }
 
+        let elapsed = (self.get_system_time)() - start_time;
         //let elapsed = now.elapsed();
-        //(self.info)(&format!("info search took {:.2?} s", elapsed));
+        (self.info)(&format!("info search took {:.2?} s", (elapsed.as_secs_f64())));
         self.report_node_counts(max_depth);
 
         return pv;
@@ -163,11 +167,18 @@ impl StandardAlphaBetaEngine {
         (self.info)(&format!("info qsearch: {} nodes ({:.2}% of nodes)", self.nodes_per_depth[0], node_percentage_of_total));
     }
 
-    pub fn new(board: &Board, update_metadata_callback: SearchMetadataCallback, info_callback: LogCallback, should_abort_callback: ShouldAbortSearchCallback) -> StandardAlphaBetaEngine {
+    pub fn new(
+        board: &Board, 
+        update_metadata_callback: SearchMetadataCallback, 
+        info_callback: LogCallback, 
+        should_abort_callback: ShouldAbortSearchCallback,
+        get_system_time_callback: GetSystemTimeCallback
+    ) -> StandardAlphaBetaEngine {
         return StandardAlphaBetaEngine {
             update_metadata: update_metadata_callback,
             info: info_callback,
             should_abort_search: should_abort_callback,
+            get_system_time: get_system_time_callback,
             board: board.clone(),
             move_lists: MoveListCollection::new(),
             nodes_per_depth: vec![0; 100],
