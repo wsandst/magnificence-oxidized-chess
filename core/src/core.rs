@@ -240,6 +240,10 @@ impl Move {
     pub fn is_quiet(&self) -> bool {
         return self.captured == Piece::Empty;
     }
+
+    pub fn empty() -> Move {
+        return Move {from: 0, to: 0, promotion: Piece::WhitePawn, captured: Piece::WhitePawn, ep: 0, castling: 0, quiet: 0}
+    }
 }
 
 impl fmt::Display for Move {
