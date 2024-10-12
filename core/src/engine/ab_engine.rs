@@ -51,16 +51,18 @@ impl Engine for StandardAlphaBetaEngine {
             self.nodes_per_depth[i] = 0;
         }
 
-        let depth = 5;
-        self.pv_table.set_max_depth(depth);
-        let eval = self.alpha_beta(depth, i32::MIN + 1, i32::MAX);
-        let pv: Vec<Move> = self.pv_table.get_pv();
-        
-        (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
+        let max_depth = 6;
+        let mut pv: Vec<Move> = Vec::new();
+        for depth in 0..max_depth {
+            self.pv_table.set_max_depth(depth);
+            let eval = self.alpha_beta(depth, i32::MIN + 1, i32::MAX, &mut pv);
+            pv = self.pv_table.get_pv();
+            (self.update_metadata)(super::SearchMetadata { depth: depth as usize, eval: eval as f64, pv: pv.clone() });
+        }
 
         //let elapsed = now.elapsed();
         //(self.info)(&format!("info search took {:.2?} s", elapsed));
-        self.report_node_counts(depth);
+        self.report_node_counts(max_depth);
 
         return pv;
     }
@@ -73,7 +75,7 @@ impl Engine for StandardAlphaBetaEngine {
 impl StandardAlphaBetaEngine {
 
     /// Evaluate the current position using an alpha beta search. Quiescence Search is ran for the leaf nodes.
-    fn alpha_beta(&mut self, depth: usize, mut lower_bound: i32, upper_bound: i32) -> i32 {
+    fn alpha_beta(&mut self, depth: usize, mut lower_bound: i32, upper_bound: i32, previous_pv: &mut Vec<Move>) -> i32 {
         self.nodes_per_depth[depth as usize] += 1;
         if depth == 0 {
             return self.qsearch(lower_bound, upper_bound);
@@ -81,7 +83,7 @@ impl StandardAlphaBetaEngine {
         let mut moves = self.move_lists.get_move_list();
 
         self.board.get_moves(&mut moves, false);
-        move_sorting::sort_moves_simple(&self.board, &mut moves);
+        move_sorting::sort_moves_simple(&self.board, &mut moves, depth, previous_pv);
 
         let returning = match moves.result() {
             SearchResult::Loss => -KING_VALUE * 8 - depth as i32,
@@ -89,7 +91,7 @@ impl StandardAlphaBetaEngine {
             SearchResult::InProgress => {
                 for mv in moves.iter() {
                     self.board.make_move(mv);
-                    let result = -self.alpha_beta(depth - 1, -upper_bound, -lower_bound);
+                    let result = -self.alpha_beta(depth - 1, -upper_bound, -lower_bound, previous_pv);
                     self.board.unmake_move(mv);
                     if result > lower_bound {
                         self.pv_table.set_best_move(depth, *mv);
