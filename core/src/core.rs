@@ -54,15 +54,28 @@ pub struct Move {
     pub quiet: u8
 }
 
+const WHITE_PIECES: [Piece; 6] = [Piece::WhitePawn, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing];
+const BLACK_PIECES: [Piece; 6] = [Piece::BlackPawn, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen, Piece::BlackKing];
+
 impl Piece {
     pub fn white_pieces() -> std::slice::Iter<'static, Piece> {
-        const PIECES: [Piece; 6] = [Piece::WhitePawn, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing];
-        PIECES.iter()
+        WHITE_PIECES.iter()
     }
 
     pub fn black_pieces() -> std::slice::Iter<'static, Piece> {
-        const PIECES: [Piece; 6] = [Piece::BlackPawn, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen, Piece::BlackKing];
-        PIECES.iter()
+        BLACK_PIECES.iter()
+    }
+
+    /// Generates an iterator over pieces following self of white
+    /// Order is pawn -> bishop -> knight -> rook -> queen -> king
+    pub fn following_pieces_white(self) -> std::slice::Iter<'static, Piece> { 
+        WHITE_PIECES[self.to_u8() as usize..].iter()
+    }
+
+    /// Generates an iterator over pieces following self of black
+    /// Order is pawn -> bishop -> knight -> rook -> queen -> king
+    pub fn following_pieces_black(self) -> std::slice::Iter<'static, Piece> {
+        BLACK_PIECES[((self.to_u8() as usize)-6)..].iter()
     }
 
     pub fn as_char(&self) -> char {
@@ -82,7 +95,7 @@ impl Piece {
             Piece::Empty => '.',
         }
     }
-
+    const PIECES: [Piece; 6] = [Piece::WhitePawn, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing];
     pub fn is_white(&self) -> bool {
         return self.to_u8() < 6;
     }

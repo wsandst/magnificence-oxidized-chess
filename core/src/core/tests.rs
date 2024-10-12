@@ -332,6 +332,8 @@ pub fn attacking_perft_test(depth: usize, board: &mut Board, reserved_moves: &mu
         total += attacking_perft_test(depth - 1, board, reserved_moves);
         board.unmake_move(mv);
     }
+    reserved_moves.push_move_list(moves);
+    reserved_moves.push_move_list(attacks);
     return 0;
 }
 
@@ -372,6 +374,20 @@ fn perft_tests() {
     let constant_state = Rc::new(BOARD_CONSTANT_STATE.clone());
     assert!(commands::perft_tests(Rc::clone(&constant_state), 2_000_000), "Perft tests failed, see print output for more details.");
 }            
+
+#[test]
+fn see_test() {
+    let constants = Rc::new(BOARD_CONSTANT_STATE.clone());
+    let mut board = Board::from_fen("1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - -", Rc::clone(&constants));
+    let mut val = board.static_exchange_evaluation(60, 28);
+    assert!(val==100, "see failed for 1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - - on e1e5");
+    board = Board::from_fen("1k1r4/1pp4p/p7/3rp3/8/P5P1/1PP4P/2K1R3 w - -", Rc::clone(&constants));
+    val = board.static_exchange_evaluation(60, 28);
+    assert!(val==-400, "see failed for 1k1r4/1pp4p/p7/3rp3/8/P5P1/1PP4P/2K1R3 w - - on e1e5");
+    board = Board::from_fen("1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -", Rc::clone(&constants));
+    val = board.static_exchange_evaluation(43, 28);
+    assert!(-200==val, "see failed for 1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - - on d3e5");
+}
 
 
 pub fn assert_moves_eq_algebraic(lhs: &MoveList, rhs: &Vec<&str>) {
