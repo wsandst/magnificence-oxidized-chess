@@ -14,3 +14,7 @@ export function js_should_search_be_aborted() {
 export function js_log_engine_info(infoMessage) {
     self.postMessage(["search_engine_info", infoMessage])
 }
+
+export function js_get_unix_time() {
+    return BigInt(Date.now());
+}

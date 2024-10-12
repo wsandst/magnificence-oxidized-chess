@@ -1,5 +1,7 @@
 use crate::core::{bitboard::{constants::WHITE, Board}, move_list::MoveList, Color, Move};
 
+use super::pv::PrincipalVariation;
+
 fn eval_move(board: &Board, mv: &Move) -> i32 {
     if mv.is_quiet() {
         // If move is quiet, give -MAX
@@ -10,12 +12,24 @@ fn eval_move(board: &Board, mv: &Move) -> i32 {
         let from_piece = board.get_piece(mv.from);
         return mv.captured.eval_score() - from_piece.eval_score();
     }
-    // Probably should do more stuff here
 }
 
-pub fn sort_moves_simple(board: &Board, move_list: &mut MoveList) {
+fn eval_move_with_pv(board: &Board, mv: &Move, pv_move: &Move) -> i32 {
+    if mv == pv_move {
+        return i32::MAX;
+    }
+    return eval_move(board, mv);
+}
+
+pub fn sort_moves_simple(board: &Board, move_list: &mut MoveList, depth: usize, previous_pv: &mut Vec<Move>) {
     let mut moves = move_list.get_underlying_vec();
-    let mut move_scores = moves.iter().map(|mv| eval_move(board, mv)).collect();
+    let mut move_scores = if previous_pv.len() >= depth as usize {
+        let pv_move = previous_pv.pop().unwrap();
+        moves.iter().map(|mv| eval_move_with_pv(board, mv, &pv_move)).collect()
+    }
+    else {
+        moves.iter().map(|mv| eval_move(board, mv)).collect()
+    };
     insertion_sort(&mut move_scores, &mut moves);
 }
 
@@ -68,8 +82,43 @@ mod tests {
             Move::from_algebraic(&board, "b2a1") // Quiet capture
         ];
         let mut move_list = MoveList::from_vec(moves);
-        sort_moves_simple(&board, &mut move_list);
-        let mut move_list_algebraic: Vec<String> = move_list.to_vec().iter().map(|mv| mv.to_algebraic()).collect();
+        sort_moves_simple(&board, &mut move_list, 3, &mut Vec::new());
+        let move_list_algebraic: Vec<String> = move_list.to_vec().iter().map(|mv| mv.to_algebraic()).collect();
+        assert_eq!(move_list_algebraic, ["b2c3", "b2c1", "b2a3", "b2a1"]);
+
+        // Test move sorting with principal variation
+        let board = Board::from_fen("7k/8/8/8/8/P1Q5/1b6/2R4K b - - 0 1", Rc::new(BOARD_CONSTANT_STATE.clone()));
+        let moves = vec![
+            Move::from_algebraic(&board, "b2a3"), // Pawn capture
+            Move::from_algebraic(&board, "b2c3"), // Queen capture
+            Move::from_algebraic(&board, "b2c1"), // Rook capture
+            Move::from_algebraic(&board, "b2a1") // Quiet capture
+        ];
+        let mut pv = vec![
+            Move::from_algebraic(&board, "b2a3"),
+            Move::from_algebraic(&board, "b2c3"), 
+            Move::from_algebraic(&board, "b2c1")
+        ];
+        let mut move_list = MoveList::from_vec(moves);
+        sort_moves_simple(&board, &mut move_list, 3, &mut pv);
+        
+        let move_list_algebraic: Vec<String> = move_list.to_vec().iter().map(|mv| mv.to_algebraic()).collect();
+        assert_eq!(move_list_algebraic, ["b2c1", "b2c3", "b2a3", "b2a1"]);
+        assert_eq!(pv.len(), 2);
+
+        sort_moves_simple(&board, &mut move_list, 2, &mut pv);
+        let move_list_algebraic: Vec<String> = move_list.to_vec().iter().map(|mv| mv.to_algebraic()).collect();
+        assert_eq!(move_list_algebraic, ["b2c3", "b2c1", "b2a3", "b2a1"]);
+        assert_eq!(pv.len(), 1);
+
+        sort_moves_simple(&board, &mut move_list, 1, &mut pv);
+        let move_list_algebraic: Vec<String> = move_list.to_vec().iter().map(|mv| mv.to_algebraic()).collect();
+        assert_eq!(move_list_algebraic, ["b2a3", "b2c3", "b2c1", "b2a1"]);
+        assert_eq!(pv.len(), 0);
+
+        // No moves left in PV, should just return regular movesort
+        sort_moves_simple(&board, &mut move_list, 3, &mut pv);
+        let move_list_algebraic: Vec<String> = move_list.to_vec().iter().map(|mv| mv.to_algebraic()).collect();
         assert_eq!(move_list_algebraic, ["b2c3", "b2c1", "b2a3", "b2a1"]);
     }
 }
