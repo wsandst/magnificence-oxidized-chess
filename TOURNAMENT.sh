@@ -4,4 +4,4 @@ REPO=/home/williamsandst/repos/rust/magnificence-oxidized-chess
 ENGINE1=$1
 ENGINE2=$2
 OPENING_BOOK="-openings file=$REPO/benchmark/books/noob_4moves.pgn format=pgn start=1"
-cutechess-cli -debug -rounds 3 -games 2 -engine cmd=$ENGINE1 -engine cmd=$ENGINE2 -each restart=on proto=uci tc=inf/40+0.4 -pgnout result.pgn -recover $OPENING_BOOK
+cutechess-cli -rounds 3 -games 2 -engine cmd=$ENGINE1 -engine cmd=$ENGINE2 -each restart=on proto=uci tc=inf/40+0.4 -pgnout result.pgn -recover $OPENING_BOOK
