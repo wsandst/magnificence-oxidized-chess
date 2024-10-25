@@ -1,0 +1,63 @@
+name: Continuous Integration
+
+on: 
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: Swatinem/rust-cache@v1
+
+      - uses: actions/setup-node@v3
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+
+      - uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          # Optional version of wasm-pack to install(eg. 'v0.9.1', 'latest')
+          version: 'latest'
+
+      - name: Install required dependencies for building
+        run: |
+          cargo install rsw
+
+
+      - name: Build release with Cargo
+        uses: actions-rs/cargo@v1
+        env:
+          RUSTFLAGS: "-C target-cpu=native"
+        with:
+          command: build
+          args: --release --package magnificence-oxidized --target=x86_64-unknown-linux-gnu
+
+      - name: Test with Cargo
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: Build Vue web frontend
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          npm install
+          bash BUILD.sh   
+        working-directory: ./web/site
+
+      - name: Create Github release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          zip -j magnificence-oxidized-${{  github.ref_name }}-linux-x86-64.zip ./target/x86_64-unknown-linux-gnu/release/magnificence-oxidized
+          cd ./web/site/
+          zip -r ../../magnificence-oxidized-${{  github.ref_name }}-web.zip dist
+          cd ../../
+          gh release create ${{  github.ref_name }} *.zip --generate-notes
